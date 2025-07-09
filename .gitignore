@@ -1,0 +1,39 @@
+# Node.js dependencies
+node_modules/
+
+# pnpm state file (no debe incluirse en el repositorio)
+.pnpm-workspace-state.json
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Editor settings
+.vscode/
+.idea/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Optional build output
+dist/
+build/
+out/
+
+# Coverage reports
+coverage/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional lockfiles (si solo usás pnpm, podés ignorar los otros)
+package-lock.json
+yarn.lock
