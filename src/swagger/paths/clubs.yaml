@@ -1,0 +1,189 @@
+/clubs:
+  get:
+    summary: Obtiene todos los clubes
+    description: Recupera una lista completa de todos los clubes registrados en la base de datos.
+    tags: [Clubs]
+    responses:
+      200:
+        description: Lista de clubes recuperada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'found all Clubs'
+                data:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Club'
+      500:
+        description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error interno del servidor'
+  post:
+    summary: Crea un nuevo club
+    description: Crea un nuevo registro de club en la base de datos.
+    tags: [Clubs]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Club'
+    responses:
+      201:
+        description: Club creado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'club created'
+                data:
+                  $ref: '#/components/schemas/Club'
+      400:
+        description: Datos de entrada inválidos.
+      500:
+        description: Error del servidor.
+
+/clubs/{id}:
+  get:
+    summary: Obtiene un club por su ID
+    description: Recupera los detalles de un club específico utilizando su identificador único.
+    tags: [Clubs]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: ID numérico del club a recuperar.
+        example: 1
+    responses:
+      200:
+        description: Club encontrado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'found club'
+                data:
+                  $ref: '#/components/schemas/Club'
+      404:
+        description: Club no encontrado.
+      500:
+        description: Error del servidor.
+  put:
+    summary: Actualiza un club existente
+    description: Actualiza completamente la información de un club específico por su ID.
+    tags: [Clubs]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: ID numérico del club a actualizar.
+        example: 1
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Club'
+    responses:
+      200:
+        description: Club actualizado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'club updated'
+      400:
+        description: Datos de entrada inválidos.
+      404:
+        description: Club no encontrado.
+      500:
+        description: Error del servidor.
+  patch:
+    summary: Actualiza parcialmente un club existente
+    description: Realiza una actualización parcial de la información de un club específico por su ID.
+    tags: [Clubs]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: ID numérico del club a actualizar.
+        example: 1
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Club'
+    responses:
+      200:
+        description: Club actualizado parcialmente exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'club updated'
+      400:
+        description: Datos de entrada inválidos.
+      404:
+        description: Club no encontrado.
+      500:
+        description: Error del servidor.
+  delete:
+    summary: Elimina un club por su ID
+    description: Elimina un club específico de la base de datos utilizando su identificador único.
+    tags: [Clubs]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: ID numérico del club a eliminar.
+        example: 1
+    responses:
+      200:
+        description: Club eliminado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'club deleted'
+      404:
+        description: Club no encontrado.
+      500:
+        description: Error del servidor.

@@ -11,8 +11,32 @@ const options: swaggerJsdoc.Options = {
       version: '1.0.0',
       description: 'Documentación de la API del proyecto fantasy',
     },
+    // Esquemas de datos
+    components: {
+      schemas: {
+        Club: {
+          type: 'object',
+          required: ['name'], // Define los campos obligatorios al crear/actualizar
+          properties: {
+            id: {
+              type: 'integer',
+              format: 'int64',
+              description: 'ID único del club',
+              readOnly: true, // Indica que este campo es solo de lectura (ej. autoincremental)
+              example: 1,
+            },
+            name: {
+              type: 'string',
+              description: 'Nombre oficial del club',
+              example: 'Rosario Central',
+            },
+          },
+        },
+      },
+    },
+    // --- FIN DE LA SECCIÓN DE ESQUEMAS ---
   },
-  apis: ['./src/routes/**/*.ts', './src/controllers/**/*.ts'], // Ajustá esto a tu estructura
+  apis: ['./src/swagger/paths/**/*.yaml'],
 };
 
 const swaggerSpec = swaggerJsdoc(options);

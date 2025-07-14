@@ -5,6 +5,12 @@ import { orm } from '../shared/db/orm.js';
 
 const em = orm.em;
 
+/**
+ * Recupera todos los clubes de la base de datos.
+ * @param req El objeto de solicitud de Express (no utilizado en este endpoint, pero se mantiene para la firma).
+ * @param res El objeto de respuesta de Express para enviar los resultados.
+ * @returns Una respuesta HTTP 200 con un mensaje y una lista de clubes, o un error HTTP 500 si falla.
+ */
 async function findAll(req: Request, res: Response) {
   try {
     const clubs = await em.find(Clubs, {});
@@ -13,7 +19,12 @@ async function findAll(req: Request, res: Response) {
     res.status(500).json({ message: error.message });
   }
 }
-
+/**
+ * Recupera un club de la base de datos.
+ * @param req El objeto de solicitud de Express que contiene el ID del club en los parámetros.
+ * @param res El objeto de respuesta de Express para enviar los resultados.
+ * @returns Una respuesta HTTP 200 con un mensaje y los datos del club, o un error HTTP 500 si falla.
+ */
 async function findOne(req: Request, res: Response) {
   try {
     const id = Number.parseInt(req.params.id);
@@ -24,6 +35,12 @@ async function findOne(req: Request, res: Response) {
   }
 }
 
+/**
+ * Agrega un nuevo club a la base de datos.
+ * @param req El objeto de solicitud de Express que contiene los datos del club en el cuerpo.
+ * @param res El objeto de respuesta de Express para enviar los resultados.
+ * @returns Una respuesta HTTP 201 con un mensaje de éxito y los datos del club creado, o un error HTTP 500 si falla.
+ */
 async function add(req: Request, res: Response) {
   try {
     const club = em.create(Clubs, req.body);
@@ -34,6 +51,12 @@ async function add(req: Request, res: Response) {
   }
 }
 
+/**
+ * Actualiza un club existente en la base de datos.
+ * @param req El objeto de solicitud de Express que contiene el ID del club en los parámetros y los datos a actualizar en el cuerpo.
+ * @param res El objeto de respuesta de Express para enviar los resultados.
+ * @returns Una respuesta HTTP 200 con un mensaje de éxito, o un error HTTP 500 si falla.
+ */
 async function update(req: Request, res: Response) {
   try {
     const id = Number.parseInt(req.params.id);
@@ -45,7 +68,12 @@ async function update(req: Request, res: Response) {
     res.status(500).json({ message: error.message });
   }
 }
-
+/**
+ * Elimina un club de la base de datos.
+ * @param req El objeto de solicitud de Express que contiene el ID del club en los parámetros.
+ * @param res El objeto de respuesta de Express para enviar los resultados.
+ * @returns Una respuesta HTTP 200 con un mensaje de éxito, o un error HTTP 500 si falla.
+ */
 async function remove(req: Request, res: Response) {
   try {
     const id = Number.parseInt(req.params.id);
