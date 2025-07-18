@@ -1,0 +1,103 @@
+#########################################################
+### GET all positions
+GET http://localhost:3000/api/positions
+
+### GET one position
+GET http://localhost:3000/api/positions/2
+
+### POST a position
+POST http://localhost:3000/api/positions
+Content-Type: application/json
+
+{
+  "description": "Defensor"
+}
+
+### PUT a position
+PUT http://localhost:3000/api/positions/5
+Content-Type: application/json
+
+{
+  "description": "Defensor Central"
+}
+
+### PATCH a position
+PATCH http://localhost:3000/api/positions/3
+Content-Type: application/json
+
+{
+  "description": "Portero"
+}
+
+### DELETE a position
+DELETE http://localhost:3000/api/positions/2
+
+
+
+
+
+
+
+
+
+
+
+#########################################################
+
+### GET all positions
+GET http://localhost:3000/api/positions
+
+
+### POST a position
+# @name createPosition
+POST http://localhost:3000/api/positions
+Content-Type: application/json
+
+{
+  "description": "Defensor"
+}
+
+### ID
+@id = {{createPosition.response.body.data.id}}
+
+### GET one position
+GET http://localhost:3000/api/positions/{{id}}
+
+### PUT a position
+PUT http://localhost:3000/api/positions/1
+Content-Type: application/json
+
+{
+  "description": "Defensor Central"
+}
+
+### POST a position
+POST http://localhost:3000/api/positions
+Content-Type: application/json
+
+{
+  "description": "Delantero"
+}
+
+### POST a position
+# @name createPositionToDelete
+POST http://localhost:3000/api/positions
+Content-Type: application/json
+
+{
+  "description": "Portero"
+}
+### DELETE a position
+@idToDelete = {{createPositionToDelete.response.body.data.id}}
+DELETE http://localhost:3000/api/positions/{{idToDelete}}
+
+### PATCH a position
+PATCH http://localhost:3000/api/positions/{{idToDelete}}
+Content-Type: application/json
+
+{
+  "description": "Portero"
+}
+
+### DELETE a position
+DELETE http://localhost:3000/api/positions/5
