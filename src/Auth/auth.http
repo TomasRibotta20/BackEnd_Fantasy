@@ -1,0 +1,22 @@
+### POST /api/auth/login    //Puede pasar que el usuario siga con la cookie a pesar de haberlo borrado de la base de datos
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@fantasy.com",
+  "password": "Admin123"
+}
+
+### POST /api/auth/register
+POST http://localhost:3000/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "email": "admin@fantasy.com",
+  "password": "Admin123",
+  "role": "admin"
+}
+
+### POST /api/auth/logout
+POST http://localhost:3000/api/auth/logout
