@@ -3,16 +3,14 @@ http://localhost:3000/api/clubs
 
 
 ### POST a club
-# @name createClub
+# @nombre createClub
 POST http://localhost:3000/api/clubs
 Content-Type: application/json
 
 {
-  "name": "Boca Juniors"
+  "nombre": "Boca Juniors",
+  "id_api": "12345"
 }
-
-### ID
-@id = {{createClub.response.body.data.id}}
 
 ### GET one club
 http://localhost:3000/api/clubs/1
@@ -22,7 +20,8 @@ PUT http://localhost:3000/api/clubs/1
 Content-Type: application/json
 
 {
-  "name": "River Plate"
+  "nombre": "River Plate",
+  "id_api": "12344"
 }
 
 ### POST a club
@@ -30,27 +29,26 @@ POST http://localhost:3000/api/clubs
 Content-Type: application/json
 
 {
-  "name": "Rosario Central"
+  "nombre": "Rosario Central",
+  "id_api": "12345"
 }
 
 ### POST a club
-# @name createclubToDelete
+# @nombre createclubToDelete
 POST http://localhost:3000/api/clubs
 Content-Type: application/json
 
 {
-  "name": "Newell's Old Boys"
+  "nombre": "Newell's Old Boys",
+  "id_api": "12346"
 }
-### DELETE a club
-@idToDelete = {{createclubToDelete.response.body.data.id}}
-DELETE http://localhost:3000/api/clubs/{{idToDelete}}
 
 ### PATCH a club
-PATCH http://localhost:3000/api/clubs/8
+PATCH http://localhost:3000/api/clubs/5
 Content-Type: application/json
 
 {
-  "name": "Pinguinitos Fc"
+  "nombre": "Pinguinitos Fc"
 }
 
 ### DELETE a club
