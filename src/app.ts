@@ -7,7 +7,7 @@ import { RequestContext } from '@mikro-orm/core';
 import cors from 'cors';
 
 const corsOptions = {
-  origin: 'http://localhost:5173/',
+  origin: 'http://localhost:5173',
   credentials: true, //access-control-allow-credentials:true
   optionSuccessStatus: 200,
 };
@@ -18,6 +18,7 @@ app.use(express.json()); // Middleware para parsear JSON
 app.use((req, res, next) => {
   RequestContext.create(orm.em, next);
 });
+app.use(cors(corsOptions));
 
 setupSwagger(app); // Configuración de Swagger
 
