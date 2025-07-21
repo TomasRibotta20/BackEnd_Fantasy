@@ -4,6 +4,13 @@ import 'reflect-metadata';
 import { clubRouter } from './Club/club.routes.js';
 import { orm } from './shared/db/orm.js';
 import { RequestContext } from '@mikro-orm/core';
+import cors from 'cors';
+
+const corsOptions = {
+  origin: 'http://localhost:5173/',
+  credentials: true, //access-control-allow-credentials:true
+  optionSuccessStatus: 200,
+};
 
 const app = express();
 app.use(express.json()); // Middleware para parsear JSON
