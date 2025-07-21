@@ -10,6 +10,13 @@ import { authRouter } from './Auth/auth.routes.js';
 import { SECRET_JWT_KEY } from './shared/jwt.js';
 import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
+import cors from 'cors';
+
+const corsOptions = {
+  origin: 'http://localhost:5173',
+  credentials: true, //access-control-allow-credentials:true
+  optionSuccessStatus: 200,
+};
 
 const app = express();
 app.use(express.json()); // Middleware para parsear JSON
@@ -41,6 +48,7 @@ app.use((req, res, next) => {
   RequestContext.create(orm.em, next);
 });
 app.use('/api/auth', authRouter); // Rutas de autenticación
+app.use(cors(corsOptions));
 
 setupSwagger(app); // Configuración de Swagger
 
