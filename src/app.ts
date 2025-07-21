@@ -44,7 +44,7 @@ app.use('/api/auth', authRouter); // Rutas de autenticación
 
 setupSwagger(app); // Configuración de Swagger
 
-app.use('/api/users', userRouter); // Rutas de usuarios, incluyendo el registro
+app.use('/api/users', userRouter); // Rutas de usuarios
 app.use('/api/positions', positionRouter);
 app.use('/api/clubs', clubRouter); // Rutas de clubes
 app.use((_, res) => {
