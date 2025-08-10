@@ -1,24 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { Position } from './position.entity.js';
 import { orm } from '../shared/db/orm.js';
 //import { handleError } from './errors.handler.js';
 
 const em = orm.em;
-
-function sanitizePositionInput(req: Request, res: Response, next: NextFunction) {
-  req.body.sanitizedInput = {
-    description: req.body.description,
-  };
-  //more checks here
-
-  Object.keys(req.body.sanitizedInput).forEach((key) => {
-    if (req.body.sanitizedInput[key] === undefined) {
-      delete req.body.sanitizedInput[key];
-    }
-  });
-  next();
-}
 
 /**
  * Recupera todas las posiciones de la base de datos.
@@ -59,7 +45,7 @@ async function findOne(req: Request, res: Response) {
  */
 async function add(req: Request, res: Response) {
   try {
-    const position = em.create(Position, req.body.sanitizedInput);
+    const position = em.create(Position, req.body);
     await em.flush();
     res.status(201).json({ message: 'New position succesfuly created', data: position });
   } catch (error: any) {
@@ -77,7 +63,7 @@ async function update(req: Request, res: Response) {
   try {
     const id = Number.parseInt(req.params.id);
     const positionToUpdate = await em.findOneOrFail(Position, { id });
-    em.assign(positionToUpdate, req.body.sanitizedInput);
+    em.assign(positionToUpdate, req.body);
     await em.flush();
     res.status(200).json({ message: 'position updated', data: positionToUpdate });
   } catch (error: any) {
@@ -102,4 +88,4 @@ async function remove(req: Request, res: Response) {
   }
 }
 
-export { findAll, findOne, add, update, remove, sanitizePositionInput };
+export { findAll, findOne, add, update, remove };

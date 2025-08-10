@@ -2,6 +2,7 @@ import express from 'express';
 import { setupSwagger } from './swagger.js';
 import 'reflect-metadata';
 import { clubRouter } from './Club/club.routes.js';
+import { positionRouter } from './Position/position.routes.js';
 import { orm } from './shared/db/orm.js';
 import { RequestContext } from '@mikro-orm/core';
 import cors from 'cors';
@@ -23,6 +24,7 @@ app.use(cors(corsOptions));
 setupSwagger(app); // Configuración de Swagger
 
 app.use('/api/clubs', clubRouter); // Rutas de clubes
+app.use('/api/positions', positionRouter); // Rutas de posiciones
 app.use((_, res) => {
   return res.status(404).send({ message: 'Resource not found' });
 });
