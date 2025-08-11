@@ -17,7 +17,7 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
     const positions = await em.find(Position, {}, { orderBy: { id: 'ASC' } });
     res.status(200).json({ message: 'found all positions', data: positions });
   } catch (error: any) {
-    next(error);
+    next(ErrorFactory.internal(`Error al obtener las posiciones: ${error.message}`));
   }
 }
 
@@ -36,7 +36,7 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
     if (error.name === 'NotFoundError') {
       return next(ErrorFactory.notFound(`Posición con ID ${id} no encontrada`));
     }
-    next(error);
+    next(ErrorFactory.internal('Error al obtener la posición'));
   }
 }
 
@@ -55,7 +55,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
     if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
       return next(ErrorFactory.duplicate('Ya existe una posición con esa descripción'));
     }
-    next(ErrorFactory.database('Error al crear la posición'));
+    next(ErrorFactory.internal('Error al crear la posición'));
   }
 }
 
@@ -79,7 +79,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
     if (error.name === 'NotFoundError') {
       return next(ErrorFactory.notFound(`Posición con ID ${id} no encontrada`));
     }
-    next(error);
+    next(ErrorFactory.internal('Error al actualizar la posición'));
   }
 }
 
@@ -96,7 +96,7 @@ async function remove(req: Request, res: Response, next: NextFunction) {
     await em.removeAndFlush(position);
     res.status(200).json({ message: 'position removed' });
   } catch (error: any) {
-    next(error);
+    next(ErrorFactory.internal(`Error al eliminar la posición: ${error.message}`));
   }
 }
 

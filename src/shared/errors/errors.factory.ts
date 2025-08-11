@@ -16,6 +16,10 @@ export class AppError extends Error {
 
 export class ErrorFactory {
   
+  static internal(message: string = 'Error interno del servidor') {
+    return new AppError(message, 500, 'INTERNAL_ERROR');
+  }
+
   static validation(message: string, zodError?: unknown) {
     return new AppError(message, 400, 'VALIDATION_ERROR', zodError);
   }
