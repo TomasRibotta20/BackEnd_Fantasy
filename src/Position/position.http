@@ -3,7 +3,7 @@
 GET http://localhost:3000/api/positions
 
 ### GET one position
-GET http://localhost:3000/api/positions/18
+GET http://localhost:3000/api/positions/1
 
 ### POST a position
 POST http://localhost:3000/api/positions
@@ -14,11 +14,11 @@ Content-Type: application/json
 }
 
 ### PUT a position
-PUT http://localhost:3000/api/positions/4
+PUT http://localhost:3000/api/positions/1
 Content-Type: application/json
 
 {
-  "description": "Defensor"
+  "description": "Defensor 5"
 }
 
 ### PATCH a position

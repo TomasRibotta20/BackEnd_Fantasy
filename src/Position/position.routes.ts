@@ -1,11 +1,5 @@
 import { Router } from 'express';
-import {
-  findAll,
-  findOne,
-  add,
-  update,
-  remove,
-} from './position.controller.js';
+import { findAll, findOne, add, update, remove } from './position.controller.js';
 import { validate } from '../shared/zod/validate.js';
 import { createPositionSchema, updatePositionSchema } from './position.schema.js';
 

@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { clubes } from './club.entity.js';
 import { orm } from '../shared/db/orm.js';
+import { ErrorFactory } from '../shared/errors/errors.factory.js';
 
 const em = orm.em;
 
@@ -11,12 +12,12 @@ const em = orm.em;
  * @param res El objeto de respuesta de Express para enviar los resultados.
  * @returns Una respuesta HTTP 200 con un mensaje y una lista de clubes, o un error HTTP 500 si falla.
  */
-async function findAll(req: Request, res: Response) {
+async function findAll(req: Request, res: Response, next: NextFunction) {
   try {
     const clubs = await em.find(clubes, {});
     res.status(200).json({ message: 'found all Clubs', data: clubs });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    next(ErrorFactory.internal(`Error al obtener los clubes: ${error.message}`));
   }
 }
 /**
@@ -25,13 +26,16 @@ async function findAll(req: Request, res: Response) {
  * @param res El objeto de respuesta de Express para enviar los resultados.
  * @returns Una respuesta HTTP 200 con un mensaje y los datos del club, o un error HTTP 500 si falla.
  */
-async function findOne(req: Request, res: Response) {
+async function findOne(req: Request, res: Response, next: NextFunction) {
+  const id = Number.parseInt(req.params.id);
   try {
-    const id = Number.parseInt(req.params.id);
     const club = await em.findOneOrFail(clubes, { id });
     res.status(200).json({ message: 'found club', data: club });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    if (error.name === 'NotFoundError') {
+      return next(ErrorFactory.notFound(`Club con ID ${id} no encontrado`));
+    }
+    next(ErrorFactory.internal('Error al obtener el club'));
   }
 }
 
@@ -41,13 +45,16 @@ async function findOne(req: Request, res: Response) {
  * @param res El objeto de respuesta de Express para enviar los resultados.
  * @returns Una respuesta HTTP 201 con un mensaje de éxito y los datos del club creado, o un error HTTP 500 si falla.
  */
-async function add(req: Request, res: Response) {
+async function add(req: Request, res: Response, next: NextFunction) {
   try {
     const club = em.create(clubes, req.body);
     await em.flush();
     res.status(201).json({ message: 'club created', data: club });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
+      return next(ErrorFactory.duplicate('Ya existe un club con esa descripción'));
+    }
+    next(ErrorFactory.internal('Error al crear el club'));
   }
 }
 
@@ -57,15 +64,21 @@ async function add(req: Request, res: Response) {
  * @param res El objeto de respuesta de Express para enviar los resultados.
  * @returns Una respuesta HTTP 200 con un mensaje de éxito, o un error HTTP 500 si falla.
  */
-async function update(req: Request, res: Response) {
+async function update(req: Request, res: Response, next: NextFunction) {
+  const id = Number.parseInt(req.params.id);
   try {
-    const id = Number.parseInt(req.params.id);
-    const club = em.getReference(clubes, id);
+    const club = await em.findOneOrFail(clubes, { id });
     em.assign(club, req.body);
     await em.flush();
-    res.status(200).json({ message: 'club updated' });
+    res.status(200).json({ message: 'club updated', data: club });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
+      return next(ErrorFactory.duplicate('Ya existe un club con esa descripción'));
+    }
+    if (error.name === 'NotFoundError') {
+      return next(ErrorFactory.notFound(`Club con ID ${id} no encontrado`));
+    }
+    next(ErrorFactory.internal('Error al actualizar el club'));
   }
 }
 /**
@@ -74,14 +87,14 @@ async function update(req: Request, res: Response) {
  * @param res El objeto de respuesta de Express para enviar los resultados.
  * @returns Una respuesta HTTP 200 con un mensaje de éxito, o un error HTTP 500 si falla.
  */
-async function remove(req: Request, res: Response) {
+async function remove(req: Request, res: Response, next: NextFunction) {
   try {
     const id = Number.parseInt(req.params.id);
     const club = em.getReference(clubes, id);
     await em.removeAndFlush(club);
     res.status(200).send({ message: 'club deleted' });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    next(ErrorFactory.internal(`Error al eliminar el club: ${error.message}`));
   }
 }
 
