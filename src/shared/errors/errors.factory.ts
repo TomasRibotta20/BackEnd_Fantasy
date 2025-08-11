@@ -20,6 +20,10 @@ export class ErrorFactory {
     return new AppError(message, 500, 'INTERNAL_ERROR');
   }
 
+  static notFoundRoute(path: string) {
+    return new AppError(`Ruta '${path}' no encontrada`, 404, 'ROUTE_NOT_FOUND');
+  }
+
   static validation(message: string, zodError?: unknown) {
     return new AppError(message, 400, 'VALIDATION_ERROR', zodError);
   }
