@@ -21,9 +21,9 @@ async function getMyProfile(req: Request, res: Response) {
     }
     // No devolver la contraseña
     const { password: _, ...userWithoutPassword } = userFromDb;
-    return res.status(200).json({ 
-      message: 'Perfil obtenido exitosamente', 
-      data: userWithoutPassword 
+    return res.status(200).json({
+      message: 'Perfil obtenido exitosamente',
+      data: userWithoutPassword,
     });
   } catch (error) {
     return res.status(500).json({ message: 'Error obteniendo perfil', error });
@@ -45,17 +45,15 @@ async function updateMyProfile(req: Request, res: Response) {
     await em.flush();
     // No devolver la contraseña
     const { password: _, ...userWithoutPassword } = user;
-    return res.status(200).json({ 
-      message: 'Perfil actualizado exitosamente', 
-      data: userWithoutPassword 
+    return res.status(200).json({
+      message: 'Perfil actualizado exitosamente',
+      data: userWithoutPassword,
     });
   } catch (error) {
     return res.status(500).json({ message: 'Error actualizando perfil', error });
   }
 }
 //------------------------------------------------------------------
-
-
 
 /**
  * Recupera todos los clubes de la base de datos.

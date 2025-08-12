@@ -36,7 +36,7 @@ Content-Type: application/json
 }
 
 ### DELETE a user
-DELETE http://localhost:3000/api/users/3
+DELETE http://localhost:3000/api/users/4
 
 
 

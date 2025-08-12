@@ -1,5 +1,12 @@
 import { Router } from 'express';
-import { login, logout, register, sanitizeRegisterInput, sanitizeLoginInput, authLimiter } from './auth.controller.js';
+import {
+  login,
+  logout,
+  register,
+  sanitizeRegisterInput,
+  sanitizeLoginInput,
+  authLimiter,
+} from './auth.controller.js';
 //import { requireAuth } from './auth.requires.js';
 
 export const authRouter = Router();

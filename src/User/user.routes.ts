@@ -1,8 +1,16 @@
 import { Router } from 'express';
-import { findAll, findOne, add, update, remove, sanitizedUserInput, getMyProfile, updateMyProfile } from './user.controller.js';
+import {
+  findAll,
+  findOne,
+  add,
+  update,
+  remove,
+  sanitizedUserInput,
+  getMyProfile,
+  updateMyProfile,
+} from './user.controller.js';
 import { requireAuth, requireAdmin } from '../Auth/auth.requires.js';
 import { sanitizeRegisterInput } from '../Auth/auth.controller.js'; // Importar la función de sanitización
-
 
 export const userRouter = Router();
 
