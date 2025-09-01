@@ -2,9 +2,12 @@ import express from 'express';
 import { setupSwagger } from './swagger.js';
 import 'reflect-metadata';
 import { clubRouter } from './Club/club.routes.js';
+import { positionRouter } from './Position/position.routes.js';
 import { orm } from './shared/db/orm.js';
 import { RequestContext } from '@mikro-orm/core';
 import cors from 'cors';
+import { globalErrorHandler } from './shared/errors/errors.handler.js';
+import { ErrorFactory } from './shared/errors/errors.factory.js';
 
 const corsOptions = {
   origin: 'http://localhost:5173',
@@ -23,9 +26,11 @@ app.use(cors(corsOptions));
 setupSwagger(app); // Configuración de Swagger
 
 app.use('/api/clubs', clubRouter); // Rutas de clubes
-app.use((_, res) => {
-  return res.status(404).send({ message: 'Resource not found' });
-});
+app.use('/api/positions', positionRouter); // Rutas de posiciones
 
+app.use((req, _, next) => {
+  next(ErrorFactory.notFoundRoute(req.originalUrl));
+});
+app.use(globalErrorHandler);
 app.listen(3000, () => {});
 //Swagger UI disponible en http://localhost:3000/api-docs

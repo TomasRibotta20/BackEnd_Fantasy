@@ -42,6 +42,7 @@
     "express-jsdoc-swagger": "^1.8.0",
     "reflect-metadata": "0.2.2",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "zod": "^4.0.17"
   }
 }

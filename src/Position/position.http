@@ -3,30 +3,30 @@
 GET http://localhost:3000/api/positions
 
 ### GET one position
-GET http://localhost:3000/api/positions/2
+GET http://localhost:3000/api/positions/1
 
 ### POST a position
 POST http://localhost:3000/api/positions
 Content-Type: application/json
 
 {
-  "description": "Defensor"
+  "description": "Arquero"
 }
 
 ### PUT a position
-PUT http://localhost:3000/api/positions/5
+PUT http://localhost:3000/api/positions/1
 Content-Type: application/json
 
 {
-  "description": "Defensor Central"
+  "description": "Defensor 5"
 }
 
 ### PATCH a position
-PATCH http://localhost:3000/api/positions/3
+PATCH http://localhost:3000/api/positions/4
 Content-Type: application/json
 
 {
-  "description": "Portero"
+  "description": "Delantero"
 }
 
 ### DELETE a position

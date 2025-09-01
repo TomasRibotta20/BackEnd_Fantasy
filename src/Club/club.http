@@ -8,7 +8,7 @@ POST http://localhost:3000/api/clubs
 Content-Type: application/json
 
 {
-  "nombre": "Boca Juniors",
+  "nombre": "River",
   "id_api": "12345"
 }
 
@@ -16,12 +16,12 @@ Content-Type: application/json
 http://localhost:3000/api/clubs/1
 
 ### PUT a club
-PUT http://localhost:3000/api/clubs/1
+PUT http://localhost:3000/api/clubs/2
 Content-Type: application/json
 
 {
-  "nombre": "River Plate",
-  "id_api": "12344"
+  "nombre": "River",
+  "id_api": "12345"
 }
 
 ### POST a club
@@ -52,4 +52,4 @@ Content-Type: application/json
 }
 
 ### DELETE a club
-DELETE http://localhost:3000/api/clubs/5
+DELETE http://localhost:3000/api/clubs/

@@ -2,23 +2,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { Position } from './position.entity.js';
 import { orm } from '../shared/db/orm.js';
-//import { handleError } from './errors.handler.js';
+import { ErrorFactory } from '../shared/errors/errors.factory.js';
 
 const em = orm.em;
-
-function sanitizePositionInput(req: Request, res: Response, next: NextFunction) {
-  req.body.sanitizedInput = {
-    description: req.body.description,
-  };
-  //more checks here
-
-  Object.keys(req.body.sanitizedInput).forEach((key) => {
-    if (req.body.sanitizedInput[key] === undefined) {
-      delete req.body.sanitizedInput[key];
-    }
-  });
-  next();
-}
 
 /**
  * Recupera todas las posiciones de la base de datos.
@@ -26,12 +12,12 @@ function sanitizePositionInput(req: Request, res: Response, next: NextFunction) 
  * @param res El objeto de respuesta de Express para enviar los resultados.
  * @returns Una respuesta HTTP 200 con un mensaje y una lista de posiciones, o un error HTTP 500 si falla.
  */
-async function findAll(req: Request, res: Response) {
+async function findAll(req: Request, res: Response, next: NextFunction) {
   try {
     const positions = await em.find(Position, {}, { orderBy: { id: 'ASC' } });
     res.status(200).json({ message: 'found all positions', data: positions });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    next(ErrorFactory.internal(`Error al obtener las posiciones: ${error.message}`));
   }
 }
 
@@ -41,13 +27,16 @@ async function findAll(req: Request, res: Response) {
  * @param res El objeto de respuesta de Express para enviar los resultados.
  * @returns Una respuesta HTTP 200 con un mensaje y los datos de la posición, o un error HTTP 500 si falla.
  */
-async function findOne(req: Request, res: Response) {
+async function findOne(req: Request, res: Response, next: NextFunction) {
+  const id = Number.parseInt(req.params.id);
   try {
-    const id = Number.parseInt(req.params.id);
     const position = await em.findOneOrFail(Position, { id });
     res.status(200).json({ message: 'found position', data: position });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    if (error.name === 'NotFoundError') {
+      return next(ErrorFactory.notFound(`Posición con ID ${id} no encontrada`));
+    }
+    next(ErrorFactory.internal('Error al obtener la posición'));
   }
 }
 
@@ -57,13 +46,16 @@ async function findOne(req: Request, res: Response) {
  * @param res El objeto de respuesta de Express para enviar los resultados.
  * @returns Una respuesta HTTP 201 con un mensaje de éxito y los datos de la posición creada, o un error HTTP 500 si falla.
  */
-async function add(req: Request, res: Response) {
+async function add(req: Request, res: Response, next: NextFunction) {
   try {
-    const position = em.create(Position, req.body.sanitizedInput);
+    const position = em.create(Position, req.body);
     await em.flush();
     res.status(201).json({ message: 'New position succesfuly created', data: position });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
+      return next(ErrorFactory.duplicate('Ya existe una posición con esa descripción'));
+    }
+    next(ErrorFactory.internal('Error al crear la posición'));
   }
 }
 
@@ -73,15 +65,21 @@ async function add(req: Request, res: Response) {
  * @param res El objeto de respuesta de Express para enviar los resultados.
  * @returns Una respuesta HTTP 200 con un mensaje de éxito, o un error HTTP 500 si falla.
  */
-async function update(req: Request, res: Response) {
+async function update(req: Request, res: Response, next: NextFunction) {
+  const id = Number.parseInt(req.params.id);
   try {
-    const id = Number.parseInt(req.params.id);
     const positionToUpdate = await em.findOneOrFail(Position, { id });
-    em.assign(positionToUpdate, req.body.sanitizedInput);
+    em.assign(positionToUpdate, req.body);
     await em.flush();
     res.status(200).json({ message: 'position updated', data: positionToUpdate });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
+      return next(ErrorFactory.duplicate('Ya existe una posición con esa descripción'));
+    }
+    if (error.name === 'NotFoundError') {
+      return next(ErrorFactory.notFound(`Posición con ID ${id} no encontrada`));
+    }
+    next(ErrorFactory.internal('Error al actualizar la posición'));
   }
 }
 
@@ -91,15 +89,15 @@ async function update(req: Request, res: Response) {
  * @param res El objeto de respuesta de Express para enviar los resultados.
  * @returns Una respuesta HTTP 200 con un mensaje de éxito, o un error HTTP 500 si falla.
  */
-async function remove(req: Request, res: Response) {
+async function remove(req: Request, res: Response, next: NextFunction) {
   try {
     const id = Number.parseInt(req.params.id);
     const position = em.getReference(Position, id);
     await em.removeAndFlush(position);
     res.status(200).json({ message: 'position removed' });
   } catch (error: any) {
-    res.status(500).json({ message: error.message });
+    next(ErrorFactory.internal(`Error al eliminar la posición: ${error.message}`));
   }
 }
 
-export { findAll, findOne, add, update, remove, sanitizePositionInput };
+export { findAll, findOne, add, update, remove };
