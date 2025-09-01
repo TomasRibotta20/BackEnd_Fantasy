@@ -1,0 +1,189 @@
+/positions:
+  get:
+    summary: Obtiene todas las posiciones
+    description: Recupera una lista completa de todos las posiciones registrados en la base de datos.
+    tags: [Positions]
+    responses:
+      200:
+        description: Lista de posiciones recuperada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'found all Positions'
+                data:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Position'
+      500:
+        description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error interno del servidor'
+  post:
+    summary: Crea una nueva posición
+    description: Crea un nuevo registro de posición en la base de datos.
+    tags: [Positions]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Position'
+    responses:
+      201:
+        description: Posición creada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'position created'
+                data:
+                  $ref: '#/components/schemas/Position'
+      400:
+        description: Datos de entrada inválidos.
+      500:
+        description: Error del servidor.
+
+/positions/{id}:
+  get:
+    summary: Obtiene una posición por su ID
+    description: Recupera los detalles de una posición específica utilizando su identificador único.
+    tags: [Positions]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: ID numérico de la posición a recuperar.
+        example: 1
+    responses:
+      200:
+        description: Posición encontrada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'found position'
+                data:
+                  $ref: '#/components/schemas/Position'
+      404:
+        description: Posición no encontrada.
+      500:
+        description: Error del servidor.
+  put:
+    summary: Actualiza una posición existente
+    description: Actualiza completamente la información de una posición específica por su ID.
+    tags: [Positions]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: ID numérico de la posición a actualizar.
+        example: 1
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Position'
+    responses:
+      200:
+        description: Posición actualizada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'position updated'
+      400:
+        description: Datos de entrada inválidos.
+      404:
+        description: Posición no encontrada.
+      500:
+        description: Error del servidor.
+  patch:
+    summary: Actualiza parcialmente una posición existente
+    description: Realiza una actualización parcial de la información de una posición específica por su ID.
+    tags: [Positions]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: ID numérico de la posición a actualizar.
+        example: 1
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Position'
+    responses:
+      200:
+        description: Posición actualizada parcialmente exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'position updated'
+      400:
+        description: Datos de entrada inválidos.
+      404:
+        description: Posición no encontrada.
+      500:
+        description: Error del servidor.
+  delete:
+    summary: Elimina una posición por su ID
+    description: Elimina una posición específica de la base de datos utilizando su identificador único.
+    tags: [Positions]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+          format: int64
+        description: ID numérico del club a eliminar.
+        example: 1
+    responses:
+      200:
+        description: Posición eliminada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'position deleted'
+      404:
+        description: Posición no encontrada.
+      500:
+        description: Error del servidor.
