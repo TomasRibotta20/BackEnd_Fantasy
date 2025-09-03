@@ -5,6 +5,11 @@ import { clubRouter } from './Club/club.routes.js';
 import { positionRouter } from './Position/position.routes.js';
 import { orm } from './shared/db/orm.js';
 import { RequestContext } from '@mikro-orm/core';
+import { userRouter } from './User/user.routes.js';
+import { authRouter } from './Auth/auth.routes.js';
+import { SECRET_JWT_KEY } from './shared/jwt.js';
+import cookieParser from 'cookie-parser';
+import jwt from 'jsonwebtoken';
 import cors from 'cors';
 import { globalErrorHandler } from './shared/errors/errors.handler.js';
 import { ErrorFactory } from './shared/errors/errors.factory.js';
@@ -16,21 +21,48 @@ const corsOptions = {
 };
 
 const app = express();
+app.use(cors(corsOptions)); // CORS debe ir primero
 app.use(express.json()); // Middleware para parsear JSON
 
 app.use((req, res, next) => {
   RequestContext.create(orm.em, next);
 });
-app.use(cors(corsOptions));
+
+//middleware
+app.use(cookieParser()); // Middleware para manejar cookies
+app.use((req, _, next) => {
+  const token = req.cookies.access_token;
+  req.authUser = { user: null };
+  try {
+    const data = jwt.verify(token, SECRET_JWT_KEY);
+    if (data && typeof data === 'object' && 'userId' in data) {
+      //req.authUser = { user: data };
+      req.authUser.user = {
+        userId: data.userId as number,
+        username: data.username as string,
+        email: data.email as string,
+        role: data.role as string,
+        iat: data.iat,
+        exp: data.exp,
+      };
+    }
+  } catch {}
+  next(); 
+});
 
 setupSwagger(app); // Configuración de Swagger
 
+app.use('/api/auth', authRouter); // Rutas de autenticación
+app.use('/api/users', userRouter); // Rutas de usuarios
+app.use('/api/positions', positionRouter);
 app.use('/api/clubs', clubRouter); // Rutas de clubes
 app.use('/api/positions', positionRouter); // Rutas de posiciones
 
 app.use((req, _, next) => {
   next(ErrorFactory.notFoundRoute(req.originalUrl));
 });
+
 app.use(globalErrorHandler);
+
 app.listen(3000, () => {});
 //Swagger UI disponible en http://localhost:3000/api-docs
