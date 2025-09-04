@@ -14,7 +14,7 @@ Content-Type: application/json
 }
 
 ### PUT a position
-PUT http://localhost:3000/api/positions/1
+PUT http://localhost:3000/api/positions/88
 Content-Type: application/json
 
 {

@@ -3,8 +3,8 @@ POST http://localhost:3000/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "jope@fantasy.com",
-  "password": "Admin123"
+  "email": "admin@example.com",
+  "password": "admin123"
 }
 
 ### POST /api/auth/register
@@ -14,9 +14,27 @@ Content-Type: application/json
 {
   "username": "josesito",
   "email": "josesito@fantasy.com",
-  "password": "Admin123",
-  "role": "user"
+  "password": "josesito123"
 }
 
 ### POST /api/auth/logout
 POST http://localhost:3000/api/auth/logout
+
+### POST /api/auth/refreshToken
+POST http://localhost:3000/api/auth/refreshToken
+
+### PUT /api/auth/new-password
+PUT http://localhost:3000/api/auth/new-password
+Content-Type: application/json
+
+{
+  "newPassword": "Admin123"
+}
+
+### PUT /api/auth/forgot-password
+PUT http://localhost:3000/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "josesito@fantasy.com"
+}

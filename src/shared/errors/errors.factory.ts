@@ -27,7 +27,11 @@ export class ErrorFactory {
   static validation(message: string, zodError?: unknown) {
     return new AppError(message, 400, 'VALIDATION_ERROR', zodError);
   }
-  
+
+  static validationAppError(message: string) {
+    return new AppError(message, 400, 'VALIDATION_APP_ERROR');
+  }
+
   static duplicate(message: string) {
     return new AppError(message, 409, 'DUPLICATE_ERROR');
   }

@@ -15,6 +15,12 @@ export class Users extends BaseEntity {
   @Property({ default: 'user' })
   role!: string; // 'user' | 'admin'
 
+  @Property({ nullable: true })
+  refreshToken?: string;
+
+  @Property({ nullable: true })
+  resetToken?: string | null;
+
   // Relación One-to-Many: Un usuario puede tener varios equipos
   //@OneToMany(() => Equipo, equipo => equipo.usuario, { eager: false })
   //equipos = new Collection<Equipo>(this);

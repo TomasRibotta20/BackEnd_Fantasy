@@ -29,11 +29,32 @@ app.use((req, res, next) => {
 });
 
 //middleware
+app.use((req, res, next) => {
+  console.log(`🌐 ${req.method} ${req.originalUrl}`);
+  console.log('🍪 Headers cookie:', req.headers.cookie);
+  next();
+});
 app.use(cookieParser()); // Middleware para manejar cookies
-app.use((req, _, next) => {
+app.use((req, res, next) => {
   const token = req.cookies.access_token;
+  console.log('🛤️ req.cookies:', req.cookies);
   req.authUser = { user: null };
+  if (!token) { //Si no hay token continúo normalmente
+    console.log('🔓 No hay token, continuando...');
+    return next();
+  }
   try {
+    const decoded = jwt.decode(token) as any;
+    console.log('📄 Token decodificado:', {
+      userId: decoded?.userId,
+      username: decoded?.username,
+      iat: decoded?.iat,
+      exp: decoded?.exp,
+      fechaCreacion: new Date(decoded?.iat * 1000),
+      fechaExpiracion: new Date(decoded?.exp * 1000),
+      fechaActual: new Date(),
+      estaExpirado: decoded?.exp < Date.now() / 1000
+    });
     const data = jwt.verify(token, SECRET_JWT_KEY);
     if (data && typeof data === 'object' && 'userId' in data) {
       //req.authUser = { user: data };
@@ -46,15 +67,29 @@ app.use((req, _, next) => {
         exp: data.exp,
       };
     }
-  } catch {}
-  next(); 
+    return next();
+  } catch (error: any) {
+    req.authUser = { user: null };
+    if (error.name === 'TokenExpiredError') {
+      console.log('🛤️ req.path:', req.path);
+      console.log('🛤️ req.originalUrl:', req.originalUrl);
+      console.log('🛤️ req.baseUrl:', req.baseUrl);
+      const isPublicAuthRoute = req.originalUrl.startsWith('/api/auth');
+      console.log('🔓 Es ruta pública?', isPublicAuthRoute);
+      if (!isPublicAuthRoute) {
+        return next(ErrorFactory.unauthorized('Token expired'));
+      }
+      res.clearCookie('access_token');
+      return next();
+    }
+    return next();
+  }
 });
 
 setupSwagger(app); // Configuración de Swagger
 
 app.use('/api/auth', authRouter); // Rutas de autenticación
 app.use('/api/users', userRouter); // Rutas de usuarios
-app.use('/api/positions', positionRouter);
 app.use('/api/clubs', clubRouter); // Rutas de clubes
 app.use('/api/positions', positionRouter); // Rutas de posiciones
 
