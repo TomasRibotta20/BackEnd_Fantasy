@@ -48,7 +48,7 @@ async function login(req: Request, res: Response, next: NextFunction) {
     const accessToken = jwt.sign(
       { userId: existingUser.id, email: existingUser.email, role: existingUser.role, type: 'access' },
       SECRET_JWT_KEY,
-      { expiresIn: '2m' }
+      { expiresIn: '10m' }
     );
     const refreshToken = jwt.sign(
       { userId: existingUser.id, email: existingUser.email, role: existingUser.role, type: 'refresh' },
@@ -68,6 +68,7 @@ async function login(req: Request, res: Response, next: NextFunction) {
         httpOnly: true,
         sameSite: 'strict',
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 días
+        path: '/api/auth',
       })
       .status(200)
       .json({ message: 'Login successful', data: userWithoutPassword }); //Falta activar el secure en producción
@@ -77,10 +78,13 @@ async function login(req: Request, res: Response, next: NextFunction) {
 }
 
 async function logout(req: Request, res: Response) {
+  console.log('🍪 Headers cookie en logout:', req.headers.cookie);
+  console.log('🍪 req.cookies en logout:', req.cookies);
   const refreshToken = req.cookies.refresh_token;
+  console.log('🔍 refreshToken encontrado:', !!refreshToken);
   if (refreshToken) {
     try {
-      const payload = jwt.verify(refreshToken, SECRET_RESETJWT_KEY) as any;
+      const payload = jwt.verify(refreshToken, SECRET_REFRESHJWT_KEY) as any;
       const user = await em.findOne(Users, { id: payload.userId });
       if (user) {
         user.refreshToken = undefined; // Revocar refresh token
@@ -90,7 +94,7 @@ async function logout(req: Request, res: Response) {
       // Ignorar errores en logout
     }
   }
-  return res.clearCookie('access_token').clearCookie('refresh_token').json({ message: 'Logout successful' });
+  return res.clearCookie('access_token').clearCookie('refresh_token', { path: '/api/auth' }).json({ message: 'Logout successful' });
 }
 
 async function forgotPassword(req: Request, res: Response, next: NextFunction) {
@@ -242,6 +246,7 @@ async function refreshToken(req: Request, res: Response, next: NextFunction) {
       httpOnly: true,
       sameSite: 'strict',
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 días
+      path: '/api/auth',
     })
     .status(200)
     .json({ message: 'Tokens refreshed exitosamente' });
