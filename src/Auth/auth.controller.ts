@@ -93,7 +93,7 @@ async function logout(req: Request, res: Response) {
       // Ignorar errores en logout
     }
   }
-  return res.clearCookie('access_token').clearCookie('refresh_token', { path: '/api/auth' }).json({ message: 'Logout successful' });
+  return res.clearCookie('access_token', { httpOnly: true, sameSite: 'strict' }).clearCookie('refresh_token', { httpOnly: true, sameSite: 'strict', path: '/api/auth' }).json({ message: 'Logout successful' });
 }
 
 async function forgotPassword(req: Request, res: Response, next: NextFunction) {
@@ -121,9 +121,8 @@ async function forgotPassword(req: Request, res: Response, next: NextFunction) {
     return next(ErrorFactory.internal('Error interno del servidor'));
   }
   existingUser.resetToken = hashedToken;
-  const verificationLink = `https://localhost:3000/new-password/${resetToken}`;
-  try {
-  await transporter.sendMail({
+  const verificationLink = `https://localhost:5173/new-password/${resetToken}`;
+  const mailOptions = {
     from: '"Forgot password" <arielmazalan15@gmail.com>',
     to: existingUser.email,
     subject: 'Restablecer contraseña',
@@ -134,10 +133,21 @@ async function forgotPassword(req: Request, res: Response, next: NextFunction) {
       <p>Este enlace expira en 15 minutos.</p>
       <p>Si no solicitaste este cambio, ignora este email.</p>
     `,
-  });
-  } catch (error) {
-    return next(ErrorFactory.internal('Error interno del servidor'));
   }
+  ////////////////////////////////////////////////////////////////////////////
+  if (!process.env.GMAIL_PASS) {
+    console.log("⚠️ Falta configuración de correo. Usando modo demo.");
+    console.log("📧 Email que se habría enviado:");
+    console.log(mailOptions);
+    console.log("🔗 Link de reset:", verificationLink);
+  } else {
+    try {
+      await transporter.sendMail(mailOptions);
+    } catch (error) {
+      return next(ErrorFactory.internal('Error interno del servidor'));
+  }
+  }
+  ////////////////////////////////////////////////////////////////////////////
   try {
     await em.flush();
   } catch (error) {

@@ -10,8 +10,8 @@ POST http://localhost:3000/api/users
 Content-Type: application/json
 
 {
-  "username": "messi10",
-  "email": "el@messi.com",
+  "username": "ariel",
+  "email": "arielmazalan1@gmail.com",
   "password": "Password123",
   "role": "user"
 }
@@ -36,7 +36,7 @@ Content-Type: application/json
 }
 
 ### DELETE a user
-DELETE http://localhost:3000/api/users/4
+DELETE http://localhost:3000/api/users/12
 
 ### Profile
 GET http://localhost:3000/api/users/profile
