@@ -3,9 +3,13 @@ import { ErrorFactory } from '../shared/errors/errors.factory.js';
 
 // Middleware para verificar autenticación
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
+  console.log('🔐 ENTRADA a requireAuth middleware');
+  console.log('🍪 Cookies:', req.cookies);
+  console.log('🔑 Headers Authorization:', req.headers.authorization);
   if (!req.authUser?.user) {
     return next(ErrorFactory.unauthorized('Acceso denegado - Login requerido'));
   }
+  console.log('✅ requireAuth SUCCESS - pasando a controller');
   next();
 }
 

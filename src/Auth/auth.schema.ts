@@ -5,20 +5,50 @@ export const forgotPasswordSchema = z.object({
 });
 
 export const newPasswordSchema = z.object({
-  token: z.string().min(10).max(500),
-  password: z.string().min(6).max(100).regex(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{6,}$/),
+  password: z.string()
+    .min(6, "La contraseña debe tener al menos 6 caracteres")
+    .max(100, "La contraseña no puede tener más de 100 caracteres")
+    .refine(
+      (password) => /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{6,}$/.test(password),
+      "La contraseña debe contener al menos una letra y un número"
+    ),
 });
 
 export const loginSchema = z.object({
-  email: z.string().min(3).max(100).regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
-  password: z.string().min(6).max(100).regex(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{6,}$/),
+  email: z.string()
+    .min(3, "El email debe tener al menos 3 caracteres")
+    .max(100, "El email no puede tener más de 100 caracteres")
+    .refine(
+      (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
+      "Formato de email inválido"
+    ),
+  password: z.string()
+    .min(6, "La contraseña debe tener al menos 6 caracteres")
+    .max(100, "La contraseña no puede tener más de 100 caracteres")
+    .refine(
+      (password) => /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{6,}$/.test(password),
+      "La contraseña debe contener al menos una letra y un número"
+    ),
 });
 
 export const registerSchema = z.object({
-  username: z.string().min(3).max(100),
-  email: z.string().min(3).max(100).regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
-  password: z.string().min(6).max(100).regex(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{6,}$/),
-  role: z.enum(['user', 'admin']).optional(),
+  username: z.string()
+    .min(3, "El nombre de usuario debe tener al menos 3 caracteres")
+    .max(100, "El nombre de usuario no puede tener más de 100 caracteres"),
+  email: z.string()
+    .min(3, "El email debe tener al menos 3 caracteres")
+    .max(100, "El email no puede tener más de 100 caracteres")
+    .refine(
+      (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
+      "Formato de email inválido"
+    ),
+  password: z.string()
+    .min(6, "La contraseña debe tener al menos 6 caracteres")
+    .max(100, "La contraseña no puede tener más de 100 caracteres")
+    .refine(
+      (password) => /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{6,}$/.test(password),
+      "La contraseña debe contener al menos una letra y un número"
+    ),
 });
 
 export type forgotPasswordInput = z.infer<typeof forgotPasswordSchema>;

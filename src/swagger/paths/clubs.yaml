@@ -53,6 +53,8 @@
                   $ref: '#/components/schemas/Club'
       400:
         description: Datos de entrada inválidos.
+      409:
+        description: Ya existe un club con esa descripción.
       500:
         description: Error del servidor.
 
@@ -121,6 +123,8 @@
         description: Datos de entrada inválidos.
       404:
         description: Club no encontrado.
+      409:
+        description: Conflicto al actualizar el club.
       500:
         description: Error del servidor.
   patch:
@@ -157,6 +161,8 @@
         description: Datos de entrada inválidos.
       404:
         description: Club no encontrado.
+      409:
+        description: Conflicto al actualizar el club.
       500:
         description: Error del servidor.
   delete:
@@ -183,7 +189,5 @@
                 message:
                   type: string
                   example: 'club deleted'
-      404:
-        description: Club no encontrado.
       500:
         description: Error del servidor.

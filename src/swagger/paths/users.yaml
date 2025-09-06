@@ -53,6 +53,8 @@
                   $ref: '#/components/schemas/User'
       400:
         description: Datos de entrada inválidos.
+      409:
+        description: El usuario ya existe.
       500:
         description: Error del servidor.
 
@@ -121,6 +123,8 @@
         description: Datos de entrada inválidos.
       404:
         description: Usuario no encontrado.
+      409:
+        description: Conflicto al actualizar el usuario.
       500:
         description: Error del servidor.
   patch:
@@ -157,6 +161,8 @@
         description: Datos de entrada inválidos.
       404:
         description: Usuario no encontrado.
+      409:
+        description: Conflicto al actualizar el usuario.
       500:
         description: Error del servidor.
   delete:
@@ -183,6 +189,60 @@
                 message:
                   type: string
                   example: 'user deleted'
+      500:
+        description: Error del servidor.
+
+/users/profile:
+  get:
+    summary: Obtiene el perfil del usuario autenticado
+    description: Recupera los detalles del perfil del usuario actualmente autenticado.
+    tags: [Users]
+    responses:
+      200:
+        description: Perfil del usuario recuperado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'user profile'
+                data:
+                  $ref: '#/components/schemas/User'
+      404:
+        description: Usuario no encontrado.
+      500:
+        description: Error del servidor.
+  put:
+    summary: Actualiza el nombre del usuario autenticado
+    description: Actualiza el nombre del usuario actualmente autenticado.
+    tags: [Users]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: 'Nuevo Nombre'
+    responses:
+      200:
+        description: Nombre del usuario actualizado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'user name updated'
+                data:
+                  $ref: '#/components/schemas/User'
+      400:
+        description: Datos de entrada inválidos.
       404:
         description: Usuario no encontrado.
       500:

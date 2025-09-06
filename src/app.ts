@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import { setupSwagger } from './swagger.js';
 import 'reflect-metadata';

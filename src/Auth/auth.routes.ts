@@ -16,7 +16,7 @@ export const authRouter = Router();
 
 authRouter.post('/login', authLimiter, validate(loginSchema), login);
 authRouter.post('/logout', logout);
-authRouter.put('/forgot-password', validate(forgotPasswordSchema), forgotPassword);
-authRouter.put('/new-password', validate(newPasswordSchema), createNewPassword);
-authRouter.post('/refreshToken', refreshToken);   
+authRouter.post('/forgot-password', validate(forgotPasswordSchema), forgotPassword);
+authRouter.post('/new-password/:resetToken', validate(newPasswordSchema), createNewPassword);
+authRouter.post('/refreshToken', refreshToken);
 authRouter.post('/register', authLimiter, validate(registerSchema), register);

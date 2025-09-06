@@ -1,5 +1,5 @@
 ### GET all clubs
-http://localhost:3000/api/clubs
+GET http://localhost:3000/api/clubs
 
 
 ### POST a club
@@ -13,7 +13,7 @@ Content-Type: application/json
 }
 
 ### GET one club
-http://localhost:3000/api/clubs/1
+GET http://localhost:3000/api/clubs/1
 
 ### PUT a club
 PUT http://localhost:3000/api/clubs/2

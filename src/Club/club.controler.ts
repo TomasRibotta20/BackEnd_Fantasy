@@ -14,7 +14,7 @@ const em = orm.em;
  */
 async function findAll(req: Request, res: Response, next: NextFunction) {
   try {
-    const clubs = await em.find(clubes, {});
+    const clubs = await em.find(clubes, {}, { orderBy: { id: 'ASC' } });
     res.status(200).json({ message: 'found all Clubs', data: clubs });
   } catch (error: any) {
     next(ErrorFactory.internal(`Error al obtener los clubes: ${error.message}`));

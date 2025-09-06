@@ -27,7 +27,6 @@ async function register(req: Request, res: Response, next: NextFunction) {
     if (existingUser) return next(ErrorFactory.duplicate('User already exists'));
     const hashedPassword = await bcrypt.hash(password, 10);
     req.body.password = hashedPassword;
-    //req.body.sanitizedInput.role = 'admin';//-----------------------------------------------------------Solo para pruebas
     const user = em.create(Users, req.body);
     await em.flush();
     const { password: _, ...userWithoutPassword } = user;
@@ -46,12 +45,12 @@ async function login(req: Request, res: Response, next: NextFunction) {
     const isPasswordValid = await bcrypt.compare(password, existingUser.password);
     if (!isPasswordValid) return next(ErrorFactory.validationAppError('Invalid password'));
     const accessToken = jwt.sign(
-      { userId: existingUser.id, email: existingUser.email, role: existingUser.role, type: 'access' },
+      { userId: existingUser.id, username: existingUser.username, email: existingUser.email, role: existingUser.role, type: 'access' },
       SECRET_JWT_KEY,
       { expiresIn: '10m' }
     );
     const refreshToken = jwt.sign(
-      { userId: existingUser.id, email: existingUser.email, role: existingUser.role, type: 'refresh' },
+      { userId: existingUser.id, username: existingUser.username, email: existingUser.email, role: existingUser.role, type: 'refresh' },
       SECRET_REFRESHJWT_KEY,
       { expiresIn: '7d' }
     );
@@ -149,7 +148,7 @@ async function forgotPassword(req: Request, res: Response, next: NextFunction) {
 
 async function createNewPassword(req: Request, res: Response, next: NextFunction) {
   const { password } = req.body;
-  const resetToken = req.headers.resetToken as string;
+  const resetToken = req.params.resetToken as string;
   if (!resetToken) {
     return next(ErrorFactory.unauthorized('Unauthorized'));
   }
@@ -220,12 +219,12 @@ async function refreshToken(req: Request, res: Response, next: NextFunction) {
     return next(ErrorFactory.unauthorized('Refresh token inválido'));
   }
   const newAccessToken = jwt.sign(
-    { userId: payload.userId, email: payload.email, role: payload.role, type: 'access' },
+    { userId: payload.userId, username: payload.username, email: payload.email, role: payload.role, type: 'access' },
     SECRET_JWT_KEY,
-    { expiresIn: '2m' }
+    { expiresIn: '10m' }
   );
   const newRefreshToken = jwt.sign(
-    { userId: payload.userId, email: payload.email, role: payload.role, type: 'refresh' },
+    { userId: payload.userId, username: payload.username, email: payload.email, role: payload.role, type: 'refresh' },
     SECRET_REFRESHJWT_KEY,
     { expiresIn: '7d' }
   );

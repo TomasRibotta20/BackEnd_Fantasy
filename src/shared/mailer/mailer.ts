@@ -10,6 +10,10 @@ export const transporter = nodemailer.createTransport({
   },
 });
 
-transporter.verify().then(() => {
-  console.log("Ready to send emails");
-});
+transporter.verify()
+  .then(() => {
+    console.log("✅ Ready to send emails");
+  })
+  .catch((error) => {
+    console.error("❌ Error configuring email transport:", error);
+  });

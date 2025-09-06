@@ -53,6 +53,8 @@
                   $ref: '#/components/schemas/Position'
       400:
         description: Datos de entrada inválidos.
+      409:
+        description: Conflicto al crear la posición.
       500:
         description: Error del servidor.
 
@@ -121,6 +123,8 @@
         description: Datos de entrada inválidos.
       404:
         description: Posición no encontrada.
+      409:
+        description: Conflicto al actualizar la posición.
       500:
         description: Error del servidor.
   patch:
@@ -157,6 +161,8 @@
         description: Datos de entrada inválidos.
       404:
         description: Posición no encontrada.
+      409:
+        description: Conflicto al actualizar la posición.
       500:
         description: Error del servidor.
   delete:
@@ -183,7 +189,5 @@
                 message:
                   type: string
                   example: 'position deleted'
-      404:
-        description: Posición no encontrada.
       500:
         description: Error del servidor.
