@@ -1,0 +1,103 @@
+/partidos:
+  get:
+    summary: Lista partidos
+    description: Filtra por jornada, club y rango de fechas.
+    tags: [Partidos]
+    parameters:
+      - in: query
+        name: jornadaId
+        schema: { type: integer }
+        required: false
+      - in: query
+        name: clubId
+        schema: { type: integer }
+        required: false
+      - in: query
+        name: from
+        schema: { type: string, format: date }
+        required: false
+        description: Fecha mínima (YYYY-MM-DD)
+      - in: query
+        name: to
+        schema: { type: string, format: date }
+        required: false
+        description: Fecha máxima (YYYY-MM-DD)
+    responses:
+      200:
+        description: Partidos listados.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message: { type: string, example: 'Partidos obtenidos' }
+                count: { type: integer }
+                data:
+                  type: array
+                  items: { $ref: '#/components/schemas/Partido' }
+      500: { description: Error. }
+  post:
+    summary: Crea un partido
+    tags: [Partidos]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/PartidoCreate' }
+    responses:
+      201:
+        description: Partido creado.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message: { type: string, example: 'Partido creado' }
+                data: { $ref: '#/components/schemas/Partido' }
+      400: { description: Datos inválidos. }
+      404: { description: Jornada o club no encontrado. }
+      409: { description: id_api duplicado. }
+      500: { description: Error. }
+
+/partidos/{id}:
+  get:
+    summary: Obtiene un partido por ID interno
+    tags: [Partidos]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    responses:
+      200: { description: Partido encontrado. }
+      404: { description: No encontrado. }
+      500: { description: Error. }
+  patch:
+    summary: Actualiza parcialmente un partido
+    tags: [Partidos]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/PartidoPatch' }
+    responses:
+      200: { description: Actualizado. }
+      404: { description: No encontrado. }
+      500: { description: Error. }
+  delete:
+    summary: Elimina un partido
+    tags: [Partidos]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    responses:
+      200: { description: Partido eliminado. }
+      404: { description: No encontrado. }
+      500: { description: Error. }

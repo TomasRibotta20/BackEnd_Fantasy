@@ -3,6 +3,9 @@ import express from 'express';
 import { setupSwagger } from './swagger.js';
 import 'reflect-metadata';
 import { clubRouter } from './Club/club.routes.js';
+import { playerRouter } from './Player/player.routes.js';
+import { jornadaRouter } from './Fixture/Jornada.routes.js';
+import { partidoRouter } from './Fixture/Partido.routes.js';
 import { positionRouter } from './Position/position.routes.js';
 import { orm } from './shared/db/orm.js';
 import { RequestContext } from '@mikro-orm/core';
@@ -92,6 +95,9 @@ setupSwagger(app); // Configuración de Swagger
 app.use('/api/auth', authRouter); // Rutas de autenticación
 app.use('/api/users', userRouter); // Rutas de usuarios
 app.use('/api/clubs', clubRouter); // Rutas de clubes
+app.use('/api/players', playerRouter); // Rutas de jugadores
+app.use('/jornadas', jornadaRouter);
+app.use('/partidos', partidoRouter);
 app.use('/api/positions', positionRouter); // Rutas de posiciones
 
 app.use((req, _, next) => {

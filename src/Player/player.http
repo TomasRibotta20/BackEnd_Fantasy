@@ -1,0 +1,39 @@
+### Listar todos los jugadores
+GET http://localhost:3000/api/players
+
+### (Opcional) Obtener un jugador por ID interno
+GET http://localhost:3000/api/players/1
+
+### Crear jugador (usa IDs existentes de club y posición)
+POST http://localhost:3000/api/players
+Content-Type: application/json
+
+{
+  "apiId": 999001,
+  "name": "Jugador Demo",
+  "firstname": "Demo",
+  "lastname": "Test",
+  "age": 25,
+  "nationality": "Argentina",
+  "height": "180 cm",
+  "weight": "75 kg",
+  "photo": "https://example.com/foto.png",
+  "jerseyNumber": 10,
+  "clubId": 1,
+  "positionId": 1
+}
+
+### Actualizar jugador (solo campos enviados)
+PUT http://localhost:3000/api/players/1
+Content-Type: application/json
+
+{
+  "age": 26,
+  "jerseyNumber": 11,
+  "positionId": 2
+}
+
+### Eliminar jugador
+DELETE http://localhost:3000/api/players/1
+
+### Ejemplo error: jugador
