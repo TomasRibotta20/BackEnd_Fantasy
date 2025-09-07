@@ -13,7 +13,9 @@ const AFA_SEASON = Number(process.env.AFA_SEASON || 2021);
 async function main() {
   const em = orm.em.fork();
 
-  console.log(`Descargando fixtures segunda fase AFA league=${AFA_LEAGUE_ID} season=${AFA_SEASON}...`);
+  console.log(
+    `Descargando fixtures segunda fase AFA league=${AFA_LEAGUE_ID} season=${AFA_SEASON}...`
+  );
   const fixtures = await getFixturesSecondPhase(AFA_LEAGUE_ID, AFA_SEASON);
   console.log(`Fixtures recibidos: ${fixtures.length}`);
 
@@ -45,14 +47,21 @@ async function main() {
     const home = await em.findOne(clubes, { id_api: fx.teams.home.id });
     const away = await em.findOne(clubes, { id_api: fx.teams.away.id });
     if (!home || !away) {
-      console.warn(`Saltando fixture ${fx.fixture.id}, club no encontrado (home=${fx.teams.home.id}, away=${fx.teams.away.id})`);
+      console.warn(
+        `Saltando fixture ${fx.fixture.id}, club no encontrado (home=${fx.teams.home.id}, away=${fx.teams.away.id})`
+      );
       continue;
     }
 
     // Partido (upsert por id_api)
     let partido = await em.findOne(Partido, { id_api: fx.fixture.id });
     if (!partido) {
-      partido = em.create(Partido, { id_api: fx.fixture.id, jornada, local: home, visitante: away });
+      partido = em.create(Partido, {
+        id_api: fx.fixture.id,
+        jornada,
+        local: home,
+        visitante: away,
+      });
     }
     partido.jornada = jornada;
     partido.local = home;
@@ -78,7 +87,8 @@ async function main() {
 
   // Actualizar fecha_inicio/fin por jornada
   for (const [roundName, mm] of minMaxPorJornada.entries()) {
-    const jornada = jornadasMap.get(roundName) ?? await em.findOne(Jornada, { nombre: roundName });
+    const jornada =
+      jornadasMap.get(roundName) ?? (await em.findOne(Jornada, { nombre: roundName }));
     if (jornada) {
       jornada.fecha_inicio = mm.min ?? null;
       jornada.fecha_fin = mm.max ?? null;

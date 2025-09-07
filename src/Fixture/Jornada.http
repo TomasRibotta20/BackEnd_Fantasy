@@ -1,0 +1,32 @@
+### Listar jornadas
+GET http://localhost:3000/jornadas
+
+### Filtro por temporada
+GET http://localhost:3000/jornadas?temporada=2021
+
+### Obtener una jornada
+GET http://localhost:3000/jornadas/1
+
+### Crear jornada
+POST http://localhost:3000/jornadas
+Content-Type: application/json
+
+{
+  "nombre": "2nd Phase - 1",
+  "temporada": 2021,
+  "etapa": "2nd Phase",
+  "liga_id": 128,
+  "fecha_inicio": "2021-07-17T00:00:00.000Z",
+  "fecha_fin": "2021-07-19T23:59:59.000Z"
+}
+
+### Actualizar jornada
+PUT http://localhost:3000/jornadas/1
+Content-Type: application/json
+
+{
+  "fecha_fin": "2021-07-20T23:59:59.000Z"
+}
+
+### Eliminar jornada
+DELETE http://localhost:3000/jornadas/1

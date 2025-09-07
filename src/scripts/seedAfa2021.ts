@@ -55,7 +55,9 @@ async function main() {
   const teams = await getTeams(AFA_LEAGUE_ID, AFA_SEASON);
 
   // Determinar inicio: env START_FROM_TEAM_ID o checkpoint
-  const envTeamId = process.env.START_FROM_TEAM_ID ? Number(process.env.START_FROM_TEAM_ID) : undefined;
+  const envTeamId = process.env.START_FROM_TEAM_ID
+    ? Number(process.env.START_FROM_TEAM_ID)
+    : undefined;
   let startIndex = 0;
 
   if (envTeamId) {

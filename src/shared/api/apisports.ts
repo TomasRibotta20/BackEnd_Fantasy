@@ -32,14 +32,23 @@ type ApiResponse<T> = {
   response: T[];
 };
 
-async function apiFetch(url: string, headers: Record<string, string>, attempt: number): Promise<Response> {
+async function apiFetch(
+  url: string,
+  headers: Record<string, string>,
+  attempt: number
+): Promise<Response> {
   try {
     const res = await fetch(url, { headers });
     if (res.status === 429) {
       // Rate limit excedido: espera según headers o 10s exponencial
       const retryAfter = Number(res.headers.get('retry-after')) || 0;
       const reset = Number(res.headers.get('x-ratelimit-requests-reset')) || 0; // API-FOOTBALL suele enviarlo
-      const delay = retryAfter > 0 ? retryAfter * 1000 : (reset > 0 ? reset * 1000 : Math.min(30_000, 2 ** attempt * 1000));
+      const delay =
+        retryAfter > 0
+          ? retryAfter * 1000
+          : reset > 0
+            ? reset * 1000
+            : Math.min(30_000, 2 ** attempt * 1000);
       await sleep(delay);
       return apiFetch(url, headers, attempt + 1);
     }
@@ -73,7 +82,8 @@ export async function apiGet<T>(path: string, params: Record<string, string | nu
     throw new Error(`API error ${res.status}: ${text}`);
   }
   const json = (await res.json()) as ApiResponse<T>;
-  if (json.errors && json.errors.length) throw new Error(`API errors: ${JSON.stringify(json.errors)}`);
+  if (json.errors && json.errors.length)
+    throw new Error(`API errors: ${JSON.stringify(json.errors)}`);
   return json;
 }
 
@@ -146,7 +156,7 @@ export type FixtureItem = {
   league: {
     id: number;
     season: number;
-    round: string;   // ej: "2nd Phase - 1"
+    round: string; // ej: "2nd Phase - 1"
     stage?: string | null; // ej: "2nd Phase"
   };
   teams: {
@@ -157,12 +167,18 @@ export type FixtureItem = {
 
 export async function getFixturesSecondPhase(leagueId: number, season: number) {
   // Intento directo por stage
-  const byStage = await apiGet<FixtureItem>('/fixtures', { league: leagueId, season, stage: '2nd Phase' });
+  const byStage = await apiGet<FixtureItem>('/fixtures', {
+    league: leagueId,
+    season,
+    stage: '2nd Phase',
+  });
   let list = byStage.response;
   if (!list.length) {
     // Fallback: traer todos y filtrar por round que empiece con "2nd Phase"
     const all = await apiGet<FixtureItem>('/fixtures', { league: leagueId, season });
-    list = all.response.filter(f => (f.league?.round || '').toLowerCase().startsWith('2nd phase'));
+    list = all.response.filter((f) =>
+      (f.league?.round || '').toLowerCase().startsWith('2nd phase')
+    );
   }
   return list;
 }

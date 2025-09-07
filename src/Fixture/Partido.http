@@ -1,0 +1,41 @@
+### Listar partidos
+GET http://localhost:3000/partidos
+
+### Filtrar por jornada
+GET http://localhost:3000/partidos?jornadaId=1
+
+### Filtrar por club
+GET http://localhost:3000/partidos?clubId=10
+
+### Filtrar rango fechas
+GET http://localhost:3000/partidos?from=2021-08-01&to=2021-08-31
+
+### Obtener un partido
+GET http://localhost:3000/partidos/1
+
+### Crear partido
+POST http://localhost:3000/partidos
+Content-Type: application/json
+
+{
+  "id_api": 900001,
+  "fecha": "2021-08-05T20:00:00.000Z",
+  "estado": "NS",
+  "estado_detalle": "Not Started",
+  "estadio": "Estadio Demo",
+  "jornadaId": 1,
+  "localId": 5,
+  "visitanteId": 12
+}
+
+### Actualizar partido
+PUT http://localhost:3000/partidos/1
+Content-Type: application/json
+
+{
+  "estado": "FT",
+  "estado_detalle": "Full Time"
+}
+
+### Eliminar partido
+DELETE http://localhost:3000/partidos/1

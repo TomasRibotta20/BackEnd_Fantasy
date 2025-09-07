@@ -42,5 +42,5 @@ export default tseslint.config(
   // Ignorar carpetas
   {
     ignores: ['dist/**', 'node_modules/**', 'docs/**'],
-  },
+  }
 );

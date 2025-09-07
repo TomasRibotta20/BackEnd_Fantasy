@@ -1,0 +1,80 @@
+/positions:
+  get:
+    summary: Lista posiciones
+    tags: [Positions]
+    responses:
+      200:
+        description: Lista de posiciones.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message: { type: string, example: 'Found all positions' }
+                data:
+                  type: array
+                  items: { $ref: '#/components/schemas/Position' }
+      500: { description: Error. }
+  post:
+    summary: Crea una posición
+    tags: [Positions]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/PositionCreate' }
+    responses:
+      201:
+        description: Posición creada.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message: { type: string, example: 'Position created' }
+                data: { $ref: '#/components/schemas/Position' }
+      409: { description: Ya existe. }
+      500: { description: Error. }
+
+/positions/{id}:
+  get:
+    summary: Obtiene una posición por ID
+    tags: [Positions]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    responses:
+      200: { description: Posición encontrada. }
+      404: { description: No encontrada. }
+      500: { description: Error. }
+  patch:
+    summary: Actualiza parcialmente una posición
+    tags: [Positions]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/PositionPatch' }
+    responses:
+      200: { description: Actualizada. }
+      404: { description: No encontrada. }
+      500: { description: Error. }
+  delete:
+    summary: Elimina una posición
+    tags: [Positions]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    responses:
+      200: { description: Eliminada. }
+      404: { description: No encontrada. }
+      500: { description: Error. }
