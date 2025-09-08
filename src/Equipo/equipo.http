@@ -1,0 +1,17 @@
+### Crear un nuevo equipo (requiere autenticación previa)
+# Primero, asegúrate de haber ejecutado una petición de LOGIN exitosa
+# desde tu archivo auth.http para obtener la cookie de sesión.
+POST http://localhost:3000/api/equipos
+Content-Type: application/json
+
+{
+  "nombre": "Los Gladiadores de Liniers"
+}
+
+### (Opcional) Obtener un equipo por ID (necesitarás crear esta ruta/controlador más adelante)
+# GET http://localhost:3000/api/equipos/1
+# Content-Type: application/json
+
+### (Opcional) Obtener el equipo del usuario autenticado (ruta muy útil)
+# GET http://localhost:3000/api/equipos/mi-equipo
+# Content-Type: application/json
