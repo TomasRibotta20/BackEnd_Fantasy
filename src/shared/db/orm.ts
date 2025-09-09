@@ -13,17 +13,12 @@ export const orm = await MikroORM.init<MySqlDriver>({
   driver: MySqlDriver,
   highlighter: new SqlHighlighter(),
   debug: true,
-  schemaGenerator: {
-    //nunca en producción
-    disableForeignKeys: true,
-    createForeignKeyConstraints: true,
-    ignoreSchema: [],
-  },
 });
 
-export const syncSchema = async () => {
+export const safeUpdateSchema = async () => {
   const generator = orm.getSchemaGenerator();
-  await generator.dropSchema();
-  await generator.createSchema();
-  await generator.updateSchema();
+  // Crea solo lo que falta y altera columnas necesarias sin borrar tablas ni columnas
+  await generator.updateSchema({
+    dropTables: false,
+  });
 };

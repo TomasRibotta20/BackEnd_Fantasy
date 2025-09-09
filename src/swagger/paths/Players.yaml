@@ -1,0 +1,135 @@
+/players:
+  get:
+    summary: Obtiene todos los jugadores
+    description: Lista jugadores con filtros opcionales.
+    tags: [Players]
+    parameters:
+      - in: query
+        name: clubId
+        schema: { type: integer }
+        required: false
+        description: Filtra por ID interno de club.
+      - in: query
+        name: positionId
+        schema: { type: integer }
+        required: false
+        description: Filtra por ID interno de posición.
+    responses:
+      200:
+        description: Lista de jugadores.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message: { type: string, example: 'Found all players' }
+                count: { type: integer, example: 28 }
+                data:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Player'
+      500:
+        description: Error del servidor.
+  post:
+    summary: Crea un nuevo jugador
+    tags: [Players]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PlayerCreate'
+    responses:
+      201:
+        description: Jugador creado.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message: { type: string, example: 'Player created' }
+                data: { $ref: '#/components/schemas/Player' }
+      400:
+        description: Datos inválidos.
+      409:
+        description: Conflicto (apiId duplicado).
+      500:
+        description: Error del servidor.
+
+/players/{id}:
+  get:
+    summary: Obtiene un jugador por ID interno
+    tags: [Players]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+        example: 1
+    responses:
+      200:
+        description: Jugador encontrado.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message: { type: string, example: 'Player found' }
+                data: { $ref: '#/components/schemas/Player' }
+      404:
+        description: No encontrado.
+      500:
+        description: Error.
+  put:
+    summary: Reemplaza completamente un jugador
+    tags: [Players]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PlayerUpdate'
+    responses:
+      200:
+        description: Actualizado.
+      400: { description: Datos inválidos. }
+      404: { description: No encontrado. }
+      500: { description: Error. }
+  patch:
+    summary: Actualiza parcialmente un jugador
+    tags: [Players]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PlayerPatch'
+    responses:
+      200:
+        description: Actualizado parcialmente.
+      404:
+        description: No encontrado.
+      500:
+        description: Error.
+  delete:
+    summary: Elimina un jugador
+    tags: [Players]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    responses:
+      200: { description: Eliminado. }
+      404: { description: No encontrado. }
+      500: { description: Error. }

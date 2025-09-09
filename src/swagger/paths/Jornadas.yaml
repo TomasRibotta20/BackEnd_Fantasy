@@ -1,0 +1,113 @@
+/jornadas:
+  get:
+    summary: Lista jornadas
+    description: Permite filtrar por temporada, etapa y liga.
+    tags: [Jornadas]
+    parameters:
+      - in: query
+        name: temporada
+        schema: { type: integer }
+        required: false
+      - in: query
+        name: etapa
+        schema: { type: string }
+        required: false
+      - in: query
+        name: liga_id
+        schema: { type: integer }
+        required: false
+    responses:
+      200:
+        description: Jornadas listadas.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message: { type: string, example: 'Jornadas obtenidas' }
+                count: { type: integer, example: 25 }
+                data:
+                  type: array
+                  items: { $ref: '#/components/schemas/Jornada' }
+      500: { description: Error. }
+  post:
+    summary: Crea una jornada
+    tags: [Jornadas]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/JornadaCreate' }
+    responses:
+      201:
+        description: Jornada creada.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message: { type: string, example: 'Jornada creada' }
+                data: { $ref: '#/components/schemas/Jornada' }
+      409: { description: Nombre duplicado. }
+      400: { description: Datos inválidos. }
+      500: { description: Error. }
+
+/jornadas/{id}:
+  get:
+    summary: Obtiene una jornada por ID
+    tags: [Jornadas]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    responses:
+      200: { description: Jornada encontrada. }
+      404: { description: No encontrada. }
+      500: { description: Error. }
+  put:
+    summary: Reemplaza una jornada
+    tags: [Jornadas]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/JornadaUpdate' }
+    responses:
+      200: { description: Jornada actualizada. }
+      404: { description: No encontrada. }
+      500: { description: Error. }
+  patch:
+    summary: Actualiza parcialmente una jornada
+    tags: [Jornadas]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/JornadaPatch' }
+    responses:
+      200: { description: Actualizada. }
+      404: { description: No encontrada. }
+      500: { description: Error. }
+  delete:
+    summary: Elimina una jornada
+    tags: [Jornadas]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    responses:
+      200: { description: Jornada eliminada. }
+      404: { description: No encontrada. }
+      500: { description: Error. }
