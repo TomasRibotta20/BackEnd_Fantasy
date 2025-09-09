@@ -1,4 +1,4 @@
-### POST /api/auth/login    //Puede pasar que el usuario siga con la cookie a pesar de haberlo borrado de la base de datos
+  ### POST /api/auth/login    //Puede pasar que el usuario siga con la cookie a pesar de haberlo borrado de la base de datos
 POST http://localhost:3000/api/auth/login
 Content-Type: application/json
 
