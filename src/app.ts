@@ -7,6 +7,7 @@ import { playerRouter } from './Player/player.routes.js';
 import { jornadaRouter } from './Fixture/Jornada.routes.js';
 import { partidoRouter } from './Fixture/Partido.routes.js';
 import { positionRouter } from './Position/position.routes.js';
+import { equipoRouter } from './Equipo/equipo.routes.js';
 import { orm } from './shared/db/orm.js';
 import { RequestContext } from '@mikro-orm/core';
 import { userRouter } from './User/user.routes.js';
@@ -99,6 +100,7 @@ app.use('/api/players', playerRouter); // Rutas de jugadores
 app.use('/jornadas', jornadaRouter);
 app.use('/partidos', partidoRouter);
 app.use('/api/positions', positionRouter); // Rutas de posiciones
+app.use('/api/equipos', equipoRouter);
 
 app.use((req, _, next) => {
   next(ErrorFactory.notFoundRoute(req.originalUrl));

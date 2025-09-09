@@ -3,8 +3,8 @@ POST http://localhost:3000/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "example@e.com",
-  "password": "password123"
+  "email": "TomasRibotta20@gmail.com",
+  "password": "TeAmoMazalan69"
 }
 
 ### POST /api/auth/register
@@ -12,9 +12,9 @@ POST http://localhost:3000/api/auth/register
 Content-Type: application/json
 
 {
-  "username": "ariel",
-  "email": "example@e.com",
-  "password": "password123"
+  "username": "Tomas",
+  "email": "TomasRibotta20@gmail.com",
+  "password": "TeAmoMazalan69"
 }
 
 ### POST /api/auth/logout
