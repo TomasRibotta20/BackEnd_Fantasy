@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { crearEquipoConDraft } from './equipo.service.js';
+import { ErrorFactory } from '../shared/errors/errors.factory.js';
 
 export async function crearEquipo(req: Request, res: Response, next: NextFunction) {
   try {
@@ -8,12 +9,8 @@ export async function crearEquipo(req: Request, res: Response, next: NextFunctio
     // Si lo tienes en otro lado (ej: req.user.id), ajústalo.
     const userId = req.authUser?.user?.userId;
 
-    if (!nombre) {
-      return res.status(400).json({ message: 'El nombre del equipo es requerido' });
-    }
-
     if (!userId) {
-      return res.status(401).json({ message: 'Usuario no autenticado' });
+      return next(ErrorFactory.unauthorized('Usuario no autenticado'));
     }
 
     const nuevoEquipo = await crearEquipoConDraft(nombre, userId);
