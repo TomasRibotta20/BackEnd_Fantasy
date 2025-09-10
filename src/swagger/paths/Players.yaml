@@ -52,7 +52,7 @@
       400:
         description: Datos inválidos.
       409:
-        description: Conflicto (apiId duplicado).
+        description: Duplicado.
       500:
         description: Error del servidor.
 
@@ -99,6 +99,7 @@
         description: Actualizado.
       400: { description: Datos inválidos. }
       404: { description: No encontrado. }
+      409: { description: Duplicado. }
       500: { description: Error. }
   patch:
     summary: Actualiza parcialmente un jugador
@@ -119,6 +120,8 @@
         description: Actualizado parcialmente.
       404:
         description: No encontrado.
+      409:
+        description: Duplicado.
       500:
         description: Error.
   delete:
@@ -131,5 +134,4 @@
         schema: { type: integer }
     responses:
       200: { description: Eliminado. }
-      404: { description: No encontrado. }
       500: { description: Error. }

@@ -1,5 +1,7 @@
-import { Entity, Property } from '@mikro-orm/core';
+import { Entity, Property, OneToMany, Collection } from '@mikro-orm/core';
 import { BaseEntity } from '../shared/db/baseEntity.entity.js';
+import { Equipo } from '../Equipo/equipo.entity.js';
+
 
 @Entity()
 export class Users extends BaseEntity {
@@ -22,6 +24,6 @@ export class Users extends BaseEntity {
   resetToken?: string | null;
 
   // Relación One-to-Many: Un usuario puede tener varios equipos
-  //@OneToMany(() => Equipo, equipo => equipo.usuario, { eager: false })
-  //equipos = new Collection<Equipo>(this);
+  @OneToMany(() => Equipo, equipo => equipo.usuario, { eager: false })
+  equipos = new Collection<Equipo>(this);
 }

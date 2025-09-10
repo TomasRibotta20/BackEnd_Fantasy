@@ -33,6 +33,7 @@
               properties:
                 message: { type: string, example: 'Position created' }
                 data: { $ref: '#/components/schemas/Position' }
+      400: { description: Datos inválidos. }
       409: { description: Ya existe. }
       500: { description: Error. }
 
@@ -65,6 +66,7 @@
     responses:
       200: { description: Actualizada. }
       404: { description: No encontrada. }
+      409: { description: Duplicado. }
       500: { description: Error. }
   delete:
     summary: Elimina una posición
@@ -76,5 +78,4 @@
         schema: { type: integer }
     responses:
       200: { description: Eliminada. }
-      404: { description: No encontrada. }
       500: { description: Error. }

@@ -1,5 +1,6 @@
-import { Entity, Property } from '@mikro-orm/core';
+import { Entity, Property, OneToMany, Collection } from '@mikro-orm/core';
 import { BaseEntity } from '../shared/db/baseEntity.entity.js';
+import { Player } from '../Player/player.entity.js';
 
 @Entity({ tableName: 'clubes' })
 export class clubes extends BaseEntity {
@@ -32,4 +33,7 @@ export class clubes extends BaseEntity {
 
   @Property({ nullable: true })
   estadio_imagen?: string | null;
+
+  @OneToMany(() => Player, (player) => player.club)
+  players = new Collection<Player>(this);
 }
