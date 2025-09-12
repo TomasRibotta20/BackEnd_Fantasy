@@ -16,12 +16,11 @@ Content-Type: application/json
 GET http://localhost:3000/api/clubs/1
 
 ### PUT a club
-PUT http://localhost:3000/api/clubs/2
+PUT http://localhost:3000/api/clubs/1
 Content-Type: application/json
 
 {
-  "nombre": "River",
-  "id_api": "12345"
+  "nombre": "Boquita"
 }
 
 ### POST a club
@@ -52,4 +51,4 @@ Content-Type: application/json
 }
 
 ### DELETE a club
-DELETE http://localhost:3000/api/clubs/
+DELETE http://localhost:3000/api/clubs/1

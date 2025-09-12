@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const createClubSchema = z.object({
   nombre: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
-  id_api: z.string().optional().default('555'),
+  id_api: z.string().optional(),
 });
 
 export const updateClubSchema = createClubSchema.partial()

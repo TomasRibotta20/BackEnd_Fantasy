@@ -34,6 +34,4 @@ export class clubes extends BaseEntity {
   @Property({ nullable: true })
   estadio_imagen?: string | null;
 
-  @OneToMany(() => Player, (player) => player.club)
-  players = new Collection<Player>(this);
 }
