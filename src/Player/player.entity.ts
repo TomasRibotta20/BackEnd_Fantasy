@@ -1,8 +1,8 @@
-import { Entity, Property, ManyToOne, Unique } from '@mikro-orm/core';
+import { Entity, Property, ManyToOne, Unique, OneToMany, Collection } from '@mikro-orm/core';
 import { BaseEntity } from '../shared/db/baseEntity.entity.js';
 import { clubes } from '../Club/club.entity.js';
 import { Position } from '../Position/position.entity.js';
-import { Equipo } from '../Equipo/equipo.entity.js'; // Importar Equipo
+import { EquipoJugador } from '../Equipo/equipoJugador.entity.js'; // Importar Equipo
 @Entity({ tableName: 'player' })
 export class Player extends BaseEntity {
   @Property({ type: 'number' })
@@ -25,11 +25,6 @@ export class Player extends BaseEntity {
   @ManyToOne(() => Position, { nullable: true })
   position?: Position | null;
 
-    @ManyToOne(() => Equipo, {
-    nullable: true, // Un jugador puede no tener equipo (agente libre)
-  })
-  equipo?: Equipo | null;
-
-  @Property({ type: 'boolean', nullable: true }) // Null si no tiene equipo
-  es_titular?: boolean | null;
+  @OneToMany(() => EquipoJugador, (equipoJugador) => equipoJugador.jugador)
+  equipos = new Collection<EquipoJugador>(this);
 }

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { crearEquipoConDraft } from './equipo.service.js';
+import { crearEquipoConDraft,getEquipoByUserId } from './equipo.service.js';
 
 export async function crearEquipo(req: Request, res: Response, next: NextFunction) {
   try {
@@ -21,6 +21,19 @@ export async function crearEquipo(req: Request, res: Response, next: NextFunctio
     return res.status(201).json({ message: 'Equipo creado exitosamente', data: nuevoEquipo });
   } catch (error) {
     // El error handler global se encargará de formatear la respuesta
+    return next(error);
+  }
+}
+export async function getMiEquipo(req: Request, res: Response, next: NextFunction) {
+  try {
+    const userId = req.authUser?.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: 'Usuario no autenticado' });
+    }
+
+    const equipo = await getEquipoByUserId(userId);
+    return res.status(200).json(equipo);
+  } catch (error) {
     return next(error);
   }
 }

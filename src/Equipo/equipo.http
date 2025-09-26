@@ -8,6 +8,9 @@ Content-Type: application/json
   "nombre": "Club Atletico AntiPinguinos"
 }
 
+### Obtener el equipo del usuario autenticado (requiere autenticación previa)
+GET http://localhost:3000/api/equipos/mi-equipo
+Content-Type: application/json
 ### (Opcional) Obtener un equipo por ID (necesitarás crear esta ruta/controlador más adelante)
 # GET http://localhost:3000/api/equipos/1
 # Content-Type: application/json
