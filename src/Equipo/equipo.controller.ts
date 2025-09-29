@@ -1,6 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import { cambiarAlineacion, crearEquipoConDraft,getEquipoByUserId,intercambiarJugador} from './equipo.service.js';
 
+/**
+ * Maneja la petición para crear un nuevo equipo con un draft automático.
+ * Extrae el nombre del equipo del body y el ID del usuario autenticado.
+ * @param {Request} req - El objeto de solicitud de Express. Espera `nombre` en `req.body`.
+ * @param {Response} res - El objeto de respuesta de Express.
+ * @param {NextFunction} next - La función para pasar el control al siguiente middleware (manejador de errores).
+ * @returns {Promise<Response|void>} Una promesa que se resuelve en una respuesta JSON con el equipo creado o pasa un error a `next`.
+ */
 export async function crearEquipo(req: Request, res: Response, next: NextFunction) {
   try {
     const { nombre } = req.body;
@@ -24,6 +32,13 @@ export async function crearEquipo(req: Request, res: Response, next: NextFunctio
     return next(error);
   }
 }
+/**
+ * Maneja la petición para obtener el equipo del usuario autenticado.
+ * @param {Request} req - El objeto de solicitud de Express.
+ * @param {Response} res - El objeto de respuesta de Express.
+ * @param {NextFunction} next - La función para pasar el control al siguiente middleware.
+ * @returns {Promise<Response|void>} Una promesa que se resuelve en una respuesta JSON con los datos del equipo o pasa un error a `next`.
+ */
 export async function getMiEquipo(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = req.authUser?.user?.userId;
@@ -37,6 +52,13 @@ export async function getMiEquipo(req: Request, res: Response, next: NextFunctio
     return next(error);
   }
 }
+/**
+ * Maneja la petición para intercambiar un jugador del equipo por otro del mercado.
+ * @param {Request} req - El objeto de solicitud de Express. Espera `jugadorSaleId` y `jugadorEntraId` en `req.body`.
+ * @param {Response} res - El objeto de respuesta de Express.
+ * @param {NextFunction} next - La función para pasar el control al siguiente middleware.
+ * @returns {Promise<Response|void>} Una promesa que se resuelve en una respuesta JSON de éxito o pasa un error a `next`.
+ */
 export async function realizarIntercambio(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = req.authUser?.user?.userId;
@@ -56,7 +78,13 @@ export async function realizarIntercambio(req: Request, res: Response, next: Nex
     return next(error);
   }
 }
-
+/**
+ * Maneja la petición para cambiar la alineación, moviendo un titular a suplente y viceversa.
+ * @param {Request} req - El objeto de solicitud de Express. Espera `jugadorTitularId` y `jugadorSuplenteId` en `req.body`.
+ * @param {Response} res - El objeto de respuesta de Express.
+ * @param {NextFunction} next - La función para pasar el control al siguiente middleware.
+ * @returns {Promise<Response|void>} Una promesa que se resuelve en una respuesta JSON de éxito o pasa un error a `next`.
+ */
 export async function actualizarAlineacion(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = req.authUser?.user?.userId;

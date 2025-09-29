@@ -1,0 +1,148 @@
+paths:
+  /api/equipos:
+    post:
+      tags: [Equipo]
+      summary: Crea un nuevo equipo para el usuario autenticado
+      description: >
+        Realiza un draft automático de 15 jugadores (11 titulares, 4 suplentes) y crea el equipo.
+        Esta operación es transaccional. El usuario no puede tener un equipo previamente creado.
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      requestBody:
+        $ref: '#/components/requestBodies/CreateEquipo'
+      responses:
+        '201':
+          description: Equipo creado exitosamente. Devuelve el equipo creado envuelto en un objeto con mensaje.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiEquipoCreateResponse'
+        '400':
+          description: Petición inválida. Falta el nombre del equipo o no hay suficientes jugadores en la base de datos para el draft.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Usuario no autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicto. El usuario ya tiene un equipo creado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/equipos/mi-equipo:
+    get:
+      tags: [Equipo]
+      summary: Obtiene el equipo completo del usuario autenticado
+      description: Devuelve el objeto del equipo del usuario con jugadores, posiciones y clubes.
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Equipo del usuario encontrado y devuelto.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Equipo'
+        '401':
+          description: Usuario no autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No encontrado. El usuario no tiene un equipo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/equipos/mi-equipo/intercambio:
+    patch:
+      tags: [Equipo]
+      summary: Intercambia un jugador del equipo por uno del mercado
+      description: >
+        Realiza un fichaje atómico. El jugador que sale es eliminado del equipo y el que entra es añadido,
+        heredando el estado de titularidad. Ambos jugadores deben ser de la misma posición.
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      requestBody:
+        $ref: '#/components/requestBodies/IntercambioJugador'
+      responses:
+        '200':
+          description: Intercambio realizado con éxito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationMessage'
+        '400':
+          description: Petición inválida (IDs faltantes, jugadores no pertenecen al equipo, o las posiciones no coinciden).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Usuario no autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No encontrado. El equipo del usuario o uno de los jugadores no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Conflicto. El jugador que se intenta fichar ya está en el equipo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/equipos/mi-equipo/alineacion:
+    patch:
+      tags: [Equipo]
+      summary: Cambia un jugador titular por un suplente dentro del equipo
+      description: >
+        Intercambia el estado es_titular entre dos jugadores del mismo equipo.
+        Ambos deben tener la misma posición y sus roles (titular/suplente) deben ser los correctos para el cambio.
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      requestBody:
+        $ref: '#/components/requestBodies/CambioAlineacion'
+      responses:
+        '200':
+          description: Alineación actualizada con éxito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OperationMessage'
+        '400':
+          description: Petición inválida (IDs faltantes, jugadores no pertenecen al equipo, roles incorrectos, o posiciones no coinciden).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Usuario no autenticado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No encontrado. El equipo del usuario no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

@@ -6,6 +6,15 @@ import { Users } from '../User/user.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 import { EquipoJugador } from './equipoJugador.entity.js';
 
+/**
+ * Selecciona una cantidad específica de jugadores de una posición dada, de forma aleatoria.
+ * @param em - El EntityManager transaccional.
+ * @param posicion - La descripción de la posición a buscar (ej. 'Goalkeeper').
+ * @param cantidad - El número de jugadores a seleccionar.
+ * @param excluirIds - Un array de IDs de jugadores a excluir de la selección.
+ * @returns Una promesa que se resuelve con un array de entidades Player.
+ * @throws {ErrorFactory.badRequest} Si no se encuentran suficientes jugadores.
+ */
 async function seleccionarJugadores(
   em: EntityManager,
   posicion: string,
@@ -35,7 +44,15 @@ async function seleccionarJugadores(
 
   return seleccionados;
 }
-
+/**
+ * Crea un nuevo equipo para un usuario, realizando un draft automático de jugadores.
+ * La operación es transaccional: o se completa del todo, o no se hace nada.
+ * @param nombreEquipo - El nombre del equipo a crear.
+ * @param userId - El ID del usuario para el cual se crea el equipo.
+ * @returns Una promesa que se resuelve con la nueva entidad Equipo creada.
+ * @throws {ErrorFactory.notFound} Si el usuario no existe.
+ * @throws {ErrorFactory.duplicate} Si el usuario ya tiene un equipo.
+ */
 export async function crearEquipoConDraft(nombreEquipo: string, userId: number) {
   return await orm.em.transactional(async (transactionalEm) => {
     const usuario = await transactionalEm.findOne(Users, { id: userId });
@@ -103,7 +120,12 @@ export async function crearEquipoConDraft(nombreEquipo: string, userId: number) 
     return nuevoEquipo;
   });
 }
-
+/**
+ * Obtiene el equipo de un usuario por su ID, incluyendo jugadores, posiciones y clubes.
+ * @param userId - El ID del usuario.
+ * @returns Una promesa que se resuelve con la entidad Equipo poblada.
+ * @throws {ErrorFactory.notFound} Si el usuario no tiene un equipo.
+ */
 export async function getEquipoByUserId(userId: number) {
   const em = orm.em.fork();
   const equipo = await em.findOne(
@@ -118,7 +140,17 @@ export async function getEquipoByUserId(userId: number) {
 
   return equipo;
 }
-
+/**
+ * Realiza un intercambio atómico de un jugador del equipo por uno Cualquiera de los existentes.
+ * Valida que ambos jugadores existan y sean de la misma posición.
+ * @param userId - El ID del usuario que realiza el intercambio.
+ * @param jugadorSaleId - El ID del jugador que sale del equipo.
+ * @param jugadorEntraId - El ID del jugador que entra al equipo.
+ * @returns Una promesa que se resuelve con un mensaje de éxito.
+ * @throws {ErrorFactory.notFound} Si el equipo o uno de los jugadores no se encuentra.
+ * @throws {ErrorFactory.badRequest} Si las validaciones de negocio fallan (posiciones, pertenencia).
+ * @throws {ErrorFactory.duplicate} Si el jugador que entra ya está en el equipo.
+ */
 export async function intercambiarJugador(
   userId: number,
   jugadorSaleId: number,
@@ -186,7 +218,17 @@ export async function intercambiarJugador(
     return { message: 'Intercambio realizado con éxito' };
   });
 }
-
+/**
+ * Intercambia el estado de titularidad entre dos jugadores del mismo equipo.
+ * Valida que ambos jugadores pertenezcan al equipo, tengan los roles correctos (titular/suplente)
+ * y compartan la misma posición.
+ * @param userId - El ID del usuario.
+ * @param jugadorTitularId - El ID del jugador actualmente titular.
+ * @param jugadorSuplenteId - El ID del jugador actualmente suplente.
+ * @returns Una promesa que se resuelve con un mensaje de éxito.
+ * @throws {ErrorFactory.notFound} Si el equipo del usuario no se encuentra.
+ * @throws {ErrorFactory.badRequest} Si alguna de las validaciones de negocio falla.
+ */
 export async function cambiarAlineacion(
   userId: number,
   jugadorTitularId: number,
