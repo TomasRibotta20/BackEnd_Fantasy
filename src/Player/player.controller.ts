@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { Player } from './player.entity.js';
 import { orm } from '../shared/db/orm.js';
+import { findAndPaginate } from './player.service.js';
+import { ErrorFactory } from '../shared/errors/errors.factory.js';
 //Definimos una variable para el entityManager
 const em = orm.em;
 
@@ -94,4 +96,34 @@ async function update(req: Request, res: Response){
         res.status(500).json({message: 'Error updating player', error: error.message});
     }
 }
-export {findAll, findOne, add, remove, update};
+/**
+ * Maneja la petición para obtener una lista paginada y filtrada de jugadores.
+ * @param {Request} req - El objeto de solicitud de Express con query params: name, position, club, page, limit.
+ * @param {Response} res - El objeto de respuesta de Express.
+ * @param {NextFunction} next - La función para pasar el control al siguiente middleware.
+ * @returns {Promise<Response|void>} Una promesa que se resuelve en una respuesta JSON con los jugadores filtrados o pasa un error a next.
+ */
+ async function getPlayers(req: Request, res: Response, next: NextFunction) {
+  try {
+    // Parsear los parámetros de consulta
+    const name = req.query.name as string;
+    const position = req.query.position as string;
+    const club = req.query.club as string;
+    const page = req.query.page ? parseInt(req.query.page as string) : undefined;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+
+    const result = await findAndPaginate({
+      name,
+      position,
+      club,
+      page,
+      limit
+    });
+    
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error('Error en getPlayers:', error);
+    return next(ErrorFactory.internal('Error al obtener jugadores'));
+  }
+}
+export {findAll, findOne, add, remove, update, getPlayers};
