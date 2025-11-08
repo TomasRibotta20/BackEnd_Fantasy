@@ -1,19 +1,17 @@
-import { Request, Response } from 'express'
+import { NextFunction, Request, Response } from 'express'
 import { orm } from '../shared/db/orm.js'
 import { GameConfig } from './gameConfig.entity.js'
+import { ErrorFactory } from '../shared/errors/errors.factory.js'
 
 class GameConfigController {
   // Obtener jornada activa 
-  async getJornadaActiva(req: Request, res: Response) {
+  async getJornadaActiva(req: Request, res: Response,next: NextFunction) {
     try {
       const em = orm.em.fork()
       const config = await em.findOne(GameConfig, 1, { populate: ['jornadaActiva'] })
 
       if (!config || !config.jornadaActiva) {
-        return res.status(404).json({
-          success: false,
-          message: 'No hay jornada activa configurada'
-        })
+        return next(ErrorFactory.notFound('No hay jornada activa configurada'))
       }
 
       res.json({
@@ -24,15 +22,12 @@ class GameConfigController {
         }
       })
     } catch (error: any) {
-      res.status(500).json({
-        success: false,
-        message: error.message
-      })
+      next(ErrorFactory.internal("Error al obtener jornada activa"));
     }
   }
 
   // Verificar estado de modificaciones
-  async getEstadoModificaciones(req: Request, res: Response) {
+  async getEstadoModificaciones(req: Request, res: Response, next:NextFunction) {
     try {
       const em = orm.em.fork()
       const config = await em.findOne(GameConfig, 1)
@@ -57,10 +52,7 @@ class GameConfigController {
         }
       })
     } catch (error: any) {
-      res.status(500).json({
-        success: false,
-        message: error.message
-      })
+      next(ErrorFactory.internal("Error al obtener estado de modificaciones"));
     }
   }
 }

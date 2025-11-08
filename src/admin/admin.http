@@ -14,7 +14,7 @@ POST {{baseUrl}}/api/admin/set-jornada-activa
 Content-Type: application/json
 
 {
-  "jornadaId": 1
+  "jornadaId": "dsadadad"
 }
 
 ### Deshabilitar modificaciones (bloquear equipos)

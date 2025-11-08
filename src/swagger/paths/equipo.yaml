@@ -146,3 +146,306 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+
+  /api/equipos/{equipoId}/historial:
+    get:
+      tags:
+        - Equipo
+      summary: Obtener historial de puntajes del equipo
+      description: Retorna el historial completo de puntajes del equipo en todas las jornadas procesadas
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: equipoId
+          required: true
+          schema:
+            type: number
+          description: ID del equipo
+          example: 1
+      responses:
+        200:
+          description: Historial obtenido exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Historial del equipo obtenido"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                          example: 1
+                        jornada:
+                          type: object
+                          properties:
+                            id:
+                              type: number
+                              example: 2
+                            nombre:
+                              type: string
+                              example: "2nd Phase - 2"
+                            temporada:
+                              type: number
+                              example: 2021
+                            fecha_inicio:
+                              type: string
+                              format: date-time
+                            fecha_fin:
+                              type: string
+                              format: date-time
+                        puntajeTotal:
+                          type: number
+                          example: 65
+                        fechaSnapshot:
+                          type: string
+                          format: date-time
+                          example: "2025-11-08T20:44:52.000Z"
+        404:
+          description: Equipo no encontrado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Equipo no encontrado"
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/equipos/{equipoId}/jornadas/{jornadaId}:
+    get:
+      tags:
+        - Equipo
+      summary: Obtener equipo en una jornada específica
+      description: |
+        Retorna el snapshot del equipo en una jornada específica, incluyendo:
+        - Información del equipo y jornada
+        - Lista de jugadores (titulares y suplentes)
+        - Puntajes individuales y estadísticas detalladas
+        - Puntaje total del equipo
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: equipoId
+          required: true
+          schema:
+            type: number
+          description: ID del equipo
+          example: 1
+        - in: path
+          name: jornadaId
+          required: true
+          schema:
+            type: number
+          description: ID de la jornada
+          example: 2
+      responses:
+        200:
+          description: Equipo en jornada obtenido exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Equipo en jornada obtenido"
+                  data:
+                    type: object
+                    properties:
+                      equipo:
+                        type: object
+                        properties:
+                          id:
+                            type: number
+                            example: 1
+                          nombre:
+                            type: string
+                            example: "Club Atletico AntiPinguinos"
+                          usuarioId:
+                            type: number
+                            example: 2
+                      jornada:
+                        type: object
+                        properties:
+                          id:
+                            type: number
+                            example: 2
+                          nombre:
+                            type: string
+                            example: "2nd Phase - 2"
+                          temporada:
+                            type: number
+                            example: 2021
+                          fecha_inicio:
+                            type: string
+                            format: date-time
+                          fecha_fin:
+                            type: string
+                            format: date-time
+                      puntajeTotal:
+                        type: number
+                        example: 65
+                        description: Puntaje total del equipo (solo jugadores titulares)
+                      fechaSnapshot:
+                        type: string
+                        format: date-time
+                        example: "2025-11-08T20:44:52.000Z"
+                      jugadores:
+                        type: array
+                        description: Lista de jugadores ordenada (titulares primero)
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: number
+                              example: 21
+                            nombre:
+                              type: string
+                              example: "R. Rey"
+                            nombreCompleto:
+                              type: string
+                              example: "Rodrigo Francisco Jesús Rey"
+                            posicion:
+                              type: string
+                              example: "Goalkeeper"
+                              enum: [Goalkeeper, Defender, Midfielder, Attacker]
+                            club:
+                              type: string
+                              example: "Gimnasia L.P."
+                            clubLogo:
+                              type: string
+                              example: "https://media.api-sports.io/football/teams/434.png"
+                            foto:
+                              type: string
+                              example: "https://media.api-sports.io/football/players/2356.png"
+                            esTitular:
+                              type: boolean
+                              example: true
+                              description: Indica si el jugador era titular en este snapshot
+                            puntaje:
+                              type: number
+                              example: 11.7
+                              description: Puntaje del jugador en esta jornada
+                            estadisticas:
+                              type: object
+                              nullable: true
+                              description: Estadísticas del partido (null si no jugó)
+                              properties:
+                                minutos:
+                                  type: number
+                                  example: 95
+                                rating:
+                                  type: number
+                                  format: float
+                                  example: 6.7
+                                goles:
+                                  type: number
+                                  example: 0
+                                asistencias:
+                                  type: number
+                                  example: 0
+                                golesRecibidos:
+                                  type: number
+                                  example: 0
+                                atajadas:
+                                  type: number
+                                  example: 0
+                                tarjetasAmarillas:
+                                  type: number
+                                  example: 0
+                                tarjetasRojas:
+                                  type: number
+                                  example: 0
+                                porteriaCero:
+                                  type: boolean
+                                  example: true
+        404:
+          description: No se encontró el snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "No se encontró información del equipo en esta jornada"
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/jornadas/{jornadaId}/ranking:
+    get:
+      tags:
+        - Jornadas
+      summary: Obtener ranking de una jornada
+      description: Retorna el ranking de equipos en una jornada ordenado por puntaje (mayor a menor)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: jornadaId
+          required: true
+          schema:
+            type: number
+          description: ID de la jornada
+          example: 2
+      responses:
+        200:
+          description: Ranking obtenido exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Ranking obtenido"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: number
+                          example: 1
+                        equipo:
+                          type: object
+                          properties:
+                            id:
+                              type: number
+                              example: 1
+                            nombre:
+                              type: string
+                              example: "Club Atletico AntiPinguinos"
+                            usuario:
+                              type: object
+                              properties:
+                                id:
+                                  type: number
+                                  example: 2
+                                username:
+                                  type: string
+                                  example: "jugador1"
+                        puntajeTotal:
+                          type: number
+                          example: 65
+                        jornada:
+                          type: object
+                          properties:
+                            id:
+                              type: number
+                              example: 2
+                            nombre:
+                              type: string
+                              example: "2nd Phase - 2"
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
