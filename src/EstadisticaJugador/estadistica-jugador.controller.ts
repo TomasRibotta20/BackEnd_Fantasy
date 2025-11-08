@@ -3,7 +3,7 @@ import { orm } from '../shared/db/orm.js';
 import { EstadisticaJugadorService } from './estadistica-jugador.service.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 
-export async function actualizarEstadisticasJornada(req: Request, res: Response) {
+export async function actualizarEstadisticasJornada(req: Request, res: Response, next: Function) {
   try {
     const jornadaId = Number(req.params.jornadaId);
     
@@ -17,16 +17,12 @@ export async function actualizarEstadisticasJornada(req: Request, res: Response)
     return res.status(200).json({
       message: `Estadísticas actualizadas correctamente para ${partidosProcesados} partidos de la jornada ${jornadaId}`
     });
-  } catch (error) {
-    console.error('Error al actualizar estadísticas:', error);
-    if (error instanceof Error) {
-      return res.status(500).json({ message: `Error: ${error.message}` });
-    }
-    return res.status(500).json({ message: 'Error desconocido al actualizar estadísticas' });
+  } catch (error: any) {
+    return next(ErrorFactory.internal('Error al actualizar estadísticas de la jornada'));
   }
 }
 
-export async function getPuntajesPorJornada(req: Request, res: Response) {
+export async function getPuntajesPorJornada(req: Request, res: Response, next: Function) {
   try {
     const jornadaId = Number(req.params.jornadaId);
     
@@ -42,16 +38,12 @@ export async function getPuntajesPorJornada(req: Request, res: Response) {
       count: estadisticas.length,
       data: estadisticas
     });
-  } catch (error) {
-    console.error('Error al obtener puntajes:', error);
-    if (error instanceof Error) {
-      return res.status(500).json({ message: `Error: ${error.message}` });
-    }
-    return res.status(500).json({ message: 'Error desconocido al obtener puntajes' });
+  } catch (error: any) {
+    return next(ErrorFactory.internal('Error al obtener puntajes de la jornada'));
   }
 }
 
-export async function getPuntajeJugadorPorJornada(req: Request, res: Response) {
+export async function getPuntajeJugadorPorJornada(req: Request, res: Response, next: Function) {
   try {
     const jornadaId = Number(req.params.jornadaId);
     const jugadorId = Number(req.params.jugadorId);
@@ -64,9 +56,7 @@ export async function getPuntajeJugadorPorJornada(req: Request, res: Response) {
     const estadistica = await EstadisticaJugadorService.getPuntajeJugadorPorJornada(em, jugadorId, jornadaId);
     
     if (!estadistica) {
-      return res.status(404).json({
-        message: `No se encontró puntaje para el jugador ${jugadorId} en la jornada ${jornadaId}`
-      });
+      return next(ErrorFactory.notFound('No se encontró estadística para el jugador en la jornada especificada'));
     }
     
     return res.status(200).json({
@@ -74,10 +64,6 @@ export async function getPuntajeJugadorPorJornada(req: Request, res: Response) {
       data: estadistica
     });
   } catch (error) {
-    console.error('Error al obtener puntaje de jugador:', error);
-    if (error instanceof Error) {
-      return res.status(500).json({ message: `Error: ${error.message}` });
-    }
-    return res.status(500).json({ message: 'Error desconocido al obtener puntaje de jugador' });
+    return next(ErrorFactory.internal('Error al obtener puntaje del jugador en la jornada'));
   }
 }
