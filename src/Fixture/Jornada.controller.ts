@@ -40,13 +40,16 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
  * @returns Una respuesta HTTP 200 con un Json con la jornada encontrada o un error HTTP 404 si no se encuentra
  */
 async function findOne(req: Request, res: Response, next: NextFunction) {
+  const id = Number(req.params.id);
   try {
-    const id = Number(req.params.id);
-    const jornada = await em.findOne(Jornada, { id });
-    if (!jornada) return next(ErrorFactory.notFound('Jornada no encontrada'));
+    const jornada = await em.findOneOrFail(Jornada, { id });
     res.status(200).json({ message: 'Jornada encontrada', data: jornada });
   } catch (error: any) {
-    next(ErrorFactory.internal('Error obteniendo jornada'));
+    if (error.name === 'NotFoundError') {
+      next(ErrorFactory.notFound(`Jornada con ID ${id} no encontrada`));
+    } else {
+      next(ErrorFactory.internal('Error obteniendo jornada'));
+    }
   }
 }
 
@@ -59,15 +62,10 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
 async function add(req: Request, res: Response, next: NextFunction) {
   try {
     const { nombre, temporada, etapa, liga_id, fecha_inicio, fecha_fin } = req.body;
-    
+  
     //if (!nombre || temporada == null) {
     //  return next(ErrorFactory.validationAppError('Nombre y temporada son campos requeridos'));
     //}
-
-    const exists = await em.findOne(Jornada, { nombre });
-    if (exists) {
-      return next(ErrorFactory.duplicate('Ya existe una jornada con ese nombre'));
-    }
 
     const jornada = em.create(Jornada, {
       nombre,
@@ -81,6 +79,9 @@ async function add(req: Request, res: Response, next: NextFunction) {
     await em.persistAndFlush(jornada);
     res.status(201).json({ message: 'Jornada creada', data: jornada });
   } catch (error: any) {
+    if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
+      return next(ErrorFactory.duplicate('Ya existe una jornada con ese nombre'));
+    } 
     next(ErrorFactory.internal('Error creando jornada'));
   }
 }
@@ -92,10 +93,9 @@ async function add(req: Request, res: Response, next: NextFunction) {
  * @returns Una respuesta HTTP 200 con un Json con la jornada actualizada o un error HTTP 404 si no se encuentra
  */
 async function update(req: Request, res: Response, next: NextFunction) {
+  const id = Number(req.params.id); //Ya validado por Zod como number
   try {
-    const id = Number(req.params.id); //Ya validado por Zod como number
-    const jornada = await em.findOne(Jornada, id);
-    if (!jornada) return next(ErrorFactory.notFound('Jornada no encontrada'));
+    const jornada = await em.findOneOrFail(Jornada, id);
 
     const { nombre, temporada, etapa, liga_id, fecha_inicio, fecha_fin } = req.body;
 
@@ -115,7 +115,10 @@ async function update(req: Request, res: Response, next: NextFunction) {
 
     await em.flush();
     res.status(200).json({ message: 'Jornada actualizada', data: jornada });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.name === 'NotFoundError') {
+      return next(ErrorFactory.notFound(`Jornada con ID ${id} no encontrada`));
+    }
     next(ErrorFactory.internal('Error actualizando jornada'));
   }
 }

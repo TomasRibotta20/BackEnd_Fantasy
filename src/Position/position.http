@@ -3,7 +3,7 @@
 GET http://localhost:3000/api/positions
 
 ### GET one position
-GET http://localhost:3000/api/positions/1
+GET http://localhost:3000/api/positions/a
 
 ### POST a position
 POST http://localhost:3000/api/positions

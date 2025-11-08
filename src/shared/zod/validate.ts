@@ -26,7 +26,7 @@ export const validateQuery = (schema: ZodType) => (req: Request, _: Response, ne
     return next(error);
   }
 
-  req.query = result.data as any;
+  Object.assign(req.query, result.data);
   next();
 };
 
@@ -40,6 +40,6 @@ export const validateParams = (schema: ZodType) => (req: Request, _: Response, n
     return next(error);
   }
 
-  req.params = result.data as any;
+  Object.assign(req.params, result.data);
   next();
 };
