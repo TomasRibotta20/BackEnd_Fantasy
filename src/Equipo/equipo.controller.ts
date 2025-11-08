@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { cambiarAlineacion, crearEquipoConDraft,getEquipoByUserId,intercambiarJugador} from './equipo.service.js';
+import { ErrorFactory } from '../shared/errors/errors.factory.js';
 
 /**
  * Maneja la petición para crear un nuevo equipo con un draft automático.
@@ -17,11 +18,11 @@ export async function crearEquipo(req: Request, res: Response, next: NextFunctio
     const userId = req.authUser?.user?.userId;
 
     if (!nombre) {
-      return res.status(400).json({ message: 'El nombre del equipo es requerido' });
+      return next(ErrorFactory.validationAppError('El nombre del equipo es obligatorio'));
     }
 
     if (!userId) {
-      return res.status(401).json({ message: 'Usuario no autenticado' });
+      return next(ErrorFactory.unauthorized('Usuario no autenticado'));
     }
 
     const nuevoEquipo = await crearEquipoConDraft(nombre, userId);
@@ -29,7 +30,7 @@ export async function crearEquipo(req: Request, res: Response, next: NextFunctio
     return res.status(201).json({ message: 'Equipo creado exitosamente', data: nuevoEquipo });
   } catch (error) {
     // El error handler global se encargará de formatear la respuesta
-    return next(error);
+    return next(ErrorFactory.internal('Error al crear el equipo'));
   }
 }
 /**
@@ -43,13 +44,13 @@ export async function getMiEquipo(req: Request, res: Response, next: NextFunctio
   try {
     const userId = req.authUser?.user?.userId;
     if (!userId) {
-      return res.status(401).json({ message: 'Usuario no autenticado' });
+      return next(ErrorFactory.unauthorized('Usuario no autenticado'));
     }
 
     const equipo = await getEquipoByUserId(userId);
     return res.status(200).json(equipo);
   } catch (error) {
-    return next(error);
+    return next(ErrorFactory.internal('Error al obtener el equipo del usuario'));
   }
 }
 /**
@@ -65,17 +66,17 @@ export async function realizarIntercambio(req: Request, res: Response, next: Nex
     const { jugadorSaleId, jugadorEntraId } = req.body;
 
     if (!userId) {
-      return res.status(401).json({ message: 'Usuario no autenticado' });
+      return next(ErrorFactory.unauthorized('Usuario no autenticado'));
     }
 
     if (!jugadorSaleId || !jugadorEntraId) {
-      return res.status(400).json({ message: 'Se requieren jugadorSaleId y jugadorEntraId' });
+      return next(ErrorFactory.validationAppError('Se requieren jugadorSaleId y jugadorEntraId'));
     }
 
     const resultado = await intercambiarJugador(userId, Number(jugadorSaleId), Number(jugadorEntraId));
     return res.status(200).json(resultado);
   } catch (error) {
-    return next(error);
+    return next(ErrorFactory.internal('Error al intercambiar jugadores'));
   }
 }
 /**
@@ -91,16 +92,15 @@ export async function actualizarAlineacion(req: Request, res: Response, next: Ne
     const { jugadorTitularId, jugadorSuplenteId } = req.body;
 
     if (!userId) {
-      // Esta validación es redundante si el middleware funciona, pero es segura.
-      return res.status(401).json({ message: 'Usuario no autenticado' });
+      return next(ErrorFactory.unauthorized('Usuario no autenticado'));
     }
     if (!jugadorTitularId || !jugadorSuplenteId) {
-      return res.status(400).json({ message: 'Se requieren jugadorTitularId y jugadorSuplenteId' });
+      return next(ErrorFactory.validationAppError('Se requieren jugadorTitularId y jugadorSuplenteId'));
     }
 
     const resultado = await cambiarAlineacion(userId, Number(jugadorTitularId), Number(jugadorSuplenteId));
     return res.status(200).json(resultado);
   } catch (error) {
-    return next(error);
+    return next(ErrorFactory.internal('Error al actualizar la alineación'));
   }
 }

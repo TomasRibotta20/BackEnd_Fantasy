@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { orm } from '../shared/db/orm.js'
 import { EquipoSnapshotService } from './equipoSnapshot.service.js'
+import { ErrorFactory } from '../shared/errors/errors.factory.js'
 
 export async function getHistorial(req: Request, res: Response, next: NextFunction) {
   try {
@@ -15,7 +16,7 @@ export async function getHistorial(req: Request, res: Response, next: NextFuncti
       data: historial,
     })
   } catch (error) {
-    return next(error)
+    return next(ErrorFactory.internal('Error al obtener el historial del equipo'))
   }
 }
 
@@ -29,9 +30,7 @@ export async function getEquipoEnJornada(req: Request, res: Response, next: Next
     const resultado = await snapshotService.obtenerEquipoEnJornada(equipoId, jornadaId)
 
     if (!resultado) {
-      return res.status(404).json({
-        message: 'No se encontró registro para esta jornada',
-      })
+      return next(ErrorFactory.notFound('No se encontró registro para esta jornada'))
     }
 
     return res.status(200).json({
@@ -56,6 +55,6 @@ export async function getRankingJornada(req: Request, res: Response, next: NextF
       data: ranking,
     })
   } catch (error) {
-    return next(error)
+    return next(ErrorFactory.internal('Error al obtener el ranking de la jornada'))
   }
 }

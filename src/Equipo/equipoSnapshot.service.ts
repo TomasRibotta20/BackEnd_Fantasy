@@ -4,6 +4,7 @@ import { EquipoJornada } from './equipoJornada.entity.js'
 import { Jornada } from '../Fixture/Jornada.entity.js'
 import { EstadisticaJugador } from '../EstadisticaJugador/estadistica-jugador.entity.js'
 import { Player } from '../Player/player.entity.js'
+import { ErrorFactory } from '../shared/errors/errors.factory.js'
 
 export class EquipoSnapshotService {
   constructor(private em: EntityManager) {}
@@ -53,7 +54,7 @@ export class EquipoSnapshotService {
     )
 
     if (equiposJornada.length === 0) {
-      throw new Error('No hay snapshots para esta jornada')
+      throw ErrorFactory.notFound('No se encontraron equipos para la jornada especificada')
     }
 
     for (const equipoJornada of equiposJornada) {
