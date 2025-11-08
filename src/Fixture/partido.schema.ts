@@ -16,5 +16,18 @@ export const updatePartidoSchema = createPartidoSchema.partial()
     message: 'Se debe enviar al menos un campo para actualizar',
   });
 
+export const findAllPartidoQuerySchema = z.object({
+  jornadaId: z.string().regex(/^\d+$/, 'El ID de jornada debe ser un número válido').optional(),
+  clubId: z.string().regex(/^\d+$/, 'El ID del club debe ser un número válido').optional(),
+  from: z.string().datetime('Fecha from debe ser válida').optional(),
+  to: z.string().datetime('Fecha to debe ser válida').optional(),
+});
+
+export const idPartidoParamsSchema = z.object({
+  id: z.string().regex(/^\d+$/, 'El ID debe ser un número válido')
+});
+
 export type CreatePartidoInput = z.infer<typeof createPartidoSchema>;
 export type UpdatePartidoInput = z.infer<typeof updatePartidoSchema>;
+export type FindAllPartidoQueryInput = z.infer<typeof findAllPartidoQuerySchema>;
+export type IdPartidoParamsInput = z.infer<typeof idPartidoParamsSchema>;

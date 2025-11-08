@@ -15,22 +15,16 @@ export const updateJornadaSchema = createJornadaSchema.partial()
   });
 
 export const findAllJornadaQuerySchema = z.object({
-  temporada: z.string().optional()
-    .transform(val => val && val !== '' ? Number(val) : undefined)
-    .pipe(z.number().int().positive('La temporada debe ser un número positivo').optional()),
+  temporada: z.string().regex(/^\d+$/, 'La temporada debe ser un número válido').optional(),
   etapa: z.string().min(1, 'La etapa no puede estar vacía').optional(),
-  liga_id: z.string().optional()
-    .transform(val => val && val !== '' ? Number(val) : undefined)
-    .pipe(z.number().int().positive('El ID de liga debe ser un número positivo').optional()),
+  liga_id: z.string().regex(/^\d+$/, 'El ID de liga debe ser un número válido').optional(),
 });
 
-export const findOneJornadaParamsSchema = z.object({
-  id: z.string()
-    .transform(val => Number(val))
-    .pipe(z.number().int().positive('El ID debe ser un número positivo'))
+export const idJornadaParamsSchema = z.object({
+  id: z.string().regex(/^\d+$/, 'El ID debe ser un número válido')
 });
 
 export type CreateJornadaInput = z.infer<typeof createJornadaSchema>;
 export type UpdateJornadaInput = z.infer<typeof updateJornadaSchema>;
 export type FindAllJornadaQuery = z.infer<typeof findAllJornadaQuerySchema>;
-export type FindOneJornadaParams = z.infer<typeof findOneJornadaParamsSchema>;
+export type IdJornadaParams = z.infer<typeof idJornadaParamsSchema>;

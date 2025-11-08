@@ -99,17 +99,10 @@ async function update(req: Request, res: Response, next: NextFunction) {
 
     const { nombre, temporada, etapa, liga_id, fecha_inicio, fecha_fin } = req.body;
 
-    //if (nombre) jornada.nombre = nombre;
-    //if (temporada != null) jornada.temporada = Number(temporada);
-    //if (etapa !== undefined) jornada.etapa = etapa ?? null;
-    //if (liga_id !== undefined) jornada.liga_id = liga_id != null ? Number(liga_id) : null;
-    //if (fecha_inicio !== undefined) jornada.fecha_inicio = fecha_inicio ? new Date(fecha_inicio) : null;
-    //if (fecha_fin !== undefined) jornada.fecha_fin = fecha_fin ? new Date(fecha_fin) : null;
-
     if (nombre !== undefined) jornada.nombre = nombre;
-    if (temporada !== undefined) jornada.temporada = temporada; // Ya es number
+    if (temporada !== undefined) jornada.temporada = Number(temporada);
     if (etapa !== undefined) jornada.etapa = etapa;
-    if (liga_id !== undefined) jornada.liga_id = liga_id; // Ya es number o null
+    if (liga_id !== undefined) jornada.liga_id = liga_id !== null ? Number(liga_id) : null;
     if (fecha_inicio !== undefined) jornada.fecha_inicio = fecha_inicio ? new Date(fecha_inicio) : null;
     if (fecha_fin !== undefined) jornada.fecha_fin = fecha_fin ? new Date(fecha_fin) : null;
 
