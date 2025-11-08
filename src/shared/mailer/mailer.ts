@@ -11,7 +11,7 @@ export const transporter = nodemailer.createTransport({
 });
 
 // Verificar solo si hay configuración real
-if (process.env.GMAIL_USER && process.env.GMAIL_PASS) {
+if (process.env.GMAIL_PASS) {
   transporter.verify()
     .then(() => {
       console.log("✅ Ready to send emails");

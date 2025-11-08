@@ -10,7 +10,7 @@ POST http://localhost:3000/api/positions
 Content-Type: application/json
 
 {
-  "description": "Arquero"
+  "description": "Defensor"
 }
 
 ### PUT a position

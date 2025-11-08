@@ -17,7 +17,7 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
     const positions = await em.find(Position, {}, { orderBy: { id: 'ASC' } });
     res.status(200).json({ message: 'found all positions', data: positions });
   } catch (error: any) {
-    next(ErrorFactory.internal(`Error al obtener las posiciones`));
+    next(ErrorFactory.internal('Error al obtener las posiciones'));
   }
 }
 
@@ -25,7 +25,7 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
  * Recupera una posición de la base de datos.
  * @param req El objeto de solicitud de Express que contiene el ID de la posición en los parámetros.
  * @param res El objeto de respuesta de Express para enviar los resultados.
- * @returns Una respuesta HTTP 200 con un mensaje y los datos de la posición, o un error HTTP 500 si falla.
+ * @returns Una respuesta HTTP 200 con un mensaje y los datos de la posición, o un error HTTP 404, 500 si falla.
  */
 async function findOne(req: Request, res: Response, next: NextFunction) {
   const id = Number.parseInt(req.params.id);
@@ -44,7 +44,7 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
  * Agrega una nueva posición a la base de datos.
  * @param req El objeto de solicitud de Express que contiene los datos de la posición en el cuerpo.
  * @param res El objeto de respuesta de Express para enviar los resultados.
- * @returns Una respuesta HTTP 201 con un mensaje de éxito y los datos de la posición creada, o un error HTTP 500 si falla.
+ * @returns Una respuesta HTTP 201 con un mensaje de éxito y los datos de la posición creada, o un error HTTP 409, 500 si falla.
  */
 async function add(req: Request, res: Response, next: NextFunction) {
   try {
@@ -63,7 +63,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
  * Actualiza una posición existente en la base de datos.
  * @param req El objeto de solicitud de Express que contiene el ID de la posición en los parámetros y los datos a actualizar en el cuerpo.
  * @param res El objeto de respuesta de Express para enviar los resultados.
- * @returns Una respuesta HTTP 200 con un mensaje de éxito, o un error HTTP 500 si falla.
+ * @returns Una respuesta HTTP 200 con un mensaje de éxito, o un error HTTP 404, 409, 500 si falla.
  */
 async function update(req: Request, res: Response, next: NextFunction) {
   const id = Number.parseInt(req.params.id);
@@ -96,7 +96,7 @@ async function remove(req: Request, res: Response, next: NextFunction) {
     await em.removeAndFlush(position);
     res.status(200).json({ message: 'position removed' });
   } catch (error: any) {
-    next(ErrorFactory.internal(`Error al eliminar la posición`));
+    next(ErrorFactory.internal('Error al eliminar la posición'));
   }
 }
 

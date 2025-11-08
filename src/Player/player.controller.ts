@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, NextFunction } from 'express';
 import { Player } from './player.entity.js';
 import { orm } from '../shared/db/orm.js';
@@ -14,6 +15,7 @@ const em = orm.em;
  * @param res El objeto de respuesta de Express para enviar los resultados.
  * @returns Una respuesta HTTP 200 con la lista de jugadores encontrados o un mensaje de error y una respuesta HTTP 500.
  */
+
 async function findAll(req: Request, res: Response, next: NextFunction){
     try{
         const players = await em.find(Player, {}, {orderBy: {id: 'ASC'}});
@@ -27,8 +29,9 @@ async function findAll(req: Request, res: Response, next: NextFunction){
  * Recupera un jugador por su ID
  * @param req El objeto de solicitud de Express que contiene el ID del jugador en los parámetros de la URL.
  * @param res El objeto de respuesta de Express para enviar los resultados.
- * @returns Una respuesta HTTP 200 con el jugador encontrado o un mensaje de error y una respuesta HTTP 500.
+ * @returns Una respuesta HTTP 200 con el jugador encontrado o un mensaje de error y una respuesta HTTP 404, 500 si falla.
  */
+
 async function findOne(req: Request, res: Response, next: NextFunction){
     const id = Number.parseInt(req.params.id);
     try{
@@ -46,8 +49,9 @@ async function findOne(req: Request, res: Response, next: NextFunction){
  * Agrega un nuevo jugador a la base de datos
  * @param req El objeto de solicitud de Express que contiene los datos del nuevo jugador en el cuerpo de la solicitud.
  * @param res El objeto de respuesta de Express para enviar los resultados.
- * @returns Una respuesta HTTP 201 con el jugador creado o un mensaje de error y una respuesta HTTP 500.
+ * @returns Una respuesta HTTP 201 con el jugador creado o un mensaje de error y una respuesta HTTP 400, 409, 500 si falla.
  */
+
 async function add(req: Request, res: Response, next: NextFunction){
     try{
         const { clubId, positionId, ...playerData } = req.body;
@@ -79,7 +83,7 @@ async function add(req: Request, res: Response, next: NextFunction){
  * Elimina un jugador de la base de datos
  * @param req El objeto de solicitud de Express que contiene el ID del jugador en los parámetros de la URL.
  * @param res El objeto de respuesta de Express para enviar los resultados.
- * @returns Una respuesta HTTP 200 con el jugador eliminado o un mensaje de error y una respuesta HTTP 500.
+ * @returns Una respuesta HTTP 200 con el jugador eliminado o un mensaje de error y una respuesta HTTP 500 si falla.
  */
 async function remove(req: Request, res: Response, next: NextFunction){
     try{
@@ -96,7 +100,7 @@ async function remove(req: Request, res: Response, next: NextFunction){
  * Actualiza un jugador existente en la base de datos
  * @param req El objeto de solicitud de Express que contiene el ID del jugador en los parámetros de la URL y los datos actualizados en el cuerpo de la solicitud.
  * @param res El objeto de respuesta de Express para enviar los resultados.
- * @returns Una respuesta HTTP 200 con el jugador actualizado o un mensaje de error y una respuesta HTTP 500.
+ * @returns Una respuesta HTTP 200 con el jugador actualizado o un mensaje de error y una respuesta HTTP 404, 409, 500 si falla.
  */
 async function update(req: Request, res: Response, next: NextFunction){
     const id = Number(req.params.id);
@@ -158,4 +162,5 @@ async function update(req: Request, res: Response, next: NextFunction){
     return next(ErrorFactory.internal('Error al obtener jugadores'));
   }
 }
-export {findAll, findOne, add, remove, update, getPlayers};
+
+export { findAll, findOne, add, remove, update, getPlayers };

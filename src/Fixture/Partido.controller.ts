@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { orm } from '../shared/db/orm.js';
 import { Partido } from './partido.entity.js';
 import { Jornada } from './Jornada.entity.js';
@@ -55,7 +56,7 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
  * Recupera un partido por su ID
  * @param req El objeto de solicitud de Express que contiene el ID del partido en los parámetros
  * @param res El objeto de respuesta de Express
- * @returns Una respuesta HTTP 200 con un Json con el partido encontrado o un error HTTP 404 si no se encuentra
+ * @returns Una respuesta HTTP 200 con un Json con el partido encontrado o un error HTTP 404, 500 si falla
  */
 async function findOne(req: Request, res: Response, next: NextFunction) {
   const id = Number(req.params.id);
@@ -78,7 +79,7 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
  * Crea un nuevo partido
  * @param req El objeto de solicitud de Express que contiene los datos del nuevo partido
  * @param res El objeto de respuesta de Express
- * @returns Una respuesta HTTP 201 con un Json con el partido creado o un error HTTP 500 con un mensaje
+ * @returns Una respuesta HTTP 201 con un Json con el partido creado o un error HTTP 400, 404, 409, 500 con un mensaje
  */
 async function add(req: Request, res: Response, next: NextFunction) {
   try {
@@ -119,7 +120,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
  * Actualiza un partido existente
  * @param req El objeto de solicitud de Express que contiene el ID del partido en los parámetros y los datos actualizados en el cuerpo
  * @param res El objeto de respuesta de Express
- * @returns Una respuesta HTTP 200 con un Json con el partido actualizado o un error HTTP 404 si no se encuentra
+ * @returns Una respuesta HTTP 200 con un Json con el partido actualizado o un error HTTP 404, 500 si falla
  */
 async function update(req: Request, res: Response, next: NextFunction) {
   const id = Number(req.params.id);
@@ -162,7 +163,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
  * Elimina un partido existente
  * @param req El objeto de solicitud de Express que contiene el ID del partido a eliminar en los parámetros
  * @param res El objeto de respuesta de Express
- * @returns Una respuesta HTTP 200 con un Json con un mensaje de éxito o un error HTTP 404 si no se encuentra
+ * @returns Una respuesta HTTP 200 con un Json con un mensaje de éxito o un error HTTP 500 si falla
  */
 async function remove(req: Request, res: Response, next: NextFunction) {
   try {

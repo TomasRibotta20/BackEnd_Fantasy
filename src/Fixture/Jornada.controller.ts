@@ -37,7 +37,7 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
  * Recupera una jornada por su ID
  * @param req El objeto de solicitud de Express que contiene el ID de la jornada en los parámetros
  * @param res El objeto de respuesta de Express
- * @returns Una respuesta HTTP 200 con un Json con la jornada encontrada o un error HTTP 404 si no se encuentra
+ * @returns Una respuesta HTTP 200 con un Json con la jornada encontrada o un error HTTP 404, 500 si falla
  */
 async function findOne(req: Request, res: Response, next: NextFunction) {
   const id = Number(req.params.id);
@@ -57,7 +57,7 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
  * Crea una nueva jornada
  * @param req El objeto de solicitud de Express que contiene los datos de la nueva jornada
  * @param res El objeto de respuesta de Express
- * @returns Una respuesta HTTP 201 con un Json con la jornada creada o un error HTTP 500 con un mensaje
+ * @returns Una respuesta HTTP 201 con un Json con la jornada creada o un error HTTP 404, 409, 500 con un mensaje
  */
 async function add(req: Request, res: Response, next: NextFunction) {
   try {
@@ -90,7 +90,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
  * Actualiza una jornada existente
  * @param req El objeto de solicitud de Express que contiene el ID de la jornada en los parámetros y los datos actualizados en el cuerpo
  * @param res El objeto de respuesta de Express
- * @returns Una respuesta HTTP 200 con un Json con la jornada actualizada o un error HTTP 404 si no se encuentra
+ * @returns Una respuesta HTTP 200 con un Json con la jornada actualizada o un error HTTP 404, 500 si falla
  */
 async function update(req: Request, res: Response, next: NextFunction) {
   const id = Number(req.params.id); //Ya validado por Zod como number
@@ -119,7 +119,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
  * Elimina una jornada existente
  * @param req El objeto de solicitud de Express que contiene el ID de la jornada a eliminar en los parámetros
  * @param res El objeto de respuesta de Express
- * @returns Una respuesta HTTP 200 con un Json con un mensaje de éxito o un error HTTP 404 si no se encuentra
+ * @returns Una respuesta HTTP 200 con un Json con un mensaje de éxito o un error HTTP 500 si falla
  */
 async function remove(req: Request, res: Response, next: NextFunction) {
   try {
