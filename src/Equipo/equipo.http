@@ -8,10 +8,32 @@ Content-Type: application/json
   "nombre": "Club Atletico AntiPinguinos"
 }
 
-### (Opcional) Obtener un equipo por ID (necesitarás crear esta ruta/controlador más adelante)
-# GET http://localhost:3000/api/equipos/1
-# Content-Type: application/json
+### Obtener el equipo del usuario autenticado (requiere autenticación previa)
+GET http://localhost:3000/api/equipos/mi-equipo
+Content-Type: application/json
 
-### (Opcional) Obtener el equipo del usuario autenticado (ruta muy útil)
-# GET http://localhost:3000/api/equipos/mi-equipo
-# Content-Type: application/json
+### Realizar un intercambio de jugadores en el equipo (requiere autenticación previa)
+PATCH http://localhost:3000/api/equipos/mi-equipo/intercambio
+Content-Type: application/json
+
+{
+  "jugadorSaleId": 1,
+  "jugadorEntraId": 60
+}
+// EL 196 el veliz, gracias dios por tanto futbol
+### Cambiar un titular por un suplente (requiere autenticación previa)
+PATCH http://localhost:3000/api/equipos/mi-equipo/alineacion
+Content-Type: application/json
+
+{
+  "jugadorTitularId": 1,
+  "jugadorSuplenteId": 196
+}
+
+### Obtener las jornadas de un equipo donde puntuó (requiere autenticación previa)
+GET http://localhost:3000/api/equipos/1/historial
+
+### Obtener Las puntuaciones de un equipo para una jornada.
+GET http://localhost:3000/api/equipos/1/jornadas/2
+Content-Type: application/json
+

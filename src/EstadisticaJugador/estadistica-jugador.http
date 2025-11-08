@@ -1,0 +1,12 @@
+@host = http://localhost:3000/api
+
+### Actualizar estadísticas para una jornada específica
+POST {{host}}/estadisticas/jornadas/1/actualizar
+Content-Type: application/json
+
+### Obtener todos los puntajes de una jornada
+GET {{host}}/estadisticas/jornadas/1/puntajes
+
+### Obtener puntaje de un jugador específico en una jornada
+# Reemplaza 123 con el ID real de un jugador
+GET {{host}}/estadisticas/jornadas/23/jugadores/123

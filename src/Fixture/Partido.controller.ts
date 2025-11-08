@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { orm } from '../shared/db/orm.js';
 import { Partido } from './partido.entity.js';
 import { Jornada } from './Jornada.entity.js';
@@ -16,6 +17,7 @@ const em = orm.em;
 async function findAll(req: Request, res: Response, next: NextFunction) {
   try {
     const { jornadaId, clubId, from, to } = req.query;
+
     const where: any = {};
     if (jornadaId) where.jornada = Number(jornadaId);
     if (clubId) where.$or = [{ local: Number(clubId) }, { visitante: Number(clubId) }];
@@ -57,17 +59,19 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
  * @returns Una respuesta HTTP 200 con un Json con el partido encontrado o un error HTTP 404, 500 si falla
  */
 async function findOne(req: Request, res: Response, next: NextFunction) {
+  const id = Number(req.params.id);
   try {
-    const id = Number(req.params.id);
-    const partido = await em.findOne(
+    const partido = await em.findOneOrFail(
       Partido,
       { id },
       { populate: ['local', 'visitante', 'jornada'] },
     );
-    if (!partido) return next(ErrorFactory.notFound('Partido no encontrado'));
     res.status(200).json({ message: 'Partido encontrado', data: partido });
   } catch (error: any) {
-    next(ErrorFactory.internal('Error obteniendo partido'));
+    if (error.name === 'NotFoundError') {
+      return next(ErrorFactory.notFound(`Partido con ID ${id} no encontrado`));
+    }
+    next(ErrorFactory.internal(`Error obteniendo partido`));
   }
 }
 
@@ -80,12 +84,9 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
 async function add(req: Request, res: Response, next: NextFunction) {
   try {
     const { id_api, fecha, estado, estado_detalle, estadio, jornadaId, localId, visitanteId } = req.body;
-    if (id_api == null || !jornadaId || !localId || !visitanteId) {
-      return next(ErrorFactory.validationAppError('Faltan campos obligatorios (id_api, jornadaId, localId, visitanteId)'));
-    }
 
     const jornada = await em.findOne(Jornada, { id: Number(jornadaId) });
-    if (!jornada) return next(ErrorFactory.notFound('Jornada no encontrada'));
+    if (!jornada) return  next(ErrorFactory.notFound('Jornada no encontrada'));
 
     const local = await em.findOne(clubes, { id: Number(localId) });
     if (!local) return next(ErrorFactory.notFound('Club local no encontrado'));
@@ -95,7 +96,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
 
     let partido = await em.findOne(Partido, { id_api: Number(id_api) });
     if (partido) {
-      return next(ErrorFactory.duplicate('Ya existe un partido con ese id_api'));
+      return next(ErrorFactory.duplicate(`El partido con id_api ${id_api} ya existe`));
     }
 
     partido = em.create(Partido, {
@@ -122,10 +123,9 @@ async function add(req: Request, res: Response, next: NextFunction) {
  * @returns Una respuesta HTTP 200 con un Json con el partido actualizado o un error HTTP 404, 500 si falla
  */
 async function update(req: Request, res: Response, next: NextFunction) {
+  const id = Number(req.params.id);
   try {
-    const id = Number(req.params.id);
-    const partido = await em.findOne(Partido, { id });
-    if (!partido) return next(ErrorFactory.notFound('Partido no encontrado'));
+    const partido = await em.findOneOrFail (Partido, { id });
 
     const { fecha, estado, estado_detalle, estadio, jornadaId, localId, visitanteId } = req.body;
 
@@ -153,6 +153,9 @@ async function update(req: Request, res: Response, next: NextFunction) {
     await em.flush();
     res.status(200).json({ message: 'Partido actualizado', data: partido });
   } catch (error: any) {
+    if (error.name === 'NotFoundError') {
+      return next(ErrorFactory.notFound(`Partido con ID ${id} no encontrado`));
+    }
     next(ErrorFactory.internal('Error actualizando partido'));
   }
 }

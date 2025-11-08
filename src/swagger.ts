@@ -15,6 +15,21 @@ const options: swaggerJsdoc.Options = {
       { url: 'http://localhost:3000', description: 'Local' },
     ],
     components: {
+      // Autenticación
+      securitySchemes: {
+        // Mantengo cookieAuth porque es lo usado en los YAML
+        cookieAuth: {
+          type: 'apiKey',
+          in: 'cookie',
+          name: 'token', // Cambia si tu cookie tiene otro nombre
+        },
+        // Agrego bearerAuth por si también admites Authorization: Bearer <JWT>
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
       schemas: {
         // --- CLUB ---
         Club:
@@ -215,10 +230,124 @@ const options: swaggerJsdoc.Options = {
             visitanteId: { type: 'integer' },
           },
         },
+
+        // --- EQUIPO ---
+        EquipoJugador: {
+          type: 'object',
+          description: 'Relación entre un equipo y un jugador, indicando titularidad.',
+          properties: {
+            id: { type: 'integer', example: 101 },
+            es_titular: { type: 'boolean', example: true },
+            jugador: { $ref: '#/components/schemas/Player' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          }
+        },
+        Equipo: {
+          type: 'object',
+          description: 'Representa el equipo de un usuario con su plantilla completa.',
+          properties: {
+            id: { type: 'integer', example: 1 },
+            nombre: { type: 'string', example: 'Los Invencibles FC' },
+            jugadores: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/EquipoJugador' }
+            },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          }
+        },
+
+        // --- RESPUESTAS COMUNES / ENVOLTORIOS ---
+        ErrorResponse: {
+          type: 'object',
+          properties: {
+            message: { type: 'string', example: 'Usuario no autenticado' },
+          },
+        },
+        OperationMessage: {
+          type: 'object',
+          properties: {
+            message: { type: 'string', example: 'Operación realizada con éxito' },
+          },
+        },
+        ApiEquipoCreateResponse: {
+          type: 'object',
+          properties: {
+            message: { type: 'string', example: 'Equipo creado exitosamente' },
+            data: { $ref: '#/components/schemas/Equipo' },
+          },
+        },
+      },
+      requestBodies: {
+        CreateEquipo: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  nombre: {
+                    type: 'string',
+                    description: 'El nombre para el nuevo equipo.',
+                    example: 'Los Invencibles FC',
+                  },
+                },
+                required: ['nombre'],
+              },
+            },
+          },
+        },
+        IntercambioJugador: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  jugadorSaleId: {
+                    type: 'integer',
+                    description: 'ID del jugador que sale del equipo.',
+                    example: 15,
+                  },
+                  jugadorEntraId: {
+                    type: 'integer',
+                    description: 'ID del jugador del mercado que entra al equipo.',
+                    example: 128,
+                  },
+                },
+                required: ['jugadorSaleId', 'jugadorEntraId'],
+              },
+            },
+          },
+        },
+        CambioAlineacion: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  jugadorTitularId: {
+                    type: 'integer',
+                    description: 'ID del jugador titular que pasará a ser suplente.',
+                    example: 2,
+                  },
+                  jugadorSuplenteId: {
+                    type: 'integer',
+                    description: 'ID del jugador suplente que pasará a ser titular.',
+                    example: 18,
+                  },
+                },
+                required: ['jugadorTitularId', 'jugadorSuplenteId'],
+              },
+            },
+          },
+        },
       },
     },
   },
-  // YAML de paths (asegúrate nombres correctos)
+  // YAML de paths
   apis: [
     './src/swagger/paths/*.yaml',
   ],
@@ -231,4 +360,5 @@ export function setupSwagger(app: Express): void {
     swaggerOptions: {
       persistAuthorization: true,
     },
-  }));}
+  }));
+}

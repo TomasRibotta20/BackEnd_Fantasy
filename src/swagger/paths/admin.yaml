@@ -1,0 +1,356 @@
+/api/admin/config:
+  get:
+    tags:
+      - Admin
+    summary: Obtener configuración del juego
+    description: Retorna la configuración actual del sistema (modificaciones habilitadas y jornada activa)
+    security:
+      - bearerAuth: []
+    responses:
+      200:
+        description: Configuración obtenida exitosamente
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    modificacionesHabilitadas:
+                      type: boolean
+                      example: false
+                      description: Indica si los usuarios pueden modificar sus equipos
+                    jornadaActiva:
+                      type: object
+                      nullable: true
+                      properties:
+                        id:
+                          type: number
+                          example: 2
+                        nombre:
+                          type: string
+                          example: "2nd Phase - 2"
+                    updatedAt:
+                      type: string
+                      format: date-time
+                      example: "2025-11-08T20:00:00.000Z"
+      401:
+        $ref: '#/components/responses/UnauthorizedError'
+      403:
+        $ref: '#/components/responses/ForbiddenError'
+
+/api/admin/habilitar-modificaciones:
+  post:
+    tags:
+      - Admin
+    summary: Habilitar modificaciones de equipos
+    description: Permite que los usuarios puedan modificar sus equipos (agregar/quitar jugadores)
+    security:
+      - bearerAuth: []
+    responses:
+      200:
+        description: Modificaciones habilitadas exitosamente
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: "Modificaciones habilitadas exitosamente"
+      401:
+        $ref: '#/components/responses/UnauthorizedError'
+      403:
+        $ref: '#/components/responses/ForbiddenError'
+
+/api/admin/deshabilitar-modificaciones:
+  post:
+    tags:
+      - Admin
+    summary: Deshabilitar modificaciones de equipos
+    description: Bloquea las modificaciones antes de procesar una jornada
+    security:
+      - bearerAuth: []
+    responses:
+      200:
+        description: Modificaciones deshabilitadas exitosamente
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: "Modificaciones deshabilitadas exitosamente"
+      401:
+        $ref: '#/components/responses/UnauthorizedError'
+      403:
+        $ref: '#/components/responses/ForbiddenError'
+
+/api/admin/set-jornada-activa:
+  post:
+    tags:
+      - Admin
+    summary: Establecer jornada activa
+    description: Establece manualmente cuál es la jornada actual del sistema
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - jornadaId
+            properties:
+              jornadaId:
+                type: number
+                example: 2
+                description: ID de la jornada a activar
+    responses:
+      200:
+        description: Jornada activa establecida exitosamente
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: "Jornada activa establecida exitosamente"
+                data:
+                  type: object
+                  properties:
+                    jornadaId:
+                      type: number
+                      example: 2
+                    jornadaNombre:
+                      type: string
+                      example: "2nd Phase - 2"
+      400:
+        description: Datos inválidos
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: false
+                message:
+                  type: string
+                  example: "Se requiere jornadaId"
+      404:
+        description: Jornada no encontrada
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: false
+                message:
+                  type: string
+                  example: "Jornada no encontrada"
+      401:
+        $ref: '#/components/responses/UnauthorizedError'
+      403:
+        $ref: '#/components/responses/ForbiddenError'
+
+/api/admin/jornadas/{jornadaId}/procesar:
+  post:
+    tags:
+      - Admin
+    summary: Procesar jornada completa
+    description: |
+      Procesa una jornada completa realizando las siguientes acciones:
+      1. Crea snapshots de todos los equipos
+      2. Obtiene estadísticas de la API externa
+      3. Calcula puntajes (solo jugadores titulares)
+      4. Opcionalmente activa la jornada
+      
+      **Nota:** Este endpoint consume requests de la API externa. Las modificaciones deben estar deshabilitadas.
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: jornadaId
+        required: true
+        schema:
+          type: number
+        description: ID de la jornada a procesar
+        example: 2
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              activarJornada:
+                type: boolean
+                default: true
+                description: Si es true, establece esta jornada como activa después de procesarla
+    responses:
+      200:
+        description: Jornada procesada exitosamente
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: "Jornada '2nd Phase - 2' procesada exitosamente y activada"
+                data:
+                  type: object
+                  properties:
+                    jornadaId:
+                      type: number
+                      example: 2
+                    jornadaNombre:
+                      type: string
+                      example: "2nd Phase - 2"
+                    numeroJornadaAPI:
+                      type: number
+                      example: 2
+                    snapshotsCreados:
+                      type: boolean
+                      example: true
+                    puntajesCalculados:
+                      type: boolean
+                      example: true
+                    jornadaActivada:
+                      type: boolean
+                      example: true
+      400:
+        description: Error en la solicitud
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: false
+                message:
+                  type: string
+                  example: "Las modificaciones deben estar deshabilitadas antes de procesar"
+      404:
+        description: Jornada no encontrada
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: false
+                message:
+                  type: string
+                  example: "Jornada no encontrada"
+      401:
+        $ref: '#/components/responses/UnauthorizedError'
+      403:
+        $ref: '#/components/responses/ForbiddenError'
+
+/api/admin/jornadas/{jornadaId}/recalcular:
+  post:
+    tags:
+      - Admin
+    summary: Recalcular puntajes de jornada
+    description: |
+      Recalcula los puntajes de una jornada usando datos ya existentes en la base de datos.
+      **No consume requests de la API externa.**
+      
+      Útil para:
+      - Corregir puntajes después de cambios en la lógica de cálculo
+      - Arreglar errores sin reprocesar desde la API
+      - Actualizar puntajes sin recrear snapshots
+      
+      **Requisito:** La jornada debe tener snapshots creados previamente.
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: jornadaId
+        required: true
+        schema:
+          type: number
+        description: ID de la jornada a recalcular
+        example: 2
+    responses:
+      200:
+        description: Puntajes recalculados exitosamente
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: "Puntajes de jornada '2nd Phase - 2' recalculados exitosamente"
+                data:
+                  type: object
+                  properties:
+                    jornadaId:
+                      type: number
+                      example: 2
+                    jornadaNombre:
+                      type: string
+                      example: "2nd Phase - 2"
+                    equiposActualizados:
+                      type: number
+                      example: 3
+                      description: Cantidad de equipos cuyos puntajes fueron actualizados
+      400:
+        description: No hay snapshots para recalcular
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: false
+                message:
+                  type: string
+                  example: "No hay snapshots para esta jornada. Debes procesarla primero."
+      404:
+        description: Jornada no encontrada
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: false
+                message:
+                  type: string
+                  example: "Jornada no encontrada"
+      401:
+        $ref: '#/components/responses/UnauthorizedError'
+      403:
+        $ref: '#/components/responses/ForbiddenError'

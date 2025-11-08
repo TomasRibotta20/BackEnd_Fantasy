@@ -26,5 +26,10 @@ export const updateUserSchema = createUserSchema.partial()
     message: 'Se debe enviar al menos un campo para actualizar',
   });
 
+export const idUserParamsSchema = z.object({
+  id: z.string().regex(/^\d+$/, 'El ID debe ser un número válido')
+});
+
 export type createUserInput = z.infer<typeof createUserSchema>;
 export type updateUserInput = z.infer<typeof updateUserSchema>;
+export type idUserParamsInput = z.infer<typeof idUserParamsSchema>;

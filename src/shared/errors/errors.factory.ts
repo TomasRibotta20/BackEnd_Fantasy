@@ -32,6 +32,10 @@ export class ErrorFactory {
     return new AppError(message, 400, 'VALIDATION_APP_ERROR');
   }
 
+  static badRequest(message: string) {
+    return new AppError(message, 400, 'BAD_REQUEST');
+  }
+  
   static duplicate(message: string) {
     return new AppError(message, 409, 'DUPLICATE_ERROR');
   }

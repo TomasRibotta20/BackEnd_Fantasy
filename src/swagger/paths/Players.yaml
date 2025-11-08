@@ -135,3 +135,93 @@
     responses:
       200: { description: Eliminado. }
       500: { description: Error. }
+
+/api/players:
+    get:
+      tags: [Players]
+      summary: Obtiene una lista filtrada y paginada de jugadores
+      description: >
+        Devuelve jugadores que coinciden con los criterios de filtrado.
+        Útil para el mercado de fichajes o para buscar jugadores específicos.
+      security:
+        - cookieAuth: []
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: name
+          schema:
+            type: string
+          description: Nombre o parte del nombre del jugador a buscar
+          example: Enzo
+        - in: query
+          name: position
+          schema:
+            type: string
+          description: ID de la posición o nombre/descripción de la posición (ej. Goalkeeper, Defender)
+          example: Midfielder
+        - in: query
+          name: club
+          schema:
+            type: string
+          description: ID del club o nombre del club (ej. River, Boca)
+          example: River
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Número de página para paginación
+          example: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Cantidad de elementos por página
+          example: 20
+      responses:
+        '200':
+          description: Lista de jugadores filtrados y paginados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Player'
+                  meta:
+                    type: object
+                    properties:
+                      totalItems:
+                        type: integer
+                        description: Cantidad total de jugadores que coinciden con los filtros
+                        example: 120
+                      currentPage:
+                        type: integer
+                        description: Página actual
+                        example: 1
+                      itemsPerPage:
+                        type: integer
+                        description: Cantidad de elementos por página
+                        example: 20
+                      totalPages:
+                        type: integer
+                        description: Número total de páginas
+                        example: 6
+        '401':
+          description: Usuario no autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Error del servidor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

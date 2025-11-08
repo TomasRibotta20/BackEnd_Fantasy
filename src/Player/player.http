@@ -9,18 +9,18 @@ POST http://localhost:3000/api/players
 Content-Type: application/json
 
 {
-  "apiId": 999001,
+  "apiId": 701,
   "name": "Jugador Demo",
   "firstname": "Demo",
   "lastname": "Test",
   "age": 25,
   "nationality": "Argentina",
-  "height": "180 cm",
-  "weight": "75 kg",
+  "height": "180cm",
+  "weight": "75kg",
   "photo": "https://example.com/foto.png",
   "jerseyNumber": 10,
-  "clubId": 1,
-  "positionId": 1
+  "clubId": 2,
+  "positionId": 3
 }
 
 ### Actualizar jugador (solo campos enviados)
@@ -30,10 +30,73 @@ Content-Type: application/json
 {
   "age": 26,
   "jerseyNumber": 11,
-  "positionId": 2
+  "positionId": 1
 }
 
 ### Eliminar jugador
 DELETE http://localhost:3000/api/players/1
 
-### Ejemplo error: jugador
+## Enpoints para listado de jugadores por club o posición o nombre
+
+@baseUrl = http://localhost:3000
+@token = {{login.response.body.token}}
+
+### Autenticación (ejecuta esto primero para obtener el token)
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "TomasRibotta20@gmail.com",
+  "password": "TeAmoMazalan69"
+}
+
+### 1. Obtener todos los jugadores (primera página, límite por defecto)
+GET {{baseUrl}}/api/players
+Authorization: Bearer {{token}}
+
+### 2. Búsqueda por nombre
+GET {{baseUrl}}/api/players?name=Enzo
+Authorization: Bearer {{token}}
+
+### 3. Filtrar por posición (utilizando descripción)
+GET {{baseUrl}}/api/players?position=Midfielder
+Authorization: Bearer {{token}}
+
+### 4. Filtrar por posición (utilizando ID de posición)
+# Asumiendo que el ID 3 corresponde a defensores
+GET {{baseUrl}}/api/players?position=3
+Authorization: Bearer {{token}}
+
+### 5. Filtrar por club (utilizando nombre)
+GET {{baseUrl}}/api/players?club=River
+Authorization: Bearer {{token}}
+
+### 6. Filtrar por club (utilizando ID de club)
+# Asumiendo que el ID 1 corresponde a River Plate
+GET {{baseUrl}}/api/players?club=1
+Authorization: Bearer {{token}}
+
+### 7. Filtrar por múltiples criterios (nombre + posición + club)
+GET {{baseUrl}}/api/players?name=Alejo&position=Attacker&club=Rosario
+Authorization: Bearer {{token}}
+
+### 8. Probar paginación (página 2 con 10 elementos por página)
+GET {{baseUrl}}/api/players?page=2&limit=10
+Authorization: Bearer {{token}}
+
+### 9. Búsqueda específica para arqueros (útil para reemplazar arqueros en el equipo)
+GET {{baseUrl}}/api/players?position=Goalkeeper
+Authorization: Bearer {{token}}
+
+### 10. Búsqueda de sólo defensores de Boca Juniors
+GET {{baseUrl}}/api/players?position=Defender&club=Boca
+Authorization: Bearer {{token}}
+
+### 11. Obtener la lista con límite alto para ver todos los resultados
+GET {{baseUrl}}/api/players?limit=100
+Authorization: Bearer {{token}}
+
+### 12. Búsqueda por nombre parcial (debería encontrar tanto "Enzo" como "Vincenzo")
+GET {{baseUrl}}/api/players?name=enz
+Authorization: Bearer {{token}}

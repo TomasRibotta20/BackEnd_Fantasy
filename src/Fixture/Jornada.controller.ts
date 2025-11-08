@@ -40,13 +40,16 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
  * @returns Una respuesta HTTP 200 con un Json con la jornada encontrada o un error HTTP 404, 500 si falla
  */
 async function findOne(req: Request, res: Response, next: NextFunction) {
+  const id = Number(req.params.id);
   try {
-    const id = Number(req.params.id);
-    const jornada = await em.findOne(Jornada, { id });
-    if (!jornada) return next(ErrorFactory.notFound('Jornada no encontrada'));
+    const jornada = await em.findOneOrFail(Jornada, { id });
     res.status(200).json({ message: 'Jornada encontrada', data: jornada });
   } catch (error: any) {
-    next(ErrorFactory.internal('Error obteniendo jornada'));
+    if (error.name === 'NotFoundError') {
+      next(ErrorFactory.notFound(`Jornada con ID ${id} no encontrada`));
+    } else {
+      next(ErrorFactory.internal('Error obteniendo jornada'));
+    }
   }
 }
 
@@ -59,13 +62,11 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
 async function add(req: Request, res: Response, next: NextFunction) {
   try {
     const { nombre, temporada, etapa, liga_id, fecha_inicio, fecha_fin } = req.body;
-    if (!nombre || temporada == null) {
-      return next(ErrorFactory.validationAppError('Faltan campos obligatorios (nombre, temporada)'));
-    }
-    const exists = await em.findOne(Jornada, { nombre });
-    if (exists) {
-      return next(ErrorFactory.duplicate('Ya existe una jornada con ese nombre'));
-    }
+  
+    //if (!nombre || temporada == null) {
+    //  return next(ErrorFactory.validationAppError('Nombre y temporada son campos requeridos'));
+    //}
+
     const jornada = em.create(Jornada, {
       nombre,
       temporada: Number(temporada),
@@ -74,9 +75,13 @@ async function add(req: Request, res: Response, next: NextFunction) {
       fecha_inicio: fecha_inicio ? new Date(fecha_inicio) : null,
       fecha_fin: fecha_fin ? new Date(fecha_fin) : null,
     });
+
     await em.persistAndFlush(jornada);
     res.status(201).json({ message: 'Jornada creada', data: jornada });
   } catch (error: any) {
+    if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
+      return next(ErrorFactory.duplicate('Ya existe una jornada con ese nombre'));
+    } 
     next(ErrorFactory.internal('Error creando jornada'));
   }
 }
@@ -88,23 +93,25 @@ async function add(req: Request, res: Response, next: NextFunction) {
  * @returns Una respuesta HTTP 200 con un Json con la jornada actualizada o un error HTTP 404, 500 si falla
  */
 async function update(req: Request, res: Response, next: NextFunction) {
+  const id = Number(req.params.id); //Ya validado por Zod como number
   try {
-    const id = Number(req.params.id);
-    const jornada = await em.findOne(Jornada, { id });
-    if (!jornada) return next(ErrorFactory.notFound('Jornada no encontrada'));
+    const jornada = await em.findOneOrFail(Jornada, id);
 
     const { nombre, temporada, etapa, liga_id, fecha_inicio, fecha_fin } = req.body;
 
-    if (nombre) jornada.nombre = nombre;
-    if (temporada != null) jornada.temporada = Number(temporada);
-    if (etapa !== undefined) jornada.etapa = etapa ?? null;
-    if (liga_id !== undefined) jornada.liga_id = liga_id != null ? Number(liga_id) : null;
+    if (nombre !== undefined) jornada.nombre = nombre;
+    if (temporada !== undefined) jornada.temporada = Number(temporada);
+    if (etapa !== undefined) jornada.etapa = etapa;
+    if (liga_id !== undefined) jornada.liga_id = liga_id !== null ? Number(liga_id) : null;
     if (fecha_inicio !== undefined) jornada.fecha_inicio = fecha_inicio ? new Date(fecha_inicio) : null;
     if (fecha_fin !== undefined) jornada.fecha_fin = fecha_fin ? new Date(fecha_fin) : null;
 
     await em.flush();
     res.status(200).json({ message: 'Jornada actualizada', data: jornada });
   } catch (error: any) {
+    if (error.name === 'NotFoundError') {
+      return next(ErrorFactory.notFound(`Jornada con ID ${id} no encontrada`));
+    }
     next(ErrorFactory.internal('Error actualizando jornada'));
   }
 }
@@ -117,10 +124,10 @@ async function update(req: Request, res: Response, next: NextFunction) {
 async function remove(req: Request, res: Response, next: NextFunction) {
   try {
     const id = Number(req.params.id);
-    const jornada = em.getReference(Jornada, id);
+    const jornada = em.getReference(Jornada, id );
     await em.removeAndFlush(jornada);
     res.status(200).json({ message: 'Jornada eliminada' });
-  } catch (error: any) {
+  } catch (error) {
     next(ErrorFactory.internal('Error eliminando jornada'));
   }
 }

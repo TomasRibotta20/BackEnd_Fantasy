@@ -17,7 +17,7 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
     const clubs = await em.find(clubes, {}, { orderBy: { id: 'ASC' } });
     res.status(200).json({ message: 'found all Clubs', data: clubs });
   } catch (error: any) {
-    next(ErrorFactory.internal(`Error al obtener los clubes: ${error.message}`));
+    next(ErrorFactory.internal(`Error al obtener los clubes`));
   }
 }
 /**
@@ -94,7 +94,7 @@ async function remove(req: Request, res: Response, next: NextFunction) {
     await em.removeAndFlush(club);
     res.status(200).send({ message: 'club deleted' });
   } catch (error: any) {
-    next(ErrorFactory.internal(`Error al eliminar el club: ${error.message}`));
+    next(ErrorFactory.internal(`Error al eliminar el club`));
   }
 }
 

@@ -12,9 +12,9 @@ POST http://localhost:3000/api/auth/register
 Content-Type: application/json
 
 {
-  "username": "Tomas",
-  "email": "TomasRibotta20@gmail.com",
-  "password": "TeAmoMazalan69"
+  "username": "Admin",
+  "email": "admin@admin.com",
+  "password": "admin123"
 }
 
 ### POST /api/auth/logout
@@ -40,13 +40,13 @@ Content-Type: application/json
 }
 
 #########################################################
-### Login
+### Login Admin
 POST http://localhost:3000/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "josesito@fantasy.com",
-  "password": "josesito123"
+  "email": "admin@admin.com",
+  "password": "admin123"
 }
 ###
 
