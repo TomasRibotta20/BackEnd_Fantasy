@@ -25,6 +25,6 @@ export class Player extends BaseEntity {
   @ManyToOne(() => Position, { nullable: true })
   position?: Position | null;
 
-  @OneToMany(() => EquipoJugador, (equipoJugador) => equipoJugador.jugador)
+  @OneToMany(() => EquipoJugador, (equipoJugador) => equipoJugador.jugador, { nullable: true })
   equipos = new Collection<EquipoJugador>(this);
 }

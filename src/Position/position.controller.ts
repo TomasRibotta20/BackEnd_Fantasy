@@ -17,7 +17,7 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
     const positions = await em.find(Position, {}, { orderBy: { id: 'ASC' } });
     res.status(200).json({ message: 'found all positions', data: positions });
   } catch (error: any) {
-    next(ErrorFactory.internal(`Error al obtener las posiciones: ${error.message}`));
+    next(ErrorFactory.internal(`Error al obtener las posiciones`));
   }
 }
 

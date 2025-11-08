@@ -9,18 +9,18 @@ POST http://localhost:3000/api/players
 Content-Type: application/json
 
 {
-  "apiId": 999001,
+  "apiId": 701,
   "name": "Jugador Demo",
   "firstname": "Demo",
   "lastname": "Test",
   "age": 25,
   "nationality": "Argentina",
-  "height": "180 cm",
-  "weight": "75 kg",
+  "height": "180cm",
+  "weight": "75kg",
   "photo": "https://example.com/foto.png",
   "jerseyNumber": 10,
-  "clubId": 1,
-  "positionId": 1
+  "clubId": 2,
+  "positionId": 3
 }
 
 ### Actualizar jugador (solo campos enviados)
@@ -30,7 +30,7 @@ Content-Type: application/json
 {
   "age": 26,
   "jerseyNumber": 11,
-  "positionId": 2
+  "positionId": 1
 }
 
 ### Eliminar jugador

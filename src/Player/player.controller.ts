@@ -3,7 +3,9 @@ import { Player } from './player.entity.js';
 import { orm } from '../shared/db/orm.js';
 import { findAndPaginate } from './player.service.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
-//Definimos una variable para el entityManager
+import { clubes } from '../Club/club.entity.js';
+import { Position } from '../Position/position.entity.js';
+
 const em = orm.em;
 
 /**
@@ -12,12 +14,12 @@ const em = orm.em;
  * @param res El objeto de respuesta de Express para enviar los resultados.
  * @returns Una respuesta HTTP 200 con la lista de jugadores encontrados o un mensaje de error y una respuesta HTTP 500.
  */
-async function findAll(req: Request, res: Response){
+async function findAll(req: Request, res: Response, next: NextFunction){
     try{
         const players = await em.find(Player, {}, {orderBy: {id: 'ASC'}});
         res.status(200).json({message: 'found all Players', data: players})
     }catch (error:any) {
-        res.status(500).json({message: 'Error finding players', error: error.message})
+        next(ErrorFactory.internal('Error finding players'));
     }
 }
 
@@ -27,16 +29,16 @@ async function findAll(req: Request, res: Response){
  * @param res El objeto de respuesta de Express para enviar los resultados.
  * @returns Una respuesta HTTP 200 con el jugador encontrado o un mensaje de error y una respuesta HTTP 500.
  */
-async function findOne(req: Request, res: Response){
+async function findOne(req: Request, res: Response, next: NextFunction){
+    const id = Number.parseInt(req.params.id);
     try{
-        const id = Number.parseInt(req.params.id);
-        const player = await em.findOne(Player, {id});
-        if (!player) {
-            return res.status(404).json({message: 'Player not found'});
-        }
+        const player = await em.findOneOrFail(Player, {id});
         res.status(200).json({message: 'found Player', data: player});
     }catch (error:any) {
-        res.status(500).json({message: 'Error finding player', error: error.message});
+        if (error.name === 'NotFoundError') {
+            return next(ErrorFactory.notFound(`Player with ID ${id} not found`));
+        }
+        next(ErrorFactory.internal('Error finding player'));
     }
 }
 
@@ -46,13 +48,30 @@ async function findOne(req: Request, res: Response){
  * @param res El objeto de respuesta de Express para enviar los resultados.
  * @returns Una respuesta HTTP 201 con el jugador creado o un mensaje de error y una respuesta HTTP 500.
  */
-async function add(req: Request, res: Response){
+async function add(req: Request, res: Response, next: NextFunction){
     try{
-        const player = em.create(Player, req.body);
+        const { clubId, positionId, ...playerData } = req.body;
+    
+        const club = await em.findOneOrFail(clubes, { id: clubId });
+        let position = null;
+        if (positionId) {
+            position = await em.findOne(Position, { id: positionId });
+            if (!position) {
+                return next(ErrorFactory.notFound(`Position with ID ${positionId} not found`));
+            }
+        }
+        const player = em.create(Player, {
+            ...playerData,
+            club,
+            position
+        });
         await em.persistAndFlush(player);
         res.status(201).json({message: 'Player created', data: player});
-    }catch (error:any) {
-        res.status(500).json({message: 'Error creating player', error: error.message});
+    } catch (error:any) {
+        if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
+            return next(ErrorFactory.duplicate('Player with that name already exists'));
+        }
+        next(ErrorFactory.internal('Error creating player'));
     }
 }
 
@@ -62,17 +81,14 @@ async function add(req: Request, res: Response){
  * @param res El objeto de respuesta de Express para enviar los resultados.
  * @returns Una respuesta HTTP 200 con el jugador eliminado o un mensaje de error y una respuesta HTTP 500.
  */
-async function remove(req: Request, res: Response){
+async function remove(req: Request, res: Response, next: NextFunction){
     try{
         const id = Number.parseInt(req.params.id);
-        const player = await em.findOne(Player, {id});
-        if (!player) {
-            return res.status(404).json({message: 'Player not found'});
-        }
+        const player = em.getReference(Player, id);
         await em.removeAndFlush(player);
         res.status(200).json({message: 'Player removed', data: player});
     }catch (error:any) {
-        res.status(500).json({message: 'Error removing player', error: error.message});
+        next(ErrorFactory.internal('Error removing player'));
     }
 }
 
@@ -82,18 +98,35 @@ async function remove(req: Request, res: Response){
  * @param res El objeto de respuesta de Express para enviar los resultados.
  * @returns Una respuesta HTTP 200 con el jugador actualizado o un mensaje de error y una respuesta HTTP 500.
  */
-async function update(req: Request, res: Response){
+async function update(req: Request, res: Response, next: NextFunction){
+    const id = Number(req.params.id);
     try{
-        const id = Number.parseInt(req.params.id);
-        const player = await em.findOne(Player, {id});
-        if (!player) {
-            return res.status(404).json({message: 'Player not found'});
+        const player = await em.findOneOrFail(Player, {id});
+        const { clubId, positionId, ...playerData } = req.body;
+        if (clubId) {
+            const club = await em.findOne(clubes, { id: clubId });
+            if (!club) {
+                return next(ErrorFactory.notFound(`Club with ID ${clubId} not found`));
+            }
+            playerData.club = club;
         }
-        em.assign(player, req.body);
-        await em.persistAndFlush(player);
+        if (positionId) {
+            const position = await em.findOne(Position, { id: positionId });
+            if (!position) {
+                return next(ErrorFactory.notFound(`Position with ID ${positionId} not found`));
+            }
+            playerData.position = position;
+        } else if (positionId === null) {
+            playerData.position = null;
+        }
+        em.assign(player, playerData);
+        await em.flush();
         res.status(200).json({message: 'Player updated', data: player});
-    }catch (error:any) {
-        res.status(500).json({message: 'Error updating player', error: error.message});
+    }catch (error: any) {
+        if (error.name === 'NotFoundError') {
+            return next(ErrorFactory.notFound(`Player with ID ${id} not found`));
+        }
+        next(ErrorFactory.internal('Error updating player'));
     }
 }
 /**
@@ -121,8 +154,7 @@ async function update(req: Request, res: Response){
     });
     
     return res.status(200).json(result);
-  } catch (error) {
-    console.error('Error en getPlayers:', error);
+  } catch (error: any) {
     return next(ErrorFactory.internal('Error al obtener jugadores'));
   }
 }

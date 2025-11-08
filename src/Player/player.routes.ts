@@ -8,12 +8,15 @@ import {
     add, 
     getPlayers
 } from './player.controller.js';
+import { validate, validateParams, validateQuery } from '../shared/zod/validate.js';
+import { createPlayerSchema, updatePlayerSchema, findAllPlayersQuerySchema, idPlayerParamsSchema } from './player.schema.js';
 
 export const playerRouter = Router();
 playerRouter.get('/', requireAuth, getPlayers);
-playerRouter.get('/', findAll);
-playerRouter.get('/:id', findOne);
-playerRouter.post('/', add);
-playerRouter.put('/:id', update);
-playerRouter.delete('/:id', remove);
+playerRouter.get('/', validateQuery(findAllPlayersQuerySchema), findAll);
+playerRouter.get('/:id', validateParams(idPlayerParamsSchema), findOne);
+playerRouter.post('/', validate(createPlayerSchema), add);
+playerRouter.put('/:id', validateParams(idPlayerParamsSchema), validate(updatePlayerSchema), update);
+playerRouter.patch('/:id', validateParams(idPlayerParamsSchema), validate(updatePlayerSchema), update);
+playerRouter.delete('/:id', validateParams(idPlayerParamsSchema), remove);
 
