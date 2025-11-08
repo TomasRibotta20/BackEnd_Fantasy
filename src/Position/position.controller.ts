@@ -96,7 +96,7 @@ async function remove(req: Request, res: Response, next: NextFunction) {
     await em.removeAndFlush(position);
     res.status(200).json({ message: 'position removed' });
   } catch (error: any) {
-    next(ErrorFactory.internal(`Error al eliminar la posición: ${error.message}`));
+    next(ErrorFactory.internal(`Error al eliminar la posición`));
   }
 }
 
