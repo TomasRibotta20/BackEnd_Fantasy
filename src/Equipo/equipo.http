@@ -29,3 +29,11 @@ Content-Type: application/json
   "jugadorTitularId": 1,
   "jugadorSuplenteId": 196
 }
+
+### Obtener las jornadas de un equipo donde puntuó (requiere autenticación previa)
+GET http://localhost:3000/api/equipos/1/historial
+
+### Obtener Las puntuaciones de un equipo para una jornada.
+GET http://localhost:3000/api/equipos/1/jornadas/2
+Content-Type: application/json
+

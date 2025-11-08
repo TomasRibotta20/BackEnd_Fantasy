@@ -56,9 +56,6 @@ export class EstadisticaJugadorService {
           console.log(`No hay estadísticas disponibles para el partido ${partido.id_api}. Marcando como procesado sin datos.`);
           partidosSinEstadisticas.push(partido.id_api);
           
-          // Aquí podrías registrar en una tabla de log que el partido no tiene estadísticas
-          // para no intentar obtenerlas nuevamente en el futuro
-          
           partidosProcesados++; // Consideramos procesado aunque no tenga datos
           continue;
         }
@@ -198,10 +195,10 @@ export class EstadisticaJugadorService {
     }
     
     // Penalizaciones
-    puntaje -= (estadistica.tarjetas_amarillas || 0);
-    puntaje -= (estadistica.tarjetas_rojas || 0) * 3;
+    puntaje -= (estadistica.tarjetas_amarillas || 0) * 2;
+    puntaje -= (estadistica.tarjetas_rojas || 0) * 5;
     
-    // Añadir puntos por rating si está disponible
+    // Añadir puntos por rating de la api si está disponible
     if (estadistica.rating) {
       puntaje += estadistica.rating;
     }
