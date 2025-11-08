@@ -1,0 +1,9 @@
+@baseUrl = http://localhost:3000
+
+
+### Obtener jornada activa
+GET {{baseUrl}}/api/config/jornada-activa
+
+
+### Obtener estado de modificaciones
+GET {{baseUrl}}/api/config/estado-modificaciones

@@ -13,6 +13,8 @@ import { orm } from './shared/db/orm.js';
 import { RequestContext } from '@mikro-orm/core';
 import { userRouter } from './User/user.routes.js';
 import { authRouter } from './Auth/auth.routes.js';
+import { gameConfigRoutes } from './Config/gameConfig.routes.js'
+import { adminRouter } from './admin/admin.routes.js'
 import { SECRET_JWT_KEY } from './shared/jwt.js';
 import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
@@ -103,6 +105,8 @@ app.use('/partidos', partidoRouter);
 app.use('/api/positions', positionRouter); // Rutas de posiciones
 app.use('/api/equipos', equipoRouter);
 app.use('/api/estadisticas', estadisticaJugadorRouter);
+app.use('/api/config', gameConfigRoutes);
+app.use('/api/admin', adminRouter);
 
 app.use((req, _, next) => {
   next(ErrorFactory.notFoundRoute(req.originalUrl));

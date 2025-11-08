@@ -1,0 +1,36 @@
+### Variables
+@baseUrl = http://localhost:3000
+
+### ====================================
+### GESTIÓN DE CONFIGURACIÓN
+### ====================================
+
+### Ver configuración actual
+GET {{baseUrl}}/api/admin/config
+
+
+### Establecer jornada activa
+POST {{baseUrl}}/api/admin/set-jornada-activa
+Content-Type: application/json
+
+{
+  "jornadaId": 1
+}
+
+### Deshabilitar modificaciones (bloquear equipos)
+POST {{baseUrl}}/api/admin/deshabilitar-modificaciones
+
+
+### Habilitar modificaciones (permitir cambios en equipos)
+POST {{baseUrl}}/api/admin/habilitar-modificaciones
+
+### Procesar jornada (ejemplo: jornada ID 2)
+POST {{baseUrl}}/api/admin/jornadas/2/procesar
+Content-Type: application/json
+
+{
+  "activarJornada": true
+}
+
+### Recalcular puntajes de una jornada (sin llamar a la API)
+POST {{baseUrl}}/api/admin/jornadas/2/recalcular

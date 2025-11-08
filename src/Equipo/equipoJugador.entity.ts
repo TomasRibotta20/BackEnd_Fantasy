@@ -6,7 +6,7 @@ import { Player } from '../Player/player.entity.js';
 @Entity({ tableName: 'equipos_jugadores' })
 @Unique({ properties: ['equipo', 'jugador'] })
 export class EquipoJugador extends BaseEntity {
-  // CORRECCIÓN: Usar Reference.create() para la relación
+  
   @ManyToOne('Equipo', { nullable: false})
   equipo!: Reference<Equipo>;
 
