@@ -2,7 +2,7 @@
 GET http://localhost:3000/partidos
 
 ### Filtrar por jornada
-GET http://localhost:3000/partidos?jornadaId=1
+GET http://localhost:3000/partidos?jornadaId=2
 
 ### Filtrar por club
 GET http://localhost:3000/partidos?clubId=10

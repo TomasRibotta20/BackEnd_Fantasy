@@ -29,20 +29,16 @@ async function seleccionarJugadores(
     },
     {
       populate: ['position'],
-      orderBy: { id: 'ASC' }, // You can randomize in JS below if needed
-      limit: cantidad * 2, // Fetch more to allow random selection
+      orderBy: { [raw('RAND()')]: 'ASC' },
+      limit: cantidad, // Solo traer la cantidad exacta que necesitas
     }
   );
 
-  // Shuffle and select random players
-  const shuffled = jugadores.sort(() => Math.random() - 0.5);
-  const seleccionados = shuffled.slice(0, cantidad);
-
-  if (seleccionados.length < cantidad) {
+  if (jugadores.length < cantidad) {
     throw ErrorFactory.badRequest(`No hay suficientes jugadores en la posición: ${posicion}`);
   }
 
-  return seleccionados;
+  return jugadores;
 }
 /**
  * Crea un nuevo equipo para un usuario, realizando un draft automático de jugadores.

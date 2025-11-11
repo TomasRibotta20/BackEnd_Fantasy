@@ -5,7 +5,7 @@ GET http://localhost:3000/jornadas
 GET http://localhost:3000/jornadas?temporada=2021
 
 ### Obtener una jornada
-GET http://localhost:3000/jornadas/1
+GET http://localhost:3000/jornadas/2
 
 ### Crear jornada
 POST http://localhost:3000/jornadas

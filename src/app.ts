@@ -9,7 +9,7 @@ import { partidoRouter } from './Fixture/Partido.routes.js';
 import { positionRouter } from './Position/position.routes.js';
 import { equipoRouter } from './Equipo/equipo.routes.js';
 import { estadisticaJugadorRouter } from './EstadisticaJugador/estadistica-jugador.routes.js';
-import { orm } from './shared/db/orm.js';
+import { orm, safeUpdateSchema } from './shared/db/orm.js';
 import { RequestContext } from '@mikro-orm/core';
 import { userRouter } from './User/user.routes.js';
 import { authRouter } from './Auth/auth.routes.js';
@@ -111,6 +111,7 @@ app.use('/api/admin', adminRouter);
 app.use((req, _, next) => {
   next(ErrorFactory.notFoundRoute(req.originalUrl));
 });
+
 
 app.use(globalErrorHandler);
 

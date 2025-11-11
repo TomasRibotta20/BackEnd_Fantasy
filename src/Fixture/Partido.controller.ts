@@ -1,6 +1,5 @@
 /* eslint-disable no-console */
 import { Request, Response, NextFunction } from 'express';
-import { Request, Response, NextFunction } from 'express';
 import { orm } from '../shared/db/orm.js';
 import { Partido } from './partido.entity.js';
 import { Jornada } from './Jornada.entity.js';

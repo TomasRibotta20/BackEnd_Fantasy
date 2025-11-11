@@ -34,6 +34,10 @@ Content-Type: application/json
 GET http://localhost:3000/api/equipos/1/historial
 
 ### Obtener Las puntuaciones de un equipo para una jornada.
-GET http://localhost:3000/api/equipos/1/jornadas/2
+GET http://localhost:3000/api/equipos/3/jornadas/1
 Content-Type: application/json
 
+### Obtener Las puntuaciones de un equipo para una jornada.
+
+GET http://localhost:3000/api/equipos/todos
+Content-Type: application/json
