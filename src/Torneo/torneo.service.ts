@@ -5,6 +5,7 @@ import { EstadoTorneo, Torneo } from './torneo.entity.js';
 import { TorneoUsuario } from './torneoUsuario.entity.js';
 import { Users } from '../User/user.entity.js';
 import { Equipo } from '../Equipo/equipo.entity.js';
+import { EquipoJugador } from '../Equipo/equipoJugador.entity.js';
 
 const em = orm.em;
 
@@ -71,7 +72,9 @@ static async leaveTorneo(torneoId: number, userId: number) {
 
   await fork.transactional(async (transactionalEm) => {
     if (miInscripcion.equipo) {
-        await transactionalEm.nativeDelete(Equipo, { id: miInscripcion.equipo.id });
+        const equipoId = miInscripcion.equipo.id;
+        await transactionalEm.nativeDelete(EquipoJugador, { equipo: equipoId });
+        await transactionalEm.nativeDelete(Equipo, { id: equipoId });
     }
     if (otrosParticipantesCount === 0) {
         await transactionalEm.nativeDelete(Torneo, { id: torneoId });
@@ -138,4 +141,39 @@ static async start(torneoId: number, userId: number) {
 
     return { message: '¡Torneo iniciado! El mercado está abierto y los jugadores asignados.' };
 }
+
+static async kickUser(torneoId: number, creadorId: number, targetUserId: number) {
+    
+    const creadorInscripcion = await em.findOne(TorneoUsuario, {
+        torneo: torneoId,
+        usuario: creadorId,
+        rol: 'creador'
+    });
+
+    if (!creadorInscripcion) {
+        throw ErrorFactory.forbidden('Solo el creador del torneo puede expulsar participantes.');
+    }
+    if (creadorId === targetUserId) {
+        throw ErrorFactory.badRequest('No puedes expulsarte a ti mismo. Usa la opción "Abandonar torneo".');
+    }
+    const targetInscripcion = await em.findOne(TorneoUsuario, {
+        torneo: torneoId,
+        usuario: targetUserId
+    }, { populate: ['equipo'] });
+
+    if (!targetInscripcion) {
+        throw ErrorFactory.notFound('El usuario indicado no participa en este torneo.');
+    }
+    const fork = em.fork();
+    await fork.transactional(async (transactionalEm) => {
+        if (targetInscripcion.equipo) {
+            const equipoId = targetInscripcion.equipo.id;
+            await transactionalEm.nativeDelete(EquipoJugador, { equipo: equipoId });
+            await transactionalEm.nativeDelete(Equipo, { id: equipoId });
+        }
+        await transactionalEm.nativeDelete(TorneoUsuario, { id: targetInscripcion.id });
+    });
+    return { message: 'Participante expulsado correctamente.' };
+}
+
 }

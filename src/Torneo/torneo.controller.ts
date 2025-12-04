@@ -456,6 +456,7 @@ async function getTorneoUsuario(req: Request, res: Response, next: NextFunction)
 
     const listaVisual = participantes.map((ins, index) => ({
         pos: index + 1,
+        usuario_id: ins.usuario.id,
         usuario: ins.usuario.username,
         equipo_id: ins.equipo?.id || null,
         nombre_equipo: ins.equipo?.nombre || 'Sin Equipo',
@@ -516,6 +517,23 @@ async function iniciarTorneo(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+async function expulsar(req: Request, res: Response, next: NextFunction) {
+  try {
+    const torneoId = Number(req.params.id);
+    const targetUserId = Number(req.params.userId); 
+    
+    const creadorId = req.authUser.user?.userId!;
+
+    const result = await TorneoService.kickUser(torneoId, creadorId, targetUserId);
+    res.status(200).json(result);
+  } catch (error: any) {
+    if (error.name === 'NotFoundError') {
+        return next(ErrorFactory.notFound('Usuario o torneo no encontrado'));
+    }
+    next(error);
+  }
+}
+
 function generateRandomCode(length = 6): string {
    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
    let result = '';
@@ -525,4 +543,4 @@ function generateRandomCode(length = 6): string {
    return result;
 }
 
-export { findAll, findOne, add, update, remove, validateAccessCode, getMisTorneos, getTorneoUsuario, joinTorneo, leave, iniciarTorneo };
+export { findAll, findOne, add, update, remove, validateAccessCode, getMisTorneos, getTorneoUsuario, joinTorneo, leave, iniciarTorneo, expulsar };

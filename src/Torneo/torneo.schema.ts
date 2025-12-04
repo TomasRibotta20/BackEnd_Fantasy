@@ -45,6 +45,11 @@ export const misTorneosQuerySchema = z.object({
   estado: z.enum(['EN_ESPERA', 'ACTIVO']).optional()
 }).optional();
 
+export const idTorneoUsuarioExpulsarSchema = z.object({
+  id: z.string().regex(/^\d+$/, 'El ID del torneo debe ser un número válido'),
+  userId: z.string().regex(/^\d+$/, 'El ID del usuario debe ser un número válido')
+});
+
 export type CreateTorneoInput = z.infer<typeof createTorneoSchema>;
 export type UpdateTorneoInput = z.infer<typeof updateTorneoSchema>;
 export type IdTorneoParams = z.infer<typeof idTorneoParamsSchema>;
@@ -52,3 +57,4 @@ export type TorneoQuery = z.infer<typeof torneoQuerySchema>;
 export type ValidateAccessCodeInput = z.infer<typeof validateAccessCodeSchema>;
 export type JoinTorneoInput = z.infer<typeof joinTorneoSchema>;
 export type MisTorneosQuery = z.infer<typeof misTorneosQuerySchema>;
+export type IdTorneoUsuarioExpulsarParams = z.infer<typeof idTorneoUsuarioExpulsarSchema>;

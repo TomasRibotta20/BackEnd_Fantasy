@@ -7,7 +7,7 @@ import { Player } from '../Player/player.entity.js';
 @Unique({ properties: ['equipo', 'jugador'] })
 export class EquipoJugador extends BaseEntity {
   
-  @ManyToOne('Equipo', { nullable: false})
+  @ManyToOne('Equipo', { nullable: false, })
   equipo!: Reference<Equipo>;
 
   @ManyToOne(() => Player, { nullable: false})
