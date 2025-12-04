@@ -98,7 +98,9 @@ async obtenerEquipoEnJornada(equipoId: number, jornadaId: number) {
     { equipo: equipoId, jornada: jornadaId },
     { 
       populate: [
-        'equipo',        
+        'equipo',
+        'equipo.torneoUsuario',
+        'equipo.torneoUsuario.usuario',        
         'jornada', 
         'jugadores', 
         'jugadores.club', 
@@ -180,7 +182,7 @@ async obtenerEquipoEnJornada(equipoId: number, jornadaId: number) {
     equipo: {
       id: equipoJornada.equipo.id,
       nombre: equipoJornada.equipo.nombre,
-      usuarioId: equipoJornada.equipo.usuario, 
+      usuarioId: equipoJornada.equipo.torneoUsuario.usuario.id, 
     },
     jornada: {
       id: equipoJornada.jornada.id,
@@ -213,7 +215,7 @@ async obtenerEquipoEnJornada(equipoId: number, jornadaId: number) {
       EquipoJornada,
       { jornada: jornadaId },
       {
-        populate: ['equipo', 'equipo.usuario', 'jornada'],
+        populate: ['equipo', 'equipo.torneoUsuario', 'equipo.torneoUsuario.usuario', 'jornada'],
         orderBy: { puntajeTotal: 'DESC' },
       }
     )

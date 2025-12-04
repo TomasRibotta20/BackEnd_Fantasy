@@ -49,7 +49,67 @@ async function seleccionarJugadores(
  * @throws {ErrorFactory.notFound} Si el usuario no existe.
  * @throws {ErrorFactory.duplicate} Si el usuario ya tiene un equipo.
  */
+
+////////////////////////////////
+
+export async function poblarEquipoAleatoriamente(equipoId: number, transactionalEm: EntityManager) {
+
+    const equipo = await transactionalEm.findOne(Equipo, { id: equipoId });
+    if (!equipo) {
+        throw ErrorFactory.notFound(`Equipo ${equipoId} no encontrado al intentar poblarlo.`);
+    }
+    const arquerosTitulares = await seleccionarJugadores(transactionalEm, 'Goalkeeper', 1);
+    const defensoresTitulares = await seleccionarJugadores(transactionalEm, 'Defender', 4);
+    const mediocampistasTitulares = await seleccionarJugadores(transactionalEm, 'Midfielder', 3);
+    const delanterosTitulares = await seleccionarJugadores(transactionalEm, 'Attacker', 3);
+
+    const todosLosTitulares = [
+      ...arquerosTitulares,
+      ...defensoresTitulares,
+      ...mediocampistasTitulares,
+      ...delanterosTitulares,
+    ];
+
+    const idsExcluir = todosLosTitulares
+      .map((p) => p.id)
+      .filter((id): id is number => id !== undefined && id !== null);
+
+    const arqueroSuplente = await seleccionarJugadores(transactionalEm, 'Goalkeeper', 1, idsExcluir);
+    const defensorSuplente = await seleccionarJugadores(transactionalEm, 'Defender', 1, idsExcluir);
+    const mediocampistaSuplente = await seleccionarJugadores(transactionalEm, 'Midfielder', 1, idsExcluir);
+    const delanteroSuplente = await seleccionarJugadores(transactionalEm, 'Attacker', 1, idsExcluir);
+
+    const todosLosSuplentes = [
+      ...arqueroSuplente,
+      ...defensorSuplente,
+      ...mediocampistaSuplente,
+      ...delanteroSuplente,
+    ];
+
+    for (const jugador of todosLosTitulares) {
+      const equipoJugador = transactionalEm.create(EquipoJugador, {
+        equipo: equipo, // Usamos la referencia al equipo existente
+        jugador: jugador,
+        es_titular: true,
+      });
+      transactionalEm.persist(equipoJugador);
+    }
+
+    // Suplentes
+    for (const jugador of todosLosSuplentes) {
+      const equipoJugador = transactionalEm.create(EquipoJugador, {
+        equipo: equipo,
+        jugador: jugador,
+        es_titular: false,
+      });
+      transactionalEm.persist(equipoJugador);
+    }
+}
+
+///////////////////////////////
+/*
 export async function crearEquipoConDraft(nombreEquipo: string, userId: number) {
+
   return await orm.em.transactional(async (transactionalEm) => {
     const usuario = await transactionalEm.findOne(Users, { id: userId });
     if (!usuario) {
@@ -116,22 +176,23 @@ export async function crearEquipoConDraft(nombreEquipo: string, userId: number) 
     return nuevoEquipo;
   });
 }
+*/
 /**
  * Obtiene el equipo de un usuario por su ID, incluyendo jugadores, posiciones y clubes.
  * @param userId - El ID del usuario.
  * @returns Una promesa que se resuelve con la entidad Equipo poblada.
  * @throws {ErrorFactory.notFound} Si el usuario no tiene un equipo.
  */
-export async function getEquipoByUserId(userId: number) {
+export async function getEquipoById(equipoId: number) {
   const em = orm.em.fork();
   const equipo = await em.findOne(
     Equipo,
-    { usuario: userId },
-    { populate: ['jugadores.jugador.position', 'jugadores.jugador.club'] }
+    { id: equipoId },
+    { populate: ['torneoUsuario', 'torneoUsuario.usuario','jugadores.jugador.position', 'jugadores.jugador.club'] }
   );
 
   if (!equipo) {
-    throw ErrorFactory.notFound('El usuario no tiene un equipo');
+    throw ErrorFactory.notFound('El equipo no existe');
   }
 
   return equipo;
@@ -148,15 +209,15 @@ export async function getEquipoByUserId(userId: number) {
  * @throws {ErrorFactory.duplicate} Si el jugador que entra ya está en el equipo.
  */
 export async function intercambiarJugador(
-  userId: number,
+  equipoId: number,
   jugadorSaleId: number,
   jugadorEntraId: number
 ) {
   return await orm.em.transactional(async (em) => {
-    // 1. Buscar el equipo del usuario.
-    const equipo = await em.findOne(Equipo, { usuario: userId });
+    // 1. BUSCAR EL EQUIPO POR SU ID
+    const equipo = await em.findOne(Equipo, { id: equipoId });
     if (!equipo) {
-      throw ErrorFactory.notFound('El usuario no tiene un equipo');
+      throw ErrorFactory.notFound('El equipo no existe');
     }
 
     // 2. Validar que el jugador que SALE está en el equipo.
@@ -226,13 +287,13 @@ export async function intercambiarJugador(
  * @throws {ErrorFactory.badRequest} Si alguna de las validaciones de negocio falla.
  */
 export async function cambiarAlineacion(
-  userId: number,
+  equipoId: number,
   jugadorTitularId: number,
   jugadorSuplenteId: number
 ) {
   return await orm.em.transactional(async (em) => {
     // 1. Buscar el equipo del usuario.
-    const equipo = await em.findOne(Equipo, { usuario: userId });
+    const equipo = await em.findOne(Equipo, { id: equipoId });
     if (!equipo) {
       throw ErrorFactory.notFound('El usuario no tiene un equipo');
     }
