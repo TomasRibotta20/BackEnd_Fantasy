@@ -8,6 +8,7 @@ import { jornadaRouter } from './Fixture/Jornada.routes.js';
 import { partidoRouter } from './Fixture/Partido.routes.js';
 import { positionRouter } from './Position/position.routes.js';
 import { equipoRouter } from './Equipo/equipo.routes.js';
+import { torneoRouter } from './Torneo/torneo.routes.js';
 import { estadisticaJugadorRouter } from './EstadisticaJugador/estadistica-jugador.routes.js';
 import { orm, safeUpdateSchema } from './shared/db/orm.js';
 import { RequestContext } from '@mikro-orm/core';
@@ -101,6 +102,7 @@ app.use('/api/users', userRouter); // Rutas de usuarios
 app.use('/api/clubs', clubRouter); // Rutas de clubes
 app.use('/api/players', playerRouter); // Rutas de jugadores
 app.use('/jornadas', jornadaRouter);
+app.use('/api/torneos', torneoRouter);
 app.use('/partidos', partidoRouter);
 app.use('/api/positions', positionRouter); // Rutas de posiciones
 app.use('/api/equipos', equipoRouter);

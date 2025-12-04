@@ -3,8 +3,8 @@ POST http://localhost:3000/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "TomasRibotta20@gmail.com",
-  "password": "TeAmoMazalan69"
+  "email": "admin@admin.com",
+  "password": "admin123"
 }
 
 ### POST /api/auth/register
@@ -12,9 +12,9 @@ POST http://localhost:3000/api/auth/register
 Content-Type: application/json
 
 {
-  "username": "Admin",
-  "email": "admin@admin.com",
-  "password": "admin123"
+  "username": "elmejor10delmundo",
+  "email": "TomasRibotta20@gmail.com",
+  "password": "TeAmoMazalan69"
 }
 
 ### POST /api/auth/logout
@@ -55,4 +55,50 @@ Content-Type: application/json
 
 {
   "password": "ariel123"
+}
+
+
+### LOGIN Usuario 1 - Test
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "Password123"
+}
+
+### LOGIN Usuario 2 - Jugador 1
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "jugador1@fantasy.com",
+  "password": "Password123"
+}
+
+### LOGIN Usuario 3 - Jugador 2
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "jugador2@fantasy.com",
+  "password": "Password123"
+}
+
+### LOGIN Usuario 4 - Futbolero
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "futbolero@liga.com",
+  "password": "Password123"
+}
+
+### LOGIN Usuario 5 - Manager Pro
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "manager@champions.com",
+  "password": "Password123"
 }
