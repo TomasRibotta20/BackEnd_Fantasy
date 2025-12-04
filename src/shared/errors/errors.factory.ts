@@ -56,4 +56,8 @@ export class ErrorFactory {
     return new AppError(message, 403, 'FORBIDDEN_ERROR');
   }
 
+  static conflict(message: string) {
+    return new AppError(message, 409, 'CONFLICT_ERROR');
+  }
+
 }
