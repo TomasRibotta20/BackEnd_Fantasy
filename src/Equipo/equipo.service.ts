@@ -30,7 +30,7 @@ async function seleccionarJugadores(
     {
       populate: ['position'],
       orderBy: { [raw('RAND()')]: 'ASC' },
-      limit: cantidad, // Solo traer la cantidad exacta que necesitas
+      limit: cantidad, // Solo traer la cantidad exacta que necesitamos
     }
   );
 

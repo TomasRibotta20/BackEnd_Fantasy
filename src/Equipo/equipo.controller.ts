@@ -26,8 +26,6 @@ export async function obtenerEquipos(req: Request, res: Response, next: NextFunc
 export async function crearEquipo(req: Request, res: Response, next: NextFunction) {
   try {
     const { nombre } = req.body;
-    // Asumimos que el middleware de autenticación añade el id del usuario a req.auth.id
-    // Si lo tienes en otro lado (ej: req.user.id), ajústalo.
     const userId = req.authUser?.user?.userId;
 
     if (!nombre) {

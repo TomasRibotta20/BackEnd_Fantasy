@@ -152,7 +152,6 @@ export async function getPlayersByTeam(teamId: number, season: number) {
   return acc;
 }
 
-// ...existing code...
 
 export type FixtureItem = {
   fixture: {

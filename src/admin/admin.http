@@ -14,7 +14,7 @@ POST {{baseUrl}}/api/admin/set-jornada-activa
 Content-Type: application/json
 
 {
-  "jornadaId": "dsadadad"
+  "jornadaId": "1"
 }
 
 ### Deshabilitar modificaciones (bloquear equipos)
@@ -25,7 +25,7 @@ POST {{baseUrl}}/api/admin/deshabilitar-modificaciones
 POST {{baseUrl}}/api/admin/habilitar-modificaciones
 
 ### Procesar jornada (ejemplo: jornada ID 2)
-POST {{baseUrl}}/api/admin/jornadas/2/procesar
+POST {{baseUrl}}/api/admin/jornadas/1/procesar
 Content-Type: application/json
 
 {

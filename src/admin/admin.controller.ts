@@ -6,7 +6,7 @@ import { EquipoSnapshotService } from '../Equipo/equipoSnapshot.service.js'
 import { EstadisticaJugadorService } from '../EstadisticaJugador/estadistica-jugador.service.js'
 import { EquipoJornada } from '../Equipo/equipoJornada.entity.js'
 import {ErrorFactory} from "../shared/errors/errors.factory.js";
-
+import { HistorialPrecioService } from '../HistorialPrecio/historial-precio.service.js';
 class AdminController {
   // Establecer jornada activa
   async setJornadaActiva(req: Request, res: Response, next: NextFunction) {
@@ -138,14 +138,25 @@ class AdminController {
 
       // 3. Crear snapshots de todos los equipos
       const snapshotService = new EquipoSnapshotService(em)
-      await snapshotService.crearSnapshotsJornada(jornadaId)
+      const snapshotsCreados = await snapshotService.crearSnapshotsJornada(jornadaId)
 
       // 4. Obtener datos de la API externa
       await EstadisticaJugadorService.actualizarEstadisticasJornada(em, jornadaId)
 
       // 5. Calcular puntajes para todos los equipos
-      await snapshotService.calcularPuntajesJornada(jornadaId)
-      // 6. Activar jornada (si se solicitó)
+      console.log('\nPASO 3: Calculando puntajes de equipos...')
+      let puntajesCalculados = false
+      if (snapshotsCreados > 0) {
+        await snapshotService.calcularPuntajesJornada(jornadaId)
+        puntajesCalculados = true
+        console.log('Puntajes calculados exitosamente')
+      } else {
+        console.log('No hay equipos para calcular puntajes, omitiendo...')
+      }
+
+      // 6. Actualizar precios de jugadores según rendimiento
+      const resultadoPrecios = await HistorialPrecioService.actualizarPreciosPorRendimiento(em, jornadaId)
+      // 7. Activar jornada (si se solicitó)
       if (activarJornada) {
         console.log('\nPASO 4: Activando jornada...')
         config.jornadaActiva = jornada

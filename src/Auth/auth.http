@@ -12,9 +12,9 @@ POST http://localhost:3000/api/auth/register
 Content-Type: application/json
 
 {
-  "username": "Admin",
-  "email": "admin@admin.com",
-  "password": "admin123"
+  "username": "Tomasito20",
+  "email": "TomasRibotta20@gmail.com",
+  "password": "TeAmoMazalan69"
 }
 
 ### POST /api/auth/logout
