@@ -19,17 +19,17 @@ export const updateTorneoSchema = z.object({
 });
 
 export const idTorneoParamsSchema = z.object({
-  id: z.string().regex(/^\d+$/, 'El ID debe ser un número válido')
+  id: z.string().regex(/^[1-9][0-9]*$/, 'El ID debe ser un número válido')
 });
 
 export const torneoQuerySchema = z.object({
   estado: z.enum(['EN_ESPERA', 'ACTIVO', 'FINALIZADO']).optional(),
   fecha_creacion_desde: z.string().datetime('Fecha debe estar en formato ISO').optional(), // ✅ Mejor validación
   fecha_creacion_hasta: z.string().datetime('Fecha debe estar en formato ISO').optional(),
-  min_participantes: z.string().regex(/^\d+$/).transform(val => Number(val)).refine(val => val >= 0).optional(),
-  max_participantes: z.string().regex(/^\d+$/).transform(val => Number(val)).refine(val => val >= 1).optional(),
-  limit: z.string().regex(/^\d+$/).transform(val => Number(val)).refine(val => val >= 1 && val <= 100).optional(),
-  offset: z.string().regex(/^\d+$/).transform(val => Number(val)).refine(val => val >= 0).optional(),
+  min_participantes: z.string().regex(/^[1-9][0-9]*$/).transform(val => Number(val)).refine(val => val >= 0).optional(),
+  max_participantes: z.string().regex(/^[1-9][0-9]*$/).transform(val => Number(val)).refine(val => val >= 1).optional(),
+  limit: z.string().regex(/^[1-9][0-9]*$/).transform(val => Number(val)).refine(val => val >= 1 && val <= 100).optional(),
+  offset: z.string().regex(/^[1-9][0-9]*$/).transform(val => Number(val)).refine(val => val >= 0).optional(),
 });
 
 export const validateAccessCodeSchema = z.object({
@@ -46,8 +46,8 @@ export const misTorneosQuerySchema = z.object({
 }).optional();
 
 export const idTorneoUsuarioExpulsarSchema = z.object({
-  id: z.string().regex(/^\d+$/, 'El ID del torneo debe ser un número válido'),
-  userId: z.string().regex(/^\d+$/, 'El ID del usuario debe ser un número válido')
+  id: z.string().regex(/^[1-9][0-9]*$/, 'El ID del torneo debe ser un número válido'),
+  userId: z.string().regex(/^[1-9][0-9]*$/, 'El ID del usuario debe ser un número válido')
 });
 
 export type CreateTorneoInput = z.infer<typeof createTorneoSchema>;
