@@ -5,6 +5,7 @@ import { calcularPreciosConIA, JugadorParaPrecio } from '../shared/api/groq.js';
 import { findAndPaginate } from '../Player/player.service.js';
 import { HistorialPrecio, MotivoActualizacionPrecio } from './historial-precio.entity.js';
 import { EstadisticaJugador } from '../EstadisticaJugador/estadistica-jugador.entity.js';
+import { ErrorFactory } from '../shared/errors/errors.factory.js';
 
 
 interface TendenciasAnalisis {
@@ -25,7 +26,7 @@ export class HistorialPrecioService {
     const club = await em.findOne(clubes, { id: clubId });
 
     if (!club) {
-      throw new Error(`Club con ID ${clubId} no encontrado`);
+      throw ErrorFactory.notFound(`Club con ID ${clubId} no encontrado`);
     }
 
     // Usar el servicio existente de jugadores con filtro por club(sin paginación)
@@ -37,7 +38,7 @@ export class HistorialPrecioService {
     const jugadores = resultadoJugadores.data;
 
     if (jugadores.length === 0) {
-      throw new Error(`No se encontraron jugadores para el club ${club.nombre}`);
+      throw ErrorFactory.notFound(`No se encontraron jugadores para el club ${club.nombre}`);
     }
 
     console.log(`rocesando ${jugadores.length} jugadores del club ${club.nombre}`);
@@ -201,7 +202,7 @@ export class HistorialPrecioService {
         console.log(`\nProcesando ${club.nombre}...`);
         
         if (!club.id) {
-          throw new Error(`Club ${club.nombre} no tiene ID válido`);
+          throw ErrorFactory.notFound(`Club ${club.nombre} no tiene ID válido`);
         }
         
         const resultado = await this.calcularYGuardarPreciosClub(em, club.id);

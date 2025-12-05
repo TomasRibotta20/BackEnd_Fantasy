@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { orm } from '../shared/db/orm.js';
 import { HistorialPrecioService } from './historial-precio.service.js';
+import { ErrorFactory } from '../shared/errors/errors.factory.js';
 
 export class HistorialPrecioController {
   
@@ -10,13 +11,7 @@ export class HistorialPrecioController {
    */
   static async previewPreciosPorClub(req: Request, res: Response, next: NextFunction) {
     try {
-      const clubId = parseInt(req.params.clubId);
-      
-      if (isNaN(clubId)) {
-        return res.status(400).json({ 
-          error: 'ID de club inválido' 
-        });
-      }
+      const clubId = Number(req.params.clubId);
 
       const em = orm.em.fork();
       const resultado = await HistorialPrecioService.obtenerPreciosSugeridosPorClub(em, clubId);
@@ -27,7 +22,7 @@ export class HistorialPrecioController {
         data: resultado
       });
 
-    } catch (error) {
+    } catch (error: any) {
       next(error);
     }
   }
@@ -38,14 +33,8 @@ export class HistorialPrecioController {
    */
   static async calcularYGuardarPreciosClub(req: Request, res: Response, next: NextFunction) {
     try {
-      const clubId = parseInt(req.params.clubId);
+      const clubId = Number(req.params.clubId);
       
-      if (isNaN(clubId)) {
-        return res.status(400).json({ 
-          error: 'ID de club inválido' 
-        });
-      }
-
       const em = orm.em.fork();
       const resultado = await HistorialPrecioService.calcularYGuardarPreciosClub(em, clubId);
 
@@ -92,13 +81,7 @@ export class HistorialPrecioController {
    */
   static async actualizarPreciosPorRendimiento(req: Request, res: Response, next: NextFunction) {
     try {
-      const jornadaId = parseInt(req.params.jornadaId);
-      
-      if (isNaN(jornadaId)) {
-        return res.status(400).json({ 
-          error: 'ID de jornada invalido' 
-        });
-      }
+      const jornadaId = Number(req.params.jornadaId);
 
       const em = orm.em.fork();
       const resultado = await HistorialPrecioService.actualizarPreciosPorRendimiento(em, jornadaId);
