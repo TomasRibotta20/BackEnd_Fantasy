@@ -4,14 +4,14 @@ export const createTorneoSchema = z.object({
   nombre: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
   nombre_equipo: z.string().min(1, 'Nombre del equipo requerido').max(50, 'Nombre muy largo'),
   descripcion: z.string().optional(),
-  cupoMaximo: z.number().min(1, 'El cupo máximo debe ser al menos 1').max(10, 'El cupo máximo no puede ser mayor a 10'),
+  cupoMaximo: z.number().min(1, 'El cupo máximo debe ser al menos 1').max(5, 'El cupo máximo no puede ser mayor a 5'),
   fecha_inicio: z.string().optional()
 });
 
 export const updateTorneoSchema = z.object({
   nombre: z.string().min(3, 'El nombre debe tener al menos 3 caracteres').optional(),
   descripcion: z.string().optional(),
-  cupoMaximo: z.number().min(1, 'El cupo máximo debe ser al menos 1').max(10, 'El cupo máximo no puede ser mayor a 10').optional(),
+  cupoMaximo: z.number().min(1, 'El cupo máximo debe ser al menos 1').max(5, 'El cupo máximo no puede ser mayor a 5').optional(),
   fecha_inicio: z.string().optional(),
   codigo_acceso: z.string().min(1, 'Código de acceso requerido').optional()
 }).refine(obj => Object.keys(obj).length > 0, {
