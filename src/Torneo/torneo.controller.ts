@@ -186,7 +186,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
 
     const equipoAdmin = new Equipo();
     equipoAdmin.nombre = nombre_equipo;
-    equipoAdmin.presupuesto = 0;
+    equipoAdmin.presupuesto = 90000000;
     equipoAdmin.puntos = 0;
 
     inscripcionAdmin.equipo = equipoAdmin;

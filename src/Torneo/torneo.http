@@ -97,7 +97,7 @@ POST http://localhost:3000/api/torneos/unirse
 Content-Type: application/json
 
 {
-  "codigo_acceso": "MU9ELX",
+  "codigo_acceso": "GVZFWF",
   "nombre_equipo": "Los Galácticos"
 }
 
@@ -114,7 +114,7 @@ GET http://localhost:3000/api/torneos/mis-torneos?estado=EN_ESPERA
 Content-Type: application/json
 
 ### Ver detalles de un torneo como participante
-GET http://localhost:3000/api/torneos/mi-torneo/5
+GET http://localhost:3000/api/torneos/mi-torneo/1
 Content-Type: application/json
 
 ### Abandonar un torneo
@@ -474,9 +474,9 @@ Content-Type: application/json
 }
 ###########################################
 ### Iniciar torneo como creador (exitoso)
-POST http://localhost:3000/api/torneos/iniciar/5
+POST http://localhost:3000/api/torneos/iniciar/1
 Content-Type: application/json
 
 
 ### Expulsar participante de un torneo (exitoso)
-DELETE http://localhost:3000/api/torneos/5/participante/9
+DELETE http://localhost:3000/api/torneos/1/participante/7
