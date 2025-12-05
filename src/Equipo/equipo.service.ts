@@ -5,6 +5,7 @@ import { Equipo } from './equipo.entity.js';
 import { Users } from '../User/user.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 import { EquipoJugador } from './equipoJugador.entity.js';
+import { TorneoUsuario } from '../Torneo/torneoUsuario.entity.js';
 
 const PRESUPUESTO_INICIAL = 90000000;
 const PRESUPUESTO_MINIMO_EQUIPO = 56000000;
@@ -71,7 +72,19 @@ async function seleccionarJugadoresPorPrecio(
   return jugadores.slice(0, cantidad);
 }
 
-
+/**
+ * Crea una instancia de Equipo lista para ser persistida.
+ * Vincula bidireccionalmente con la inscripción.
+ */
+export function crearEquipo(nombre: string, inscripcion: TorneoUsuario): Equipo {
+  const equipo = new Equipo();
+  equipo.nombre = nombre;
+  equipo.puntos = 0;
+  equipo.presupuesto = 90000000; 
+  equipo.torneoUsuario = inscripcion;
+  inscripcion.equipo = equipo; 
+  return equipo;
+}
 ////////////////////////////////
 
 /**

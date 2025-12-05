@@ -7,6 +7,7 @@ import { Users } from '../User/user.entity.js';
 import { FilterQuery } from '@mikro-orm/core';
 import { TorneoService } from './torneo.service.js';
 import { Equipo } from '../Equipo/equipo.entity.js';
+import { crearEquipo } from '../Equipo/equipo.service.js';
 
 const em = orm.em;
 
@@ -183,12 +184,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
     if (currentUserId) inscripcionAdmin.usuario = em.getReference(Users, currentUserId);
     inscripcionAdmin.torneo = nuevoTorneo;
     inscripcionAdmin.rol = 'creador';
-
-    const equipoAdmin = new Equipo();
-    equipoAdmin.nombre = nombre_equipo;
-    equipoAdmin.presupuesto = 90000000;
-    equipoAdmin.puntos = 0;
-
+    const equipoAdmin = crearEquipo(nombre_equipo, inscripcionAdmin)
     inscripcionAdmin.equipo = equipoAdmin;
     equipoAdmin.torneoUsuario = inscripcionAdmin;
 
@@ -199,7 +195,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
     let guardadoExitoso = false;
     while (intentos < maxIntentos && !guardadoExitoso) {
         try {
-            await em.flush();
+            await em.flush(); //Ya es transaccional
             guardadoExitoso = true;  
         } catch (error: any) {
             if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
