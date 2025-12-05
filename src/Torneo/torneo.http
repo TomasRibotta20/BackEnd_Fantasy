@@ -479,4 +479,4 @@ Content-Type: application/json
 
 
 ### Expulsar participante de un torneo (exitoso)
-DELETE http://localhost:3000/api/torneos/1/participante/7
+DELETE http://localhost:3000/api/torneos/12/participante/8

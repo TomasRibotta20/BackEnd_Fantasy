@@ -495,9 +495,6 @@ async function leave(req: Request, res: Response, next: NextFunction) {
     const result = await TorneoService.leaveTorneo(Number(req.params.id), req.authUser.user?.userId!);
     res.status(200).json(result);
   } catch (error: any) {
-    if (error.name === 'NotFoundError') {
-        return next(ErrorFactory.notFound('Torneo no encontrado'));
-    }
     next(error);
   }
 }
@@ -523,9 +520,6 @@ async function expulsar(req: Request, res: Response, next: NextFunction) {
     const result = await TorneoService.kickUser(torneoId, creadorId, targetUserId);
     res.status(200).json(result);
   } catch (error: any) {
-    if (error.name === 'NotFoundError') {
-        return next(ErrorFactory.notFound('Usuario o torneo no encontrado'));
-    }
     next(error);
   }
 }
