@@ -5,6 +5,7 @@ import { Jornada } from '../Fixture/Jornada.entity.js'
 import { EstadisticaJugador } from '../EstadisticaJugador/estadistica-jugador.entity.js'
 import { Player } from '../Player/player.entity.js'
 import { ErrorFactory } from '../shared/errors/errors.factory.js'
+import { EstadoTorneo } from '../Torneo/torneo.entity.js'
 
 export class EquipoSnapshotService {
   constructor(private em: EntityManager) {}
@@ -12,7 +13,8 @@ export class EquipoSnapshotService {
   // Crear snapshots de todos los equipos para una jornada
   async crearSnapshotsJornada(jornadaId: number): Promise<number> {
     const jornada = await this.em.findOneOrFail(Jornada, jornadaId)
-    const equipos = await this.em.find(Equipo, {}, { populate: ['jugadores.jugador'] })
+    const equipos = await this.em.find(Equipo, { torneoUsuario: { torneo: { estado: EstadoTorneo.ACTIVO } } }, { populate: ['jugadores.jugador'] })
+    //const equipos = await this.em.find(Equipo, {}, { populate: ['jugadores.jugador'] })
     let snapshotsCreados = 0
     for (const equipo of equipos) {
       // Verificar si ya existe snapshot
