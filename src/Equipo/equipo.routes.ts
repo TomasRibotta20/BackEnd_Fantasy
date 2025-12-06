@@ -1,9 +1,10 @@
 import { Router } from 'express';
 // CAMBIO: Importa el objeto completo, no solo una función.
 import { requireAuth } from '../Auth/auth.requires.js';
-import { actualizarAlineacion, /*crearEquipo,*/ getMiEquipo, realizarIntercambio, obtenerEquipos }  from './equipo.controller.js';
+import { actualizarAlineacion,getMiEquipo, realizarIntercambio, obtenerEquipos, venderJugador}  from './equipo.controller.js';
 import { verificarModificacionesHabilitadas as verificarModi} from '../shared/middleware/verificarModificaciones.middleware.js';
 import { getEquipoEnJornada, getHistorial } from './equipoHistorial.controller.js';
+
 
 const equipoRouter = Router();
 
@@ -25,3 +26,5 @@ equipoRouter.get('/:equipoId/historial', requireAuth, getHistorial)
 //Ruta para obtener las puntuaciones de un equipo en una jornada
 equipoRouter.get('/:equipoId/jornadas/:jornadaId', requireAuth, getEquipoEnJornada)
 export { equipoRouter };
+
+equipoRouter.post('/mi-equipo/:equipoId/vender-jugador', requireAuth, verificarModi, venderJugador);

@@ -6,12 +6,13 @@ import { Users } from '../User/user.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 import { EquipoJugador } from './equipoJugador.entity.js';
 import { TorneoUsuario } from '../Torneo/torneoUsuario.entity.js';
+import { Transaccion, TipoTransaccion } from './transaccion.entity.js';
 
 const PRESUPUESTO_INICIAL = 90000000;
 const PRESUPUESTO_MINIMO_EQUIPO = 56000000;
 const PRESUPUESTO_MAXIMO_EQUIPO = 70000000;
 const PRECIO_MINIMO_ESTRELLA = 8000000;
-
+const PORCENTAJE_VENTA_INSTANTANEA = 0.70; 
 /**
  * Selecciona jugadores por posicion y rango de precio
  */
@@ -346,77 +347,6 @@ export async function poblarEquipoAleatoriamente(
   console.log(`Equipo ${equipo.nombre} poblado exitosamente con ${jugadoresSeleccionados.length} jugadores`);
 }
 
-///////////////////////////////
-/*
-export async function crearEquipoConDraft(nombreEquipo: string, userId: number) {
-
-  return await orm.em.transactional(async (transactionalEm) => {
-    const usuario = await transactionalEm.findOne(Users, { id: userId });
-    if (!usuario) {
-      throw ErrorFactory.notFound('Usuario no encontrado');
-    }
-
-    const equipoExistente = await transactionalEm.findOne(Equipo, { usuario });
-    if (equipoExistente) {
-      throw ErrorFactory.duplicate('El usuario ya tiene un equipo creado');
-    }
-
-    const arquerosTitulares = await seleccionarJugadores(transactionalEm, 'Goalkeeper', 1);
-    const defensoresTitulares = await seleccionarJugadores(transactionalEm, 'Defender', 4);
-    const mediocampistasTitulares = await seleccionarJugadores(transactionalEm, 'Midfielder', 3);
-    const delanterosTitulares = await seleccionarJugadores(transactionalEm, 'Attacker', 3);
-
-    const todosLosTitulares = [
-      ...arquerosTitulares,
-      ...defensoresTitulares,
-      ...mediocampistasTitulares,
-      ...delanterosTitulares,
-    ];
-    const idsExcluir = todosLosTitulares
-      .map((p) => p.id)
-      .filter((id): id is number => id !== undefined && id !== null);
-
-    const arqueroSuplente = await seleccionarJugadores(transactionalEm, 'Goalkeeper', 1, idsExcluir);
-    const defensorSuplente = await seleccionarJugadores(transactionalEm, 'Defender', 1, idsExcluir);
-    const mediocampistaSuplente = await seleccionarJugadores(transactionalEm, 'Midfielder', 1, idsExcluir);
-    const delanteroSuplente = await seleccionarJugadores(transactionalEm, 'Attacker', 1, idsExcluir);
-
-    const todosLosSuplentes = [
-      ...arqueroSuplente,
-      ...defensorSuplente,
-      ...mediocampistaSuplente,
-      ...delanteroSuplente,
-    ];
-
-    const nuevoEquipo = transactionalEm.create(Equipo, {
-      nombre: nombreEquipo,
-      usuario: usuario,
-    });
-
-    for (const jugador of todosLosTitulares) {
-      const equipoJugador = transactionalEm.create(EquipoJugador, {
-        equipo: nuevoEquipo,
-        jugador: jugador,
-        es_titular: true,
-      });
-      transactionalEm.persist(equipoJugador);
-    }
-
-    for (const jugador of todosLosSuplentes) {
-      const equipoJugador = transactionalEm.create(EquipoJugador, {
-        equipo: nuevoEquipo,
-        jugador: jugador,
-        es_titular: false,
-      });
-      transactionalEm.persist(equipoJugador);
-    }
-
-    await transactionalEm.persistAndFlush(nuevoEquipo);
-
-    return nuevoEquipo;
-  });
-}
-*/
 /**
  * Obtiene el equipo de un usuario por su ID, incluyendo jugadores, posiciones y clubes.
  * @param userId - El ID del usuario.
@@ -589,5 +519,74 @@ export async function cambiarAlineacion(
     relacionSuplente.es_titular = true;
 
     return { message: 'Alineación actualizada con éxito.' };
+  });
+}
+
+/**
+ * Vende un jugador del equipo al mercado instantáneamente
+ * Devuelve el 70% del precio actual del jugador
+ */
+export async function venderJugador(equipoId: number, jugadorId: number, userId: number) {
+  return await orm.em.transactional(async (em) => {
+    // 1. Buscar la relación equipo-jugador
+    const equipoJugador = await em.findOne(
+      EquipoJugador,
+      { equipo: equipoId, jugador: jugadorId },
+      { populate: ['equipo', 'equipo.torneoUsuario', 'equipo.torneoUsuario.usuario', 'jugador'] }
+    );
+
+    if (!equipoJugador) {
+      throw ErrorFactory.notFound('El jugador no pertenece a tu equipo');
+    }
+
+    const equipo = equipoJugador.equipo as any as Equipo;
+    const jugador = equipoJugador.jugador as any as Player;
+
+    // 2. Verificar que el usuario es dueño del equipo
+    const ownerId = equipo.torneoUsuario.usuario.id;
+    if (ownerId !== userId) {
+      throw ErrorFactory.forbidden('No tienes permisos para vender jugadores de este equipo');
+    }
+
+    // 3. Calcular devolución (70% del precio actual)
+    const precioActual = jugador.precio_actual || 0;
+    
+    if (precioActual <= 0) {
+      throw ErrorFactory.badRequest('El jugador no tiene un precio válido');
+    }
+
+    const devolucion = Math.floor(precioActual * PORCENTAJE_VENTA_INSTANTANEA);
+
+    // 4. Actualizar presupuesto del equipo
+    equipo.presupuesto += devolucion;
+
+    // 5. Crear transacción
+    const transaccion = em.create(Transaccion, {
+      equipo,
+      tipo: TipoTransaccion.VENTA_INSTANTANEA,
+      monto: devolucion,
+      jugador,
+      fecha: new Date(),
+      descripcion: `Venta instantánea de ${jugador.name} (${PORCENTAJE_VENTA_INSTANTANEA * 100}% de $${precioActual.toLocaleString()})`
+    });
+
+    em.persist(transaccion);
+
+    // 6. Eliminar al jugador del equipo
+    em.remove(equipoJugador);
+
+    await em.flush();
+
+    return {
+      jugador: {
+        id: jugador.id,
+        nombre: jugador.name,
+        precio_actual: precioActual
+      },
+      devolucion,
+      porcentaje: PORCENTAJE_VENTA_INSTANTANEA * 100,
+      presupuesto_nuevo: equipo.presupuesto,
+      cantidad_jugadores_restantes: equipo.jugadores.length - 1
+    };
   });
 }

@@ -5,3 +5,9 @@ export const crearEquipoSchema = z.object({
 });
 
 export type CrearEquipoInput = z.infer<typeof crearEquipoSchema>;
+
+export const venderJugadorSchema = z.object({
+  jugadorId: z.number().int().positive('El ID del jugador debe ser un número positivo')
+});
+
+export type VenderJugadorInput = z.infer<typeof venderJugadorSchema>;

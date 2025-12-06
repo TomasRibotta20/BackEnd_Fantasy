@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { cambiarAlineacion,getEquipoById,intercambiarJugador} from './equipo.service.js';
+import { cambiarAlineacion,getEquipoById,intercambiarJugador, venderJugador as venderJugadorService} from './equipo.service.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 import { Equipo } from './equipo.entity.js';
 import { orm } from '../shared/db/orm.js';
@@ -106,4 +106,29 @@ export async function actualizarAlineacion(req: Request, res: Response, next: Ne
   } catch (error) {
     return next(ErrorFactory.internal('Error al actualizar la alineación'));
   }
+}
+
+/**
+ * Vende un jugador del equipo al mercado instantáneamente
+ */
+export async function venderJugador(req: Request, res: Response, next: NextFunction) {
+  try {
+    const equipoId = Number(req.params.equipoId);
+    const { jugadorId } = req.body;
+    const userId = req.authUser.user?.userId!;
+
+    if (!jugadorId) {
+      throw ErrorFactory.badRequest('El jugadorId es requerido');
+    }
+
+    const resultado = await venderJugadorService(equipoId, jugadorId, userId);
+
+    return res.status(200).json({
+      message: 'Jugador vendido exitosamente',
+      data: resultado
+    });
+
+  } catch (error) {
+    return next(error);
+  }
 }

@@ -20,6 +20,9 @@ export class Equipo extends BaseEntity {
   @Property({ default: 90000000 })
   presupuesto: number = 90000000;
 
+  @Property({ default: 0 })
+  presupuesto_bloqueado: number = 0;
+
   // La relación ahora es con la tabla intermedia
   @OneToMany(() => EquipoJugador, (equipoJugador) => equipoJugador.equipo, {
     eager: true,
@@ -27,5 +30,8 @@ export class Equipo extends BaseEntity {
   })
   jugadores = new Collection<EquipoJugador>(this);
 
-  
+  //helper para obtener el presupuesto disponible del equipo
+  get presupuestoDisponible(): number {
+    return this.presupuesto - this.presupuesto_bloqueado;
+  }
 }
