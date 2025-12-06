@@ -50,6 +50,7 @@
     "express": "5.1.0",
     "express-jsdoc-swagger": "^1.8.0",
     "express-rate-limit": "^8.0.1",
+    "groq-sdk": "^0.37.0",
     "jsonwebtoken": "9.0.2",
     "nodemailer": "^7.0.6",
     "reflect-metadata": "0.2.2",

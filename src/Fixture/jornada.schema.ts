@@ -15,13 +15,13 @@ export const updateJornadaSchema = createJornadaSchema.partial()
   });
 
 export const findAllJornadaQuerySchema = z.object({
-  temporada: z.string().regex(/^\d+$/, 'La temporada debe ser un número válido').optional(),
+  temporada: z.string().regex(/^[1-9][0-9]*$/, 'La temporada debe ser un número válido').optional(),
   etapa: z.string().min(1, 'La etapa no puede estar vacía').optional(),
-  liga_id: z.string().regex(/^\d+$/, 'El ID de liga debe ser un número válido').optional(),
+  liga_id: z.string().regex(/^[1-9][0-9]*$/, 'El ID de liga debe ser un número válido').optional(),
 });
 
 export const idJornadaParamsSchema = z.object({
-  id: z.string().regex(/^\d+$/, 'El ID debe ser un número válido')
+  id: z.string().regex(/^[1-9][0-9]*$/, 'El ID debe ser un número válido')
 });
 
 export type CreateJornadaInput = z.infer<typeof createJornadaSchema>;

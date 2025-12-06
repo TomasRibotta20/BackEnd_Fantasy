@@ -11,7 +11,7 @@ export const updateClubSchema = createClubSchema.partial()
   });
 
 export const idClubParamsSchema = z.object({
-  id: z.string().regex(/^\d+$/, 'El ID debe ser un número válido')
+  id: z.string().regex(/^[1-9][0-9]*$/, 'El ID debe ser un número válido')
 });
 
 export type CreateClubInput = z.infer<typeof createClubSchema>;

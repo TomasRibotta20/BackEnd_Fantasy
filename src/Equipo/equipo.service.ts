@@ -5,105 +5,345 @@ import { Equipo } from './equipo.entity.js';
 import { Users } from '../User/user.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 import { EquipoJugador } from './equipoJugador.entity.js';
+import { TorneoUsuario } from '../Torneo/torneoUsuario.entity.js';
+
+const PRESUPUESTO_INICIAL = 90000000;
+const PRESUPUESTO_MINIMO_EQUIPO = 56000000;
+const PRESUPUESTO_MAXIMO_EQUIPO = 70000000;
+const PRECIO_MINIMO_ESTRELLA = 8000000;
 
 /**
- * Selecciona una cantidad específica de jugadores de una posición dada, de forma aleatoria.
- * @param em - El EntityManager transaccional.
- * @param posicion - La descripción de la posición a buscar (ej. 'Goalkeeper').
- * @param cantidad - El número de jugadores a seleccionar.
- * @param excluirIds - Un array de IDs de jugadores a excluir de la selección.
- * @returns Una promesa que se resuelve con un array de entidades Player.
- * @throws {ErrorFactory.badRequest} Si no se encuentran suficientes jugadores.
+ * Selecciona jugadores por posicion y rango de precio
  */
-async function seleccionarJugadores(
+async function seleccionarJugadoresPorPrecio(
   em: EntityManager,
   posicion: string,
   cantidad: number,
-  excluirIds: number[] = []
-) {
+  precioMin: number,
+  precioMax: number,
+  excluirIds: number[] = [],
+  torneoId?: number
+): Promise<Player[]> {
+  const whereConditions: any = {
+    position: { description: posicion },
+    precio_actual: { $gte: precioMin, $lte: precioMax },
+    id: { $nin: excluirIds }
+  };
+
+  if (torneoId) {
+    // Obtener todos los equipos del torneo
+    const equiposDelTorneo = await em.find(Equipo, {
+      torneoUsuario: { torneo: torneoId }
+    }, { populate: ['jugadores'] });
+
+    // Extraer todos los IDs de jugadores ya asignados
+    const idsAsignados: number[] = [];
+    for (const equipo of equiposDelTorneo) {
+      const jugadoresEquipo = equipo.jugadores.getItems();
+      for (const ej of jugadoresEquipo) {
+        const jugadorId = typeof ej.jugador === 'number' ? ej.jugador : (ej.jugador as any).id;
+        if (jugadorId) {
+          idsAsignados.push(jugadorId);
+        }
+      }
+    }
+
+    if (idsAsignados.length > 0) {
+      whereConditions.id = { $nin: [...excluirIds, ...idsAsignados] };
+    }
+  }
+
   const jugadores = await em.find(
     Player,
-    {
-      position: { description: posicion },
-      id: { $nin: excluirIds },
-    },
+    whereConditions,
     {
       populate: ['position'],
       orderBy: { [raw('RAND()')]: 'ASC' },
-      limit: cantidad, // Solo traer la cantidad exacta que necesitas
+      limit: cantidad * 3
     }
   );
 
   if (jugadores.length < cantidad) {
-    throw ErrorFactory.badRequest(`No hay suficientes jugadores en la posición: ${posicion}`);
+    throw ErrorFactory.badRequest(
+      `No hay suficientes jugadores en ${posicion} con precio entre ${precioMin} y ${precioMax}`
+    );
   }
 
-  return jugadores;
+  return jugadores.slice(0, cantidad);
 }
-/**
- * Crea un nuevo equipo para un usuario, realizando un draft automático de jugadores.
- * La operación es transaccional: o se completa del todo, o no se hace nada.
- * @param nombreEquipo - El nombre del equipo a crear.
- * @param userId - El ID del usuario para el cual se crea el equipo.
- * @returns Una promesa que se resuelve con la nueva entidad Equipo creada.
- * @throws {ErrorFactory.notFound} Si el usuario no existe.
- * @throws {ErrorFactory.duplicate} Si el usuario ya tiene un equipo.
- */
 
+/**
+ * Crea una instancia de Equipo lista para ser persistida.
+ * Vincula bidireccionalmente con la inscripción.
+ */
+export function crearEquipo(nombre: string, inscripcion: TorneoUsuario): Equipo {
+  const equipo = new Equipo();
+  equipo.nombre = nombre;
+  equipo.puntos = 0;
+  equipo.presupuesto = 90000000; 
+  equipo.torneoUsuario = inscripcion;
+  inscripcion.equipo = equipo; 
+  return equipo;
+}
 ////////////////////////////////
 
-export async function poblarEquipoAleatoriamente(equipoId: number, transactionalEm: EntityManager) {
+/**
+ * Pobla un equipo con jugadores considerando presupuesto y precios
+ */
+export async function poblarEquipoAleatoriamente(
+  equipoId: number, 
+  transactionalEm: EntityManager
+) {
+  const equipo = await transactionalEm.findOne(Equipo, { id: equipoId }, { 
+    populate: ['torneoUsuario', 'torneoUsuario.torneo'] 
+  });
+  
+  if (!equipo) {
+    throw ErrorFactory.notFound(`Equipo ${equipoId} no encontrado al intentar poblarlo.`);
+  }
 
-    const equipo = await transactionalEm.findOne(Equipo, { id: equipoId });
-    if (!equipo) {
-        throw ErrorFactory.notFound(`Equipo ${equipoId} no encontrado al intentar poblarlo.`);
+  const torneoId = equipo.torneoUsuario?.torneo?.id;
+  const idsExcluir: number[] = [];
+  let costoTotal = 0;
+
+  console.log(`Iniciando poblado de equipo ${equipo.nombre} (Torneo ID: ${torneoId})`);
+
+  const jugadoresSeleccionados: Array<{ jugador: Player; esTitular: boolean }> = [];
+
+  // PASO 1: Seleccionar jugador estrella (>8M)
+  console.log('Paso 1: Seleccionando jugador estrella...');
+  
+  const probabilidadPosicion = Math.random();
+  let posicionEstrella: string;
+  
+  if (probabilidadPosicion < 0.5) {
+    posicionEstrella = 'Attacker';
+  } else if (probabilidadPosicion < 0.8) {
+    posicionEstrella = 'Midfielder';
+  } else if (probabilidadPosicion < 0.95) {
+    posicionEstrella = 'Defender';
+  } else {
+    posicionEstrella = 'Goalkeeper';
+  }
+
+  const estrellas = await seleccionarJugadoresPorPrecio(
+    transactionalEm,
+    posicionEstrella,
+    1,
+    PRECIO_MINIMO_ESTRELLA,
+    100000000,
+    idsExcluir,
+    torneoId
+  );
+
+  const estrella = estrellas[0];
+  jugadoresSeleccionados.push({ jugador: estrella, esTitular: true });
+  costoTotal += estrella.precio_actual || 0;
+  idsExcluir.push(estrella.id!);
+
+  console.log(`Estrella seleccionada: ${estrella.name} (${posicionEstrella}) - $${estrella.precio_actual?.toLocaleString()}`);
+
+  // PASO 2: Completar titulares de la posición de la estrella
+  console.log('Paso 2: Completando posicion de la estrella...');
+  
+  const cantidadPorPosicion: Record<string, number> = {
+    'Goalkeeper': 1,
+    'Defender': 4,
+    'Midfielder': 3,
+    'Attacker': 3
+  };
+
+  const faltanDePosicionEstrella = cantidadPorPosicion[posicionEstrella] - 1;
+  
+  if (faltanDePosicionEstrella > 0) {
+    const complementos = await seleccionarJugadoresPorPrecio(
+      transactionalEm,
+      posicionEstrella,
+      faltanDePosicionEstrella,
+      3000000,
+      7000000,
+      idsExcluir,
+      torneoId
+    );
+
+    for (const jugador of complementos) {
+      jugadoresSeleccionados.push({ jugador, esTitular: true });
+      costoTotal += jugador.precio_actual || 0;
+      idsExcluir.push(jugador.id!);
     }
-    const arquerosTitulares = await seleccionarJugadores(transactionalEm, 'Goalkeeper', 1);
-    const defensoresTitulares = await seleccionarJugadores(transactionalEm, 'Defender', 4);
-    const mediocampistasTitulares = await seleccionarJugadores(transactionalEm, 'Midfielder', 3);
-    const delanterosTitulares = await seleccionarJugadores(transactionalEm, 'Attacker', 3);
+  }
 
-    const todosLosTitulares = [
-      ...arquerosTitulares,
-      ...defensoresTitulares,
-      ...mediocampistasTitulares,
-      ...delanterosTitulares,
-    ];
+  // PASO 3: Completar resto de titulares
+  console.log('Paso 3: Completando resto de titulares...');
 
-    const idsExcluir = todosLosTitulares
-      .map((p) => p.id)
-      .filter((id): id is number => id !== undefined && id !== null);
+  const posiciones = ['Goalkeeper', 'Defender', 'Midfielder', 'Attacker'];
+  
+  for (const pos of posiciones) {
+    if (pos === posicionEstrella) continue;
 
-    const arqueroSuplente = await seleccionarJugadores(transactionalEm, 'Goalkeeper', 1, idsExcluir);
-    const defensorSuplente = await seleccionarJugadores(transactionalEm, 'Defender', 1, idsExcluir);
-    const mediocampistaSuplente = await seleccionarJugadores(transactionalEm, 'Midfielder', 1, idsExcluir);
-    const delanteroSuplente = await seleccionarJugadores(transactionalEm, 'Attacker', 1, idsExcluir);
+    const cantidad = cantidadPorPosicion[pos];
+    let precioMin: number, precioMax: number;
 
-    const todosLosSuplentes = [
-      ...arqueroSuplente,
-      ...defensorSuplente,
-      ...mediocampistaSuplente,
-      ...delanteroSuplente,
-    ];
-
-    for (const jugador of todosLosTitulares) {
-      const equipoJugador = transactionalEm.create(EquipoJugador, {
-        equipo: equipo, // Usamos la referencia al equipo existente
-        jugador: jugador,
-        es_titular: true,
-      });
-      transactionalEm.persist(equipoJugador);
+    if (pos === 'Goalkeeper') {
+      precioMin = 3000000;
+      precioMax = 6000000;
+    } else if (pos === 'Defender') {
+      precioMin = 2000000;
+      precioMax = 6000000;
+    } else {
+      precioMin = 3000000;
+      precioMax = 8000000;
     }
 
-    // Suplentes
-    for (const jugador of todosLosSuplentes) {
-      const equipoJugador = transactionalEm.create(EquipoJugador, {
-        equipo: equipo,
-        jugador: jugador,
-        es_titular: false,
-      });
-      transactionalEm.persist(equipoJugador);
+    const jugadores = await seleccionarJugadoresPorPrecio(
+      transactionalEm,
+      pos,
+      cantidad,
+      precioMin,
+      precioMax,
+      idsExcluir,
+      torneoId
+    );
+
+    for (const jugador of jugadores) {
+      jugadoresSeleccionados.push({ jugador, esTitular: true });
+      costoTotal += jugador.precio_actual || 0;
+      idsExcluir.push(jugador.id!);
     }
+  }
+
+  // PASO 4: Seleccionar suplentes (baratos)
+  console.log('Paso 4: Seleccionando suplentes...');
+
+  for (const pos of posiciones) {
+    const suplente = await seleccionarJugadoresPorPrecio(
+      transactionalEm,
+      pos,
+      1,
+      500000,
+      2000000,
+      idsExcluir,
+      torneoId
+    );
+
+    jugadoresSeleccionados.push({ jugador: suplente[0], esTitular: false });
+    costoTotal += suplente[0].precio_actual || 0;
+    idsExcluir.push(suplente[0].id!);
+  }
+
+  console.log(`Costo total antes de ajustes: $${costoTotal.toLocaleString()}`);
+
+  // PASO 5: Ajustar presupuesto si es necesario
+  let intentos = 0;
+  const MAX_INTENTOS = 10;
+
+  while ((costoTotal > PRESUPUESTO_MAXIMO_EQUIPO || costoTotal < PRESUPUESTO_MINIMO_EQUIPO) && intentos < MAX_INTENTOS) {
+    intentos++;
+    
+    if (costoTotal > PRESUPUESTO_MAXIMO_EQUIPO) {
+      console.log(`Ajuste ${intentos}: Costo muy alto, reemplazando jugador caro...`);
+      
+      const jugadoresTitulares = jugadoresSeleccionados
+        .filter(j => j.esTitular && j.jugador.id !== estrella.id)
+        .sort((a, b) => (b.jugador.precio_actual || 0) - (a.jugador.precio_actual || 0));
+
+      if (jugadoresTitulares.length === 0) break;
+
+      const aReemplazar = jugadoresTitulares[0];
+      const posicion = aReemplazar.jugador.position?.description;
+      
+      if (!posicion) continue;
+
+      const precioActual = aReemplazar.jugador.precio_actual || 0;
+      const nuevoMax = Math.floor(precioActual * 0.7);
+      const nuevoMin = Math.max(500000, Math.floor(precioActual * 0.4));
+
+      try {
+        const reemplazo = await seleccionarJugadoresPorPrecio(
+          transactionalEm,
+          posicion,
+          1,
+          nuevoMin,
+          nuevoMax,
+          idsExcluir,
+          torneoId
+        );
+
+        const index = jugadoresSeleccionados.indexOf(aReemplazar);
+        costoTotal -= precioActual;
+        costoTotal += reemplazo[0].precio_actual || 0;
+        
+        idsExcluir.splice(idsExcluir.indexOf(aReemplazar.jugador.id!), 1);
+        idsExcluir.push(reemplazo[0].id!);
+        
+        jugadoresSeleccionados[index] = { jugador: reemplazo[0], esTitular: true };
+      } catch (error) {
+        console.warn('No se pudo encontrar reemplazo, continuando...');
+        break;
+      }
+      
+    } else {
+      console.log(`Ajuste ${intentos}: Costo muy bajo, mejorando jugador...`);
+      
+      const jugadoresSuplentes = jugadoresSeleccionados
+        .filter(j => !j.esTitular)
+        .sort((a, b) => (a.jugador.precio_actual || 0) - (b.jugador.precio_actual || 0));
+
+      if (jugadoresSuplentes.length === 0) break;
+
+      const aReemplazar = jugadoresSuplentes[0];
+      const posicion = aReemplazar.jugador.position?.description;
+      
+      if (!posicion) continue;
+
+      const precioActual = aReemplazar.jugador.precio_actual || 0;
+      const nuevoMin = Math.floor(precioActual * 1.5);
+      const nuevoMax = Math.floor(precioActual * 3);
+
+      try {
+        const reemplazo = await seleccionarJugadoresPorPrecio(
+          transactionalEm,
+          posicion,
+          1,
+          nuevoMin,
+          nuevoMax,
+          idsExcluir,
+          torneoId
+        );
+
+        const index = jugadoresSeleccionados.indexOf(aReemplazar);
+        costoTotal -= precioActual;
+        costoTotal += reemplazo[0].precio_actual || 0;
+        
+        idsExcluir.splice(idsExcluir.indexOf(aReemplazar.jugador.id!), 1);
+        idsExcluir.push(reemplazo[0].id!);
+        
+        jugadoresSeleccionados[index] = { jugador: reemplazo[0], esTitular: false };
+      } catch (error) {
+        console.warn('No se pudo encontrar reemplazo mejor, continuando...');
+        break;
+      }
+    }
+  }
+
+  console.log(`Costo total final: $${costoTotal.toLocaleString()}`);
+
+  // PASO 6: Persistir jugadores en el equipo
+  for (const { jugador, esTitular } of jugadoresSeleccionados) {
+    const equipoJugador = transactionalEm.create(EquipoJugador, {
+      equipo: equipo,
+      jugador: jugador,
+      es_titular: esTitular,
+    });
+    transactionalEm.persist(equipoJugador);
+  }
+
+  // PASO 7: Actualizar presupuesto del equipo
+  const presupuestoRestante = equipo.presupuesto - costoTotal;
+  equipo.presupuesto = presupuestoRestante;
+
+  console.log(`Presupuesto restante: $${presupuestoRestante.toLocaleString()}`);
+  console.log(`Equipo ${equipo.nombre} poblado exitosamente con ${jugadoresSeleccionados.length} jugadores`);
 }
 
 ///////////////////////////////

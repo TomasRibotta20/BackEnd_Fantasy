@@ -17,7 +17,13 @@ export class Player extends BaseEntity {
   @Property({ nullable: true }) height?: string | null;
   @Property({ nullable: true }) weight?: string | null;
   @Property({ nullable: true }) photo?: string | null;
-  @Property({ type: 'number', nullable: true }) jerseyNumber?: number | null;
+  @Property({ type: 'number', nullable: true }) jerseyNumber?: number | 
+  null;
+  @Property({ nullable: true })
+  precio_actual?: number;
+  
+  @Property({ nullable: true })
+  ultima_actualizacion_precio?: Date;
 
   @ManyToOne(() => clubes, { nullable: false })
   club!: clubes;

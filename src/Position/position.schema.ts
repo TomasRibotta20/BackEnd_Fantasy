@@ -1,4 +1,3 @@
-import e from 'express';
 import { z } from 'zod';
 
 export const createPositionSchema = z.object({
@@ -11,7 +10,7 @@ export const updatePositionSchema = createPositionSchema.partial()
   });
 
 export const idPositionParamsSchema = z.object({
-  id: z.string().regex(/^\d+$/, 'El ID debe ser un número válido')
+  id: z.string().regex(/^[1-9][0-9]*$/, 'El ID debe ser un número válido')
 });
 
 export type CreatePositionInput = z.infer<typeof createPositionSchema>;

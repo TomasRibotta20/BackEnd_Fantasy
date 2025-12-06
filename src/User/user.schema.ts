@@ -27,7 +27,7 @@ export const updateUserSchema = createUserSchema.partial()
   });
 
 export const idUserParamsSchema = z.object({
-  id: z.string().regex(/^\d+$/, 'El ID debe ser un número válido')
+  id: z.string().regex(/^[1-9][0-9]*$/, 'El ID debe ser un número válido')
 });
 
 export type createUserInput = z.infer<typeof createUserSchema>;

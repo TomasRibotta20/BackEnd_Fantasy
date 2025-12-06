@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import { setupSwagger } from './swagger.js';
 import 'reflect-metadata';
+import { historialPrecioRouter } from './HistorialPrecio/historial-precio.routes.js';
 import { clubRouter } from './Club/club.routes.js';
 import { playerRouter } from './Player/player.routes.js';
 import { jornadaRouter } from './Fixture/Jornada.routes.js';
@@ -109,6 +110,7 @@ app.use('/api/equipos', equipoRouter);
 app.use('/api/estadisticas', estadisticaJugadorRouter);
 app.use('/api/config', gameConfigRoutes);
 app.use('/api/admin', adminRouter);
+app.use('/api/precios', historialPrecioRouter);
 
 app.use((req, _, next) => {
   next(ErrorFactory.notFoundRoute(req.originalUrl));

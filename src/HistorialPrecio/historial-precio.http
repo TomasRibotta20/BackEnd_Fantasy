@@ -1,0 +1,9 @@
+###Get Preview de Precios Sugeridos para un Club
+GET http://localhost:3000/api/precios/preview/2
+
+### Calcular Y GUARDAR precios de River (ID 2)
+POST http://localhost:3000/api/precios/calcular/2
+
+
+### Calcular TODOS los clubes (Tarda bastante y no llega con las peticiones por el limite hay que hacerlo dos dias separados)
+POST http://localhost:3000/api/precios/calcular-todos

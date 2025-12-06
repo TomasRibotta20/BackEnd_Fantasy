@@ -10,6 +10,9 @@ export class GameConfig extends BaseEntity {
   @Property({ default: true })
   modificacionesHabilitadas: boolean = true
 
+  @Property({ default: 5 })
+  cupoMaximoTorneos: number = 5
+
   @Property()
   updatedAt: Date = new Date()
 }

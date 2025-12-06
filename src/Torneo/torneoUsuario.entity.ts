@@ -4,12 +4,12 @@ import { Torneo } from './torneo.entity.js';
 import { BaseEntity } from '../shared/db/baseEntity.entity.js';
 import { Equipo } from '../Equipo/equipo.entity.js';
 
-@Entity()
+@Entity({ tableName: 'torneo_usuario' })
 @Unique({ properties: ['usuario', 'torneo'] }) 
 export class TorneoUsuario extends BaseEntity {
   
   @Property()
-  rol!: string; // 'creador' | 'participante'
+  rol!: string;
 
   @Property({ onCreate: () => new Date() })
   fecha_inscripcion = new Date();

@@ -102,7 +102,6 @@ static async leaveTorneo(torneoId: number, userId: number) {
   };
 }
 
-// ... dentro de la clase TorneoService ...
 
 static async start(torneoId: number, userId: number) {
     const torneo = await em.findOne(Torneo, { id: torneoId }, {
@@ -126,7 +125,7 @@ static async start(torneoId: number, userId: number) {
             const equipoId = inscripcion.equipo?.id;
             if (equipoId) {
                 const equipoRef = transactionalEm.getReference(Equipo, equipoId );
-                equipoRef.presupuesto = 100000000; 
+                equipoRef.presupuesto = 90000000; 
                 await poblarEquipoAleatoriamente(equipoId, transactionalEm);
             }
         }

@@ -17,8 +17,8 @@ export class Equipo extends BaseEntity {
   })
   torneoUsuario!: TorneoUsuario;
 
-  @Property({ default: 1000000 })
-  presupuesto: number = 1000000;
+  @Property({ default: 90000000 })
+  presupuesto: number = 90000000;
 
   // La relación ahora es con la tabla intermedia
   @OneToMany(() => EquipoJugador, (equipoJugador) => equipoJugador.equipo, {
