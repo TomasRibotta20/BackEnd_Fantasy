@@ -8,6 +8,7 @@ import { FilterQuery } from '@mikro-orm/core';
 import { TorneoService } from './torneo.service.js';
 import { Equipo } from '../Equipo/equipo.entity.js';
 import { crearEquipo } from '../Equipo/equipo.service.js';
+import { GameConfig } from '../Config/gameConfig.entity.js';
 
 const em = orm.em;
 
@@ -172,6 +173,20 @@ async function add(req: Request, res: Response, next: NextFunction) {
     
     const currentUserId = req.authUser.user?.userId;
 
+     // Validar contra el cupo máximo global configurado
+    const config = await em.findOne(GameConfig, 1);
+    const cupoMaximoGlobal = config?.cupoMaximoTorneos || 8;
+
+    if (cupoMaximo > cupoMaximoGlobal) {
+      return next(ErrorFactory.badRequest(
+        `El cupo máximo del torneo (${cupoMaximo}) no puede exceder el límite global configurado (${cupoMaximoGlobal})`
+      ));
+    }
+
+    if (cupoMaximo < 2) {
+      return next(ErrorFactory.badRequest('El cupo máximo debe ser al menos 2 participantes'));
+    }
+
     const nuevoTorneo = new Torneo();
     nuevoTorneo.nombre = nombre;
     nuevoTorneo.descripcion = descripcion;
@@ -260,6 +275,21 @@ async function update(req: Request, res: Response, next: NextFunction) {
         if (torneo.estado !== EstadoTorneo.ESPERA) {
             return next(ErrorFactory.badRequest('No puedes cambiar el cupo de un torneo ya iniciado.'));
         }
+         
+        // Validar contra el cupo máximo global
+        const config = await em.findOne(GameConfig, 1);
+        const cupoMaximoGlobal = config?.cupoMaximoTorneos || 8;
+        
+        if (cupoMaximo > cupoMaximoGlobal) {
+            return next(ErrorFactory.badRequest(
+                `El cupo máximo del torneo (${cupoMaximo}) no puede exceder el límite global configurado (${cupoMaximoGlobal})`
+            ));
+        }
+        
+        if (cupoMaximo < 2) {
+            return next(ErrorFactory.badRequest('El cupo máximo debe ser al menos 2 participantes'));
+        }
+
         const inscritosActuales = torneo.cantidadParticipantes || 0; 
         if (cupoMaximo < inscritosActuales) {
             return next(ErrorFactory.badRequest(`El cupo máximo no puede ser menor a los participantes actuales (${inscritosActuales}).`));
