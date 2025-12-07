@@ -79,7 +79,7 @@ Content-Type: application/json
 ### ========== ELIMINACIÓN ==========
 
 ### Eliminar torneo (solo admin)
-DELETE http://localhost:3000/api/torneos/1
+DELETE http://localhost:3000/api/torneos/2
 Content-Type: application/json
 
 ### ========== RUTAS DE USUARIO ==========

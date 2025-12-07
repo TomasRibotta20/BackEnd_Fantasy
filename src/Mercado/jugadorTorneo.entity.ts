@@ -11,7 +11,7 @@ export class JugadorTorneo extends BaseEntity {
   @ManyToOne(() => Player)
   jugador!: Player;
   
-  @ManyToOne(() => Torneo)
+  @ManyToOne(() => Torneo, { deleteRule: 'cascade' })
   torneo!: Torneo;
   
   @Property({ default: false })

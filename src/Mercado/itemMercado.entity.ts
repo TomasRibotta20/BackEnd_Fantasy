@@ -7,7 +7,7 @@ import { MercadoPuja } from './mercadoPuja.entity.js';
 @Entity({ tableName: 'item_mercado' })
 export class ItemMercado extends BaseEntity {
   
-  @ManyToOne('MercadoDiario')
+  @ManyToOne('MercadoDiario', { deleteRule: 'cascade' })
   mercado!: MercadoDiario;
   
   @ManyToOne(() => Player, { eager: true })

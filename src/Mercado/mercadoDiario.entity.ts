@@ -12,7 +12,7 @@ export enum EstadoMercado {
 @Entity({ tableName: 'mercado_diario' })
 export class MercadoDiario extends BaseEntity {
   
-  @ManyToOne(() => Torneo)
+  @ManyToOne(() => Torneo, { deleteRule: 'cascade' })
   torneo!: Torneo;
   
   @Property()

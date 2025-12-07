@@ -7,7 +7,7 @@ Content-Type: application/json
 }
 
 ### Cerrar mercado (Admin)
-POST http://localhost:3000/api/mercado/6/cerrar
+POST http://localhost:3000/api/mercado/8/cerrar
 Content-Type: application/json
 
 ### Obtener mercado activo de un torneo (Usuario autenticado)
