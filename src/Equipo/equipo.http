@@ -41,3 +41,11 @@ Content-Type: application/json
 
 GET http://localhost:3000/api/equipos/todos
 Content-Type: application/json
+
+### Vender un jugador del equipo (requiere autenticación previa)
+POST http://localhost:3000/api/equipos/mi-equipo/5/vender-jugador
+Content-Type: application/json
+
+{
+  "jugadorId": 1140
+}
