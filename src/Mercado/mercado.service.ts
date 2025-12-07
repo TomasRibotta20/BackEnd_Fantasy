@@ -20,7 +20,7 @@ const LIMITES_POSICIONES: Record<string, { min: number; max: number }> = {
 };
 
 const MAXIMO_JUGADORES_EQUIPO = 15;
-const JUGADORES_POR_MERCADO = 500;
+const JUGADORES_POR_MERCADO = 10;
 
 /**
  * Inicializa los registros JugadorTorneo para un torneo
