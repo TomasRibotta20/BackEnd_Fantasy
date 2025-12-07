@@ -1,9 +1,10 @@
-import { Entity, Property, OneToOne, OneToMany, Collection } from '@mikro-orm/core';
+import { Entity, Property, OneToOne, OneToMany, Collection, Check } from '@mikro-orm/core';
 import { BaseEntity } from '../shared/db/baseEntity.entity.js';
 import { EquipoJugador } from './equipoJugador.entity.js';
 import type { TorneoUsuario } from '../Torneo/torneoUsuario.entity.js';
 
 @Entity({ tableName: 'equipos' })
+@Check({ expression: 'presupuesto >= 0 AND presupuesto_bloqueado >= 0' })
 export class Equipo extends BaseEntity {
   @Property({ nullable: false })
   nombre!: string;
@@ -23,7 +24,6 @@ export class Equipo extends BaseEntity {
   @Property({ default: 0 })
   presupuesto_bloqueado: number = 0;
 
-  // La relación ahora es con la tabla intermedia
   @OneToMany(() => EquipoJugador, (equipoJugador) => equipoJugador.equipo, {
     eager: true,
     orphanRemoval: true,

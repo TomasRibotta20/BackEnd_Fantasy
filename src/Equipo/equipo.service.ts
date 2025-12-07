@@ -8,6 +8,7 @@ import { EquipoJugador } from './equipoJugador.entity.js';
 import { TorneoUsuario } from '../Torneo/torneoUsuario.entity.js';
 import { Transaccion, TipoTransaccion } from './transaccion.entity.js';
 
+
 const PRESUPUESTO_INICIAL = 90000000;
 const PRESUPUESTO_MINIMO_EQUIPO = 56000000;
 const PRESUPUESTO_MAXIMO_EQUIPO = 70000000;

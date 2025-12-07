@@ -1,0 +1,15 @@
+### Abrir mercado para un torneo (Admin)
+POST http://localhost:3000/api/mercado/abrir
+Content-Type: application/json
+
+{
+  "torneoId": 2
+}
+
+### Cerrar mercado (Admin)
+POST http://localhost:3000/api/mercado/1/cerrar
+Content-Type: application/json
+
+### Obtener mercado activo de un torneo (Usuario autenticado)
+GET http://localhost:3000/api/mercado/activo/2
+Content-Type: application/json
