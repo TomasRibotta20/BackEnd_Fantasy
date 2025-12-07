@@ -20,7 +20,7 @@ const LIMITES_POSICIONES: Record<string, { min: number; max: number }> = {
 };
 
 const MAXIMO_JUGADORES_EQUIPO = 15;
-const JUGADORES_POR_MERCADO = 10;
+const JUGADORES_POR_MERCADO = 500;
 
 /**
  * Inicializa los registros JugadorTorneo para un torneo
@@ -146,26 +146,36 @@ export async function abrirMercado(torneoId: number) {
 
     let jugadoresSeleccionados: JugadorTorneo[];
     let huboReset = false;
-
+    let idsCompletados: Set<number> | undefined;
     // 4. ¿Hay suficientes disponibles?
     if (disponibles.length < JUGADORES_POR_MERCADO) {
       console.log(`Reset del pool. Disponibles: ${disponibles.length}/${JUGADORES_POR_MERCADO}`);
 
+      // Agarramos todos los jugadores que sobran del pool actual
+      jugadoresSeleccionados = shuffle(disponibles);
+      const faltantes = JUGADORES_POR_MERCADO - jugadoresSeleccionados.length;
+      
       // RESET: Limpiar flag de todos los libres
       for (const jt of jugadoresLibres) {
         jt.aparecio_en_mercado = false;
       }
 
       huboReset = true;
+      
+      //Completamos con los reseteados, excluyendo los que ya agarramos
+      const idsSeleccionados = new Set(jugadoresSeleccionados.map(jt => jt.jugador.id));
+      const recienReseteados = jugadoresLibres.filter(jt => !idsSeleccionados.has(jt.jugador.id));
 
-      // Validar que haya al menos 10 jugadores libres en total
-      if (jugadoresLibres.length < JUGADORES_POR_MERCADO) {
+      // Validar que haya mas jugadores recien reseteados que faltantes
+      if (recienReseteados.length < faltantes) {
         throw ErrorFactory.badRequest(
-          `Insuficientes jugadores libres en el torneo: ${jugadoresLibres.length}/${JUGADORES_POR_MERCADO} requeridos`
+          `Insuficientes jugadores libres en el torneo: ${jugadoresLibres.length} disponibles, se necesitan ${JUGADORES_POR_MERCADO}`
         );
       }
 
-      jugadoresSeleccionados = shuffle(jugadoresLibres).slice(0, JUGADORES_POR_MERCADO);
+      const completar = shuffle(recienReseteados).slice(0, faltantes);
+      idsCompletados = new Set(completar.map(jt => jt.jugador.id).filter((id): id is number => id !== undefined));
+      jugadoresSeleccionados.push(...completar);
     } else {
       jugadoresSeleccionados = shuffle(disponibles).slice(0, JUGADORES_POR_MERCADO);
     }
@@ -200,8 +210,14 @@ export async function abrirMercado(torneoId: number) {
       });
       em.persist(item);
 
-      // Marcar como "ya apareció"
+      // Solo marcar los que vinieron del completar (segunda vuelta)
+      // Los del pool viejo (primera vuelta) quedan en false
+      if (huboReset && idsCompletados && jugadorTorneo.jugador.id && idsCompletados.has(jugadorTorneo.jugador.id)) {
       jugadorTorneo.aparecio_en_mercado = true;
+      } else if (!huboReset) {
+      // Si no hubo reset, marcar todos normalmente
+      jugadorTorneo.aparecio_en_mercado = true;
+      }
     }
 
     await em.flush();
