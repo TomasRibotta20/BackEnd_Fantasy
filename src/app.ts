@@ -23,6 +23,8 @@ import jwt from 'jsonwebtoken';
 import cors from 'cors';
 import { globalErrorHandler } from './shared/errors/errors.handler.js';
 import { ErrorFactory } from './shared/errors/errors.factory.js';
+import { premioRouter } from './Premio/premio.routes.js';
+import { recompensaRouter } from './Recompensa/recompensa.routes.js';
 
 const corsOptions = {
   origin: 'http://localhost:5173',
@@ -107,6 +109,8 @@ app.use('/api/torneos', torneoRouter);
 app.use('/partidos', partidoRouter);
 app.use('/api/positions', positionRouter); // Rutas de posiciones
 app.use('/api/equipos', equipoRouter);
+app.use('/api/premios', premioRouter);
+app.use('/api/recompensas', recompensaRouter);
 app.use('/api/estadisticas', estadisticaJugadorRouter);
 app.use('/api/config', gameConfigRoutes);
 app.use('/api/admin', adminRouter);
