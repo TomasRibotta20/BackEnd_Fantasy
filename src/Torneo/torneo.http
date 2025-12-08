@@ -69,7 +69,7 @@ Content-Type: application/json
 }
 
 ### Actualizar código de acceso (solo admin)
-PATCH http://localhost:3000/api/torneos/1
+PATCH http://localhost:3000/api/torneos/3
 Content-Type: application/json
 
 {
@@ -79,7 +79,7 @@ Content-Type: application/json
 ### ========== ELIMINACIÓN ==========
 
 ### Eliminar torneo (solo admin)
-DELETE http://localhost:3000/api/torneos/2
+DELETE http://localhost:3000/api/torneos/3
 Content-Type: application/json
 
 ### ========== RUTAS DE USUARIO ==========
@@ -97,8 +97,8 @@ POST http://localhost:3000/api/torneos/unirse
 Content-Type: application/json
 
 {
-  "codigo_acceso": "6TUSAZ",
-  "nombre_equipo": "Los tralaleritos"
+  "codigo_acceso": "O6BH4G",
+  "nombre_equipo": "Chiquilines Fc"
 }
 
 ### Ver mis torneos (con filtro opcional por estado)
@@ -474,7 +474,7 @@ Content-Type: application/json
 }
 ###########################################
 ### Iniciar torneo como creador (exitoso)
-POST http://localhost:3000/api/torneos/iniciar/2
+POST http://localhost:3000/api/torneos/iniciar/4
 Content-Type: application/json
 
 

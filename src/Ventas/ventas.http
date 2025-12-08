@@ -1,0 +1,195 @@
+### ========== AUTENTICACIÓN ==========
+### Primero login
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@admin.com",
+  "password": "admin123"
+}
+
+### ========== CREAR/ACTUALIZAR OFERTA ==========
+
+### Crear oferta por un jugador
+POST http://localhost:3000/api/ventas/ofertar
+Content-Type: application/json
+
+{
+  "equipoJugador_id": 167,
+  "monto_ofertado": 6500000,
+  "mensaje_oferente": "Me interesa muchisimo este jugador para reforzar mi Equipo"
+}
+
+### Actualizar oferta existente (mismo equipoJugador_id)
+POST http://localhost:3000/api/ventas/ofertar
+Content-Type: application/json
+
+{
+  "equipoJugador_id": 112,
+  "monto_ofertado": 6000000,
+  "mensaje_oferente": "Subo mi oferta, realmente lo necesito"
+}
+
+### Crear oferta sin mensaje
+POST http://localhost:3000/api/ventas/ofertar
+Content-Type: application/json
+
+{
+  "equipoJugador_id": 2,
+  "monto_ofertado": 4500000
+}
+
+### ========== VER OFERTAS ==========
+
+### Ver mis ofertas enviadas (todas)
+GET http://localhost:3000/api/ventas/mis-ofertas-enviadas
+Content-Type: application/json
+
+### Ver mis ofertas enviadas pendientes
+GET http://localhost:3000/api/ventas/mis-ofertas-enviadas?estado=PENDIENTE
+Content-Type: application/json
+
+### Ver mis ofertas enviadas con paginación
+GET http://localhost:3000/api/ventas/mis-ofertas-enviadas?limit=10&offset=0
+Content-Type: application/json
+
+### Ver mis ofertas recibidas (todas)
+GET http://localhost:3000/api/ventas/mis-ofertas-recibidas
+Content-Type: application/json
+
+### Ver mis ofertas recibidas pendientes
+GET http://localhost:3000/api/ventas/mis-ofertas-recibidas?estado=PENDIENTE
+Content-Type: application/json
+
+### Ver mis ofertas recibidas aceptadas
+GET http://localhost:3000/api/ventas/mis-ofertas-recibidas?estado=ACEPTADA
+Content-Type: application/json
+
+### Ver detalle de una oferta específica
+GET http://localhost:3000/api/ventas/1
+Content-Type: application/json
+
+### ========== ACEPTAR OFERTA ==========
+
+### Aceptar oferta (como vendedor)
+POST http://localhost:3000/api/ventas/3/aceptar
+Content-Type: application/json
+
+### ========== RECHAZAR OFERTA ==========
+
+### Rechazar oferta sin mensaje
+POST http://localhost:3000/api/ventas/2/rechazar
+Content-Type: application/json
+
+{}
+
+### Rechazar oferta con mensaje
+POST http://localhost:3000/api/ventas/2/rechazar
+Content-Type: application/json
+
+{
+  "mensaje_respuesta": "Lo siento, ese jugador es clave en mi equipo y no planeo venderlo"
+}
+
+### ========== CANCELAR OFERTA ==========
+
+### Cancelar oferta (como oferente)
+DELETE http://localhost:3000/api/ventas/1/cancelar
+Content-Type: application/json
+
+### ========== SISTEMA ==========
+
+### Procesar ofertas vencidas (cron job)
+POST http://localhost:3000/api/ventas/sistema/procesar-vencidas
+Content-Type: application/json
+
+### ========== CASOS DE ERROR ==========
+
+### Intentar ofertar por jugador que no existe
+POST http://localhost:3000/api/ventas/ofertar
+Content-Type: application/json
+
+{
+  "equipoJugador_id": 99999,
+  "monto_ofertado": 5000000
+}
+
+### Intentar ofertar sin presupuesto suficiente
+POST http://localhost:3000/api/ventas/ofertar
+Content-Type: application/json
+
+{
+  "equipoJugador_id": 1,
+  "monto_ofertado": 999999999999
+}
+
+### Intentar ofertar por menos del precio actual
+POST http://localhost:3000/api/ventas/ofertar
+Content-Type: application/json
+
+{
+  "equipoJugador_id": 1,
+  "monto_ofertado": 100
+}
+
+### Intentar aceptar oferta que no existe
+POST http://localhost:3000/api/ventas/99999/aceptar
+Content-Type: application/json
+
+### Intentar aceptar oferta de otro usuario
+POST http://localhost:3000/api/ventas/1/aceptar
+Content-Type: application/json
+
+### Intentar cancelar oferta de otro usuario
+DELETE http://localhost:3000/api/ventas/1/cancelar
+Content-Type: application/json
+
+### ========== FLUJO COMPLETO ==========
+
+### 1. Usuario A hace login
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@test.com",
+  "password": "Password123"
+}
+
+### 2. Usuario A crea oferta por jugador de Usuario B
+POST http://localhost:3000/api/ventas/ofertar
+Content-Type: application/json
+
+{
+  "equipoJugador_id": 5,
+  "monto_ofertado": 7500000,
+  "mensaje_oferente": "Excelente jugador, te ofrezco buen precio"
+}
+
+### 3. Usuario A ve sus ofertas enviadas
+GET http://localhost:3000/api/ventas/mis-ofertas-enviadas?estado=PENDIENTE
+Content-Type: application/json
+
+### 4. Usuario B hace login
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "jugador1@fantasy.com",
+  "password": "Password123"
+}
+
+### 5. Usuario B ve sus ofertas recibidas
+GET http://localhost:3000/api/ventas/mis-ofertas-recibidas?estado=PENDIENTE
+Content-Type: application/json
+
+### 6. Usuario B ve detalle de la oferta
+GET http://localhost:3000/api/ventas/1
+Content-Type: application/json
+
+### 7. Usuario B acepta la oferta
+POST http://localhost:3000/api/ventas/1/aceptar
+Content-Type: application/json
+
+### 8. Usuario A verifica que se completó la transferencia
+GET http://localhost:3000/api/equipos/mi-equipo
+Content-Type: application/json

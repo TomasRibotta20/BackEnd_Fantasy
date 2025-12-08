@@ -10,7 +10,9 @@ export enum TipoTransaccion {
   INTERCAMBIO_RECIBIDO = 'INTERCAMBIO_RECIBIDO',
   PREMIO = 'PREMIO',
   PENALIZACION = 'PENALIZACION',
-  DRAFT = 'DRAFT'
+  CLASULA = 'CLASULA',
+  COMPRA_JUGADOR = 'COMPRA_JUGADOR',     
+  VENTA_JUGADOR = 'VENTA_JUGADOR'   
 }
 
 @Entity({ tableName: 'transacciones' })

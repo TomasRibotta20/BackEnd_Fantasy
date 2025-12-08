@@ -16,5 +16,10 @@ export class EquipoJugador extends BaseEntity {
   @Property({ type: 'boolean', default: false })
   es_titular: boolean = false;
 
+  @Property({ nullable: false })
+  fecha_incorporacion!: Date;
+
+  @Property({ default: 0 })
+  valor_clausula: number = 0;
   
 }
