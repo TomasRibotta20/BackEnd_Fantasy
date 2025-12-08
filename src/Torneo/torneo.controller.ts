@@ -183,10 +183,6 @@ async function add(req: Request, res: Response, next: NextFunction) {
       ));
     }
 
-    if (cupoMaximo < 2) {
-      return next(ErrorFactory.badRequest('El cupo máximo debe ser al menos 2 participantes'));
-    }
-
     const nuevoTorneo = new Torneo();
     nuevoTorneo.nombre = nombre;
     nuevoTorneo.descripcion = descripcion;
@@ -284,10 +280,6 @@ async function update(req: Request, res: Response, next: NextFunction) {
             return next(ErrorFactory.badRequest(
                 `El cupo máximo del torneo (${cupoMaximo}) no puede exceder el límite global configurado (${cupoMaximoGlobal})`
             ));
-        }
-        
-        if (cupoMaximo < 2) {
-            return next(ErrorFactory.badRequest('El cupo máximo debe ser al menos 2 participantes'));
         }
 
         const inscritosActuales = torneo.cantidadParticipantes || 0; 

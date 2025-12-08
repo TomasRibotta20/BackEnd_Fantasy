@@ -36,7 +36,7 @@ static async join(codigo_acceso: string, nombre_equipo: string, userId: number) 
       
       const nuevoEquipo = new Equipo();
       nuevoEquipo.nombre = nombre_equipo;
-      nuevoEquipo.presupuesto = 0;
+      nuevoEquipo.presupuesto = 90000000;
       nuevoEquipo.puntos = 0;
       nuevoEquipo.torneoUsuario = nuevaInscripcion;
       nuevaInscripcion.equipo = nuevoEquipo;
@@ -131,7 +131,6 @@ static async start(torneoId: number, userId: number) {
         }
         const torneoRef = transactionalEm.getReference(Torneo, torneoId);
         torneoRef.estado = EstadoTorneo.ACTIVO;
-        // Si no tenía fecha, le ponemos HOY
         if (!torneoRef.fecha_inicio) {
             torneoRef.fecha_inicio = new Date();
         }
