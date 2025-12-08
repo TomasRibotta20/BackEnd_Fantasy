@@ -26,6 +26,7 @@ class AdminController {
         config = em.create(GameConfig, {
           jornadaActiva: jornada,
           modificacionesHabilitadas: true,
+          cupoMaximoTorneos: 5,
           updatedAt: new Date()
         })
       } else {
@@ -55,7 +56,8 @@ class AdminController {
       if (!config) {
         config = em.create(GameConfig, {
           modificacionesHabilitadas: true,
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          cupoMaximoTorneos: 5
         })
       } else {
         config.modificacionesHabilitadas = true
@@ -82,7 +84,8 @@ class AdminController {
       if (!config) {
         config = em.create(GameConfig, {
           modificacionesHabilitadas: false,
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          cupoMaximoTorneos: 5
         })
       } else {
         config.modificacionesHabilitadas = false
@@ -99,7 +102,43 @@ class AdminController {
         next(ErrorFactory.internal("Error al deshabilitar modificaciones"));
     }
   }
+   // Establecer cupo máximo para torneos
+  async setCupoMaximoTorneos(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { cupoMaximo } = req.body
+      const em = orm.em.fork()
 
+      if (!cupoMaximo || cupoMaximo < 2) {
+        return next(ErrorFactory.badRequest('El cupo máximo debe ser al menos 2'))
+      }
+
+      if (cupoMaximo > 10) {
+        return next(ErrorFactory.badRequest('El cupo máximo no puede exceder 10 participantes'))
+      }
+
+      let config = await em.findOne(GameConfig, 1)
+      if (!config) {
+        config = em.create(GameConfig, {
+          cupoMaximoTorneos: cupoMaximo,
+          modificacionesHabilitadas: true,
+          updatedAt: new Date()
+        })
+      } else {
+        config.cupoMaximoTorneos = cupoMaximo
+        config.updatedAt = new Date()
+      }
+
+      await em.persistAndFlush(config)
+
+      res.json({
+        success: true,
+        message: `Cupo máximo para torneos establecido en ${cupoMaximo} participantes`,
+        data: { cupoMaximoTorneos: cupoMaximo }
+      })
+    } catch (error: any) {
+        next(ErrorFactory.internal("Error al establecer cupo máximo"));
+    }
+  }
   // Ver configuración actual
   async getConfig(req: Request, res: Response, next: NextFunction) {
     try {
