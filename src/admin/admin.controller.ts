@@ -219,6 +219,7 @@ class AdminController {
         },
       })
     } catch (error: any) {
+      console.error('\nERROR procesando jornada:', error)
         return next(ErrorFactory.internal("Error desconocido al procesar jornada"))
     }
   }

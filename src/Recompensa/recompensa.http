@@ -10,7 +10,7 @@ GET {{baseUrl}}/recompensas/pendientes
 ### 2. GET Opciones de Premio (ID válido)
 ### ========================================
 # @name getOpcionesRecompensa
-GET {{baseUrl}}/recompensas/5/opciones
+GET {{baseUrl}}/recompensas/6/opciones
 
 ### ========================================
 ### 3. GET Opciones de Premio (ID inválido - para probar validación)
@@ -32,8 +32,8 @@ POST {{baseUrl}}/recompensas/elegir
 Content-Type: application/json
 
 {
-  "recompensaId": 1,
-  "premioId": 1
+  "recompensaId": 4,
+  "premioId": 25
 }
 
 ### ========================================
@@ -44,8 +44,8 @@ POST {{baseUrl}}/recompensas/elegir
 Content-Type: application/json
 
 {
-  "recompensaId": 2,
-  "premioId": 4
+  "recompensaId": 6,
+  "premioId": 21
 }
 
 ### ========================================
@@ -103,7 +103,7 @@ POST {{baseUrl}}/recompensas/elegir
 Content-Type: application/json
 
 {
-  "recompensaId": 99,
+  "recompensaId": 4,
   "premioId": 1
 }
 
@@ -115,8 +115,8 @@ POST {{baseUrl}}/recompensas/elegir
 Content-Type: application/json
 
 {
-  "recompensaId": 1,
-  "premioId": 7
+  "recompensaId": 6,
+  "premioId": 24
 }
 
 ### ========================================
@@ -127,7 +127,7 @@ POST {{baseUrl}}/recompensas/confirmar-pick
 Content-Type: application/json
 
 {
-  "recompensaId": 3,
+  "recompensaId": 6,
   "jugadorId": 123
 }
 
@@ -139,8 +139,8 @@ POST {{baseUrl}}/recompensas/confirmar-pick
 Content-Type: application/json
 
 {
-  "recompensaId": 3,
-  "jugadorId": 999
+  "recompensaId": 6,
+  "jugadorId": 860
 }
 
 ### ========================================
@@ -151,7 +151,7 @@ POST {{baseUrl}}/recompensas/confirmar-pick
 Content-Type: application/json
 
 {
-  "recompensaId": 3
+  "recompensaId": 6
 }
 
 ### ========================================

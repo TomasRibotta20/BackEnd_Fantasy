@@ -24,10 +24,10 @@ POST http://localhost:3000/api/torneos
 Content-Type: application/json
 
 {
-  "nombre": "La LIGA",
+  "nombre": "La turbo LIGA",
   "descripcion": "Torneo de fantasy",
   "cupoMaximo": 3,
-  "nombre_equipo": "Equipo de Prueba",
+  "nombre_equipo": "mazaPrime",
   "fecha_inicio": "2024-01-15T10:00:00Z"
 }
 
@@ -97,8 +97,8 @@ POST http://localhost:3000/api/torneos/unirse
 Content-Type: application/json
 
 {
-  "codigo_acceso": "GVZFWF",
-  "nombre_equipo": "Los Galácticos"
+  "codigo_acceso": "ZG23SQ",
+  "nombre_equipo": "Team 1"
 }
 
 ### Ver mis torneos (con filtro opcional por estado)
@@ -219,7 +219,7 @@ POST http://localhost:3000/api/torneos/mis-torneos
 Content-Type: application/json
 
 ### 4. Ver detalles del torneo y otros participantes
-GET http://localhost:3000/api/torneos/mi-torneo/5
+GET http://localhost:3000/api/torneos/mi-torneo/20
 Content-Type: application/json
 
 ### 5. Abandonar torneo si es necesario
@@ -474,7 +474,7 @@ Content-Type: application/json
 }
 ###########################################
 ### Iniciar torneo como creador (exitoso)
-POST http://localhost:3000/api/torneos/iniciar/1
+POST http://localhost:3000/api/torneos/iniciar/19
 Content-Type: application/json
 
 

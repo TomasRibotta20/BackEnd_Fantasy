@@ -3,6 +3,7 @@ import { BaseEntity } from '../shared/db/baseEntity.entity.js';
 import { clubes } from '../Club/club.entity.js';
 import { Position } from '../Position/position.entity.js';
 import { EquipoJugador } from '../Equipo/equipoJugador.entity.js'; // Importar Equipo
+import type { EstadisticaJugador } from '../EstadisticaJugador/estadistica-jugador.entity.js';
 @Entity({ tableName: 'player' })
 export class Player extends BaseEntity {
   @Property({ type: 'number' })
@@ -33,4 +34,7 @@ export class Player extends BaseEntity {
 
   @OneToMany(() => EquipoJugador, (equipoJugador) => equipoJugador.jugador, { nullable: true })
   equipos = new Collection<EquipoJugador>(this);
+
+  @OneToMany(() => 'EstadisticaJugador', (e: EstadisticaJugador) => e.jugador)
+  estadisticas = new Collection<EstadisticaJugador>(this);
 }

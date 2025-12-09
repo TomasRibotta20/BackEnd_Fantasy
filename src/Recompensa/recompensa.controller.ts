@@ -6,12 +6,12 @@ import { Premio, RangoPrecio, Tier } from '../Premio/premio.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 import { Saldo } from '../Premio/saldo.entity.js';
 import { Ruleta } from '../Premio/ruleta.entity.js';
-import { sortearJugador } from './recompensa.service.js';
+import { procesarSaldo, procesarRuleta, procesarPlayerPick } from './recompensa.service.js';
 import { EquipoJugador } from '../Equipo/equipoJugador.entity.js';
 import { PlayerPick } from '../Premio/playerpick.entity.js';
 import { Player } from '../Player/player.entity.js';
 import { Equipo } from '../Equipo/equipo.entity.js';
-import { EntityManager } from '@mikro-orm/mysql';
+import { procesarPicksExpiradosDelUsuario, addSaldoLocal, ficharJugadorLocal } from './recompensa.service.js';
 
 const em = orm.em;
 
@@ -20,7 +20,7 @@ const em = orm.em;
  * @param posicion - Posición del usuario en la jornada
  * @returns Tier correspondiente (ORO, PLATA o BRONCE)
  */
-function calcularTierPorPosicion(posicion: number): Tier {
+export function calcularTierPorPosicion(posicion: number): Tier {
   if (posicion === 1) return Tier.ORO;
   if (posicion <= 3) return Tier.PLATA;
   return Tier.BRONCE;
@@ -29,10 +29,15 @@ function calcularTierPorPosicion(posicion: number): Tier {
 
 async function getPendientes(req: Request, res: Response, next: NextFunction) {
   try {
-    const usuarioId = req.authUser.user?.userId;
+    const usuarioId = req.authUser.user?.userId!;
+    await procesarPicksExpiradosDelUsuario(em, usuarioId);
     const pendientes = await em.find(Recompensa, {
       torneoUsuario: { usuario: usuarioId },
-      fecha_reclamo: null
+      fecha_reclamo: null,
+      $or: [
+        { fechaExpiracionPick: null },
+        { fechaExpiracionPick: { $gte: new Date() } }
+      ]
     }, {
       populate: ['jornada', 'torneoUsuario.torneo'],
       orderBy: { jornada: { id: 'DESC' } }
@@ -69,11 +74,33 @@ async function getOpcionesRecompensa(req: Request, res: Response, next: NextFunc
     if (recompensa.fecha_reclamo) {
       throw ErrorFactory.conflict("Esta recompensa ya fue reclamada y finalizada.");
     }
+    if (new Date() > recompensa.fechaExpiracionPick!) {
+      throw ErrorFactory.conflict("El tiempo para elegir ha expirado. Se asignó una compensación automáticamente.");
+    }
+    if (recompensa.premioConfiguracion && recompensa.opcionesPickDisponibles) {
+      const jugadoresDisponibles = await em.find(Player, {
+        id: { $in: recompensa.opcionesPickDisponibles }
+      });
+      return res.status(200).json({
+        tipo: 'pick_pendiente',
+        recompensaId: recompensa.id,
+        mensaje: 'Tienes un pick pendiente. Elige tu jugador.',
+        opciones: jugadoresDisponibles.map(j => ({
+          id: j.id!,
+          name: j.name,
+          position: j.position?.description || 'N/A',
+          team: j.club.nombre,
+          precio_actual: j.precio_actual,
+          foto_perfil: j.photo
+        })),
+        opcionesIds: recompensa.opcionesPickDisponibles,
+        expira: recompensa.fechaExpiracionPick
+      });
+    }
     if (recompensa.premioConfiguracion) {
-      throw ErrorFactory.conflict("Ya elegiste un premio. Finaliza el proceso actual.");
+      throw ErrorFactory.conflict("Ya elegiste una opción para esta recompensa. Está procesándose.");
     }
     const tierCalculado = calcularTierPorPosicion(recompensa.posicionJornada);
-
     const premiosDisponibles = await em.find(Premio, { tier: tierCalculado });
 
     return res.status(200).json({
@@ -111,166 +138,20 @@ async function elegirPremio(req: Request, res: Response, next: NextFunction) {
     if (premioConfig.tier !== tierRealUsuario) {
         throw ErrorFactory.forbidden(`Error de integridad: Este premio es ${premioConfig.tier} y tú eres ${tierRealUsuario}.`);
     }
-
+    let resultado;
     if (premioConfig instanceof Saldo) {
-      const monto = premioConfig.monto;
-      await em.transactional(async (txEm) => { 
-        const recompensaTx = txEm.merge(recompensa);
-        recompensaTx.premioConfiguracion = premioConfig;
-        await addSaldoLocal(txEm, usuarioId, recompensaTx.torneoUsuario.torneo.id!, monto); 
-        recompensaTx.monto = monto;
-        recompensaTx.fecha_reclamo = new Date();
-      });
-      return res.status(200).json({ tipo: 'saldo', monto, mensaje: '¡Dinero acreditado!' });//Se devuelve con status?
+      resultado = await procesarSaldo(em, recompensa, premioConfig, usuarioId);
+    } 
+    else if (premioConfig instanceof Ruleta) {
+      resultado = await procesarRuleta(em, recompensa, premioConfig, usuarioId);
+    } 
+    else if (premioConfig instanceof PlayerPick) {
+      resultado = await procesarPlayerPick(em, recompensa, premioConfig, usuarioId);
     }
-
-    if (premioConfig instanceof Ruleta) {
-      const torneoId = recompensa.torneoUsuario.torneo.id!;
-      const cantidadJugadores = await em.count(EquipoJugador, { 
-            equipo: { torneoUsuario: { usuario: usuarioId, torneo: torneoId } } 
-        });
-
-      if (cantidadJugadores >= 15) {
-        throw ErrorFactory.conflict("PLANTILLA_LLENA, No tienes espacio. Vende un jugador antes de jugar.");
-      }
-      
-      const resultado = await sortearJugador(
-        em, 
-        premioConfig.configuracion, 
-        torneoId
-      );
-      const { jugador: jugadorGanado, rangoSorteado } = resultado;
-      if (!jugadorGanado) {
-        let montoCompensacion: number;
-        if (rangoSorteado.max) {
-          montoCompensacion = (Number(rangoSorteado.min) + Number(rangoSorteado.max)) / 2;
-        } else {
-          montoCompensacion = Number(rangoSorteado.min);
-        }
-        await em.transactional(async (txEm) => { 
-          const recompensaTx = txEm.merge(recompensa);
-          recompensaTx.premioConfiguracion = premioConfig;
-          await addSaldoLocal(txEm, usuarioId, torneoId, montoCompensacion); 
-          recompensaTx.montoCompensacion = montoCompensacion;
-          recompensaTx.fecha_reclamo = new Date();
-        });
-        return res.status(200).json({ 
-          tipo: 'dinero_fallback',
-          rangoOriginal: rangoSorteado,
-          montoCompensacion: montoCompensacion,
-          mensaje: '¡Tu suerte fue increíble! Pero el mercado está vacío en esa categoría. Te compensamos con el valor equivalente.'
-        });
-      }
-      const resultadoTransaccion = await em.transactional(async (txEm) => {
-        const recompensaTx = txEm.merge(recompensa);
-        recompensaTx.premioConfiguracion = premioConfig;
-        const jugador = await txEm.findOne(Player, jugadorGanado.id!, {
-            lockMode: LockMode.PESSIMISTIC_WRITE
-        });
-        if (!jugador) {
-          throw ErrorFactory.notFound("Jugador no encontrado durante la transacción.");
-        }
-        const ocupado = await txEm.count(EquipoJugador, { jugador: jugadorGanado, equipo: { torneoUsuario: { torneo: torneoId } } });
-        
-        if (ocupado > 0) {
-          const montoCompensacion = Number(jugadorGanado.precio_actual);
-          recompensaTx.jugador = undefined;
-          recompensaTx.montoCompensacion = montoCompensacion;
-          recompensaTx.fecha_reclamo = new Date();
-          await addSaldoLocal(txEm, usuarioId, recompensaTx.torneoUsuario.torneo.id!, montoCompensacion);
-          return { status: 'COMPENSACION', monto: montoCompensacion, nombre: jugador.name };
-        }
-        const cantidadFinal = await txEm.count(EquipoJugador, { equipo: { torneoUsuario: { usuario: usuarioId, torneo: torneoId } } });
-        if (cantidadFinal >= 15) {
-          throw ErrorFactory.conflict("Tu plantilla se llenó mientras girabas la ruleta.");
-        }
-
-        const equipo = await txEm.findOne(Equipo, { torneoUsuario: { usuario: usuarioId, torneo: torneoId } });
-        if (!equipo) throw ErrorFactory.notFound("No tienes un equipo en este torneo.");     
-        await ficharJugadorLocal(txEm, equipo.id!, jugador);
-        recompensaTx.jugador = jugador;
-        recompensaTx.fecha_reclamo = new Date();
-        return { status: 'EXITO', jugador: jugador };
-      });
-      if (resultadoTransaccion.status === 'COMPENSACION') {
-        return res.status(200).json({
-            tipo: 'compensacion_saldo',
-            montoCompensacion: resultadoTransaccion.monto,
-            jugadorIntentado: resultadoTransaccion.nombre,
-            mensaje: `¡Qué lástima! Alguien fichó a ${resultadoTransaccion.nombre} antes. Te acreditamos su valor.`
-        });
-      }
-      return res.status(200).json({ 
-        tipo: 'ruleta', 
-        jugador: resultadoTransaccion.jugador, 
-        mensaje: '¡Jugador fichado exitosamente!'
-      });
+    else {
+      throw ErrorFactory.badRequest("Tipo de premio no reconocido");
     }
-
-  if (premioConfig instanceof PlayerPick) {
-    const torneoId = recompensa.torneoUsuario.torneo.id!;
-    const cantidadObjetivo = premioConfig.configuracion.cantidadOpciones || 3;
-    const opcionesEncontradas: number[] = [];
-    const opcionesFull: Player[] = [];
-    
-    const cantidadJugadores = await em.count(EquipoJugador, { 
-        equipo: { torneoUsuario: { usuario: usuarioId, torneo: torneoId } } 
-    });
-    if (cantidadJugadores >= 15) {
-       throw ErrorFactory.conflict("PLANTILLA_LLENA, No tienes espacio. Vende un jugador antes de jugar.");
-    }
-
-    let intentos = 0;
-    const maxIntentos = cantidadObjetivo * 5;
-    let ultimoRangoReferencia: RangoPrecio | null = null; 
-    while (opcionesEncontradas.length < cantidadObjetivo && intentos < maxIntentos) {
-      intentos++;
-      const resultado = await sortearJugador(
-          em, 
-          premioConfig.configuracion, 
-          torneoId, 
-          opcionesEncontradas
-      );
-      if (resultado.rangoSorteado) {
-        ultimoRangoReferencia = resultado.rangoSorteado;
-      }
-      if (resultado.jugador) {
-        opcionesEncontradas.push(resultado.jugador.id!);
-        opcionesFull.push(resultado.jugador);
-      }
-    }
-    if (opcionesEncontradas.length === 0) {
-      let montoCompensacion = 5000000; 
-      if (ultimoRangoReferencia) {
-         if (ultimoRangoReferencia.max) {
-             montoCompensacion = (Number(ultimoRangoReferencia.min) + Number(ultimoRangoReferencia.max)) / 2;
-         } else {
-             montoCompensacion = Number(ultimoRangoReferencia.min);
-         }
-      }
-      await em.transactional(async (txEm) => { 
-          const recompensaTx = txEm.merge(recompensa);
-          recompensaTx.premioConfiguracion = premioConfig;
-          await addSaldoLocal(txEm, usuarioId, recompensaTx.torneoUsuario.torneo.id!, montoCompensacion); 
-          recompensaTx.montoCompensacion = montoCompensacion;
-          recompensaTx.fecha_reclamo = new Date();
-      });
-      return res.status(200).json({ 
-        tipo: 'dinero_fallback',
-        montoCompensacion: montoCompensacion,
-        mensaje: 'El mercado está vacío. Te compensamos con dinero.'
-      });
-    }
-    recompensa.premioConfiguracion = premioConfig;
-    recompensa.opcionesPickDisponibles = opcionesEncontradas;
-    recompensa.fechaExpiracionPick = new Date(Date.now() + 5 * 60 * 1000);
-    await em.flush();
-    return res.status(200).json({ 
-      tipo: 'pick', 
-      opciones: opcionesFull,
-      expira: recompensa.fechaExpiracionPick 
-    });
-  }
+    return res.status(200).json(resultado);
   } catch (error: any) {
     next(error);
   }
@@ -365,38 +246,6 @@ async function confirmarPick(req: Request, res: Response, next: NextFunction) {
   } catch (error) {
     next(error);
   }
-}
-
-/**
- * Agrega saldo al PRESUPUESTO DEL EQUIPO en un torneo específico.
- */
-async function addSaldoLocal(em: EntityManager, usuarioId: number, torneoId: number, monto: number) {
-  const equipo = await em.findOne(Equipo, { 
-      torneoUsuario: { usuario: usuarioId, torneo: torneoId } 
-  }, {
-      lockMode: LockMode.PESSIMISTIC_WRITE
-  });
-  if (!equipo) {
-    throw ErrorFactory.notFound("Equipo no encontrado durante la transacción.");
-  }
-  equipo.presupuesto = Number(equipo.presupuesto) + Number(monto);
-  em.persist(equipo);
-  console.log(`[TEST] Presupuesto Equipo ${equipo.id} actualizado. Nuevo monto: ${equipo.presupuesto}`);
-}
-
-/**
- * Simula el EquipoService.
- * Incorpora el jugador al equipo creando la relación.
- */
-async function ficharJugadorLocal(em: EntityManager, equipoId: number, jugador: Player) {
-  const equipoRef = em.getReference(Equipo, equipoId);
-  const nuevoFichaje = em.create(EquipoJugador, {
-    equipo: equipoRef,
-    jugador: jugador,
-    es_titular: false
-  });
-  em.persist(nuevoFichaje);
-  console.log(`[TEST] Jugador ${jugador.name} fichado en Equipo ${equipoId}`);
 }
 
 export { elegirPremio, getOpcionesRecompensa, getPendientes, confirmarPick };
