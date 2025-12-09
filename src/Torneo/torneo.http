@@ -24,10 +24,10 @@ POST http://localhost:3000/api/torneos
 Content-Type: application/json
 
 {
-  "nombre": "La turbo LIGA",
+  "nombre": "La Jorgeliga",
   "descripcion": "Torneo de fantasy",
   "cupoMaximo": 3,
-  "nombre_equipo": "mazaPrime",
+  "nombre_equipo": "Equipo del Admin",
   "fecha_inicio": "2024-01-15T10:00:00Z"
 }
 
@@ -79,7 +79,7 @@ Content-Type: application/json
 ### ========== ELIMINACIÓN ==========
 
 ### Eliminar torneo (solo admin)
-DELETE http://localhost:3000/api/torneos/11
+DELETE http://localhost:3000/api/torneos/2
 Content-Type: application/json
 
 ### ========== RUTAS DE USUARIO ==========
@@ -97,8 +97,8 @@ POST http://localhost:3000/api/torneos/unirse
 Content-Type: application/json
 
 {
-  "codigo_acceso": "ZG23SQ",
-  "nombre_equipo": "Team 1"
+  "codigo_acceso": "6TUSAZ",
+  "nombre_equipo": "Los tralaleritos"
 }
 
 ### Ver mis torneos (con filtro opcional por estado)
@@ -474,7 +474,7 @@ Content-Type: application/json
 }
 ###########################################
 ### Iniciar torneo como creador (exitoso)
-POST http://localhost:3000/api/torneos/iniciar/19
+POST http://localhost:3000/api/torneos/iniciar/2
 Content-Type: application/json
 
 

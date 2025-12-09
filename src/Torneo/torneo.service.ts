@@ -6,6 +6,7 @@ import { TorneoUsuario } from './torneoUsuario.entity.js';
 import { Users } from '../User/user.entity.js';
 import { Equipo } from '../Equipo/equipo.entity.js';
 import { EquipoJugador } from '../Equipo/equipoJugador.entity.js';
+import { inicializarJugadoresTorneo } from '../Mercado/mercado.service.js';
 
 const em = orm.em;
 
@@ -121,19 +122,28 @@ static async start(torneoId: number, userId: number) {
 
     const fork = em.fork();
     await fork.transactional(async (transactionalEm) => {
+        // 1. Poblar equipos con jugadores
         for (const inscripcion of torneo.inscripciones) {
             const equipoId = inscripcion.equipo?.id;
             if (equipoId) {
-                const equipoRef = transactionalEm.getReference(Equipo, equipoId );
+                const equipoRef = transactionalEm.getReference(Equipo, equipoId);
                 equipoRef.presupuesto = 90000000; 
                 await poblarEquipoAleatoriamente(equipoId, transactionalEm);
             }
         }
+
+        // 2. Inicializar JugadorTorneo y relacionar jugadores asignados
+        console.log('Inicializando sistema de mercado...');
+        await inicializarJugadoresTorneo(torneoId, transactionalEm);
+
+        // 3. Cambiar estado del torneo
         const torneoRef = transactionalEm.getReference(Torneo, torneoId);
         torneoRef.estado = EstadoTorneo.ACTIVO;
+        
         if (!torneoRef.fecha_inicio) {
             torneoRef.fecha_inicio = new Date();
         }
+        
         await transactionalEm.flush();
     });
 

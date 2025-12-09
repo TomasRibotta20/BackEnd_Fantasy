@@ -324,22 +324,39 @@ async function update(req: Request, res: Response, next: NextFunction) {
 async function remove(req: Request, res: Response, next: NextFunction) {
   try {
     const torneoId = Number(req.params.id);
+    
     await em.transactional(async (transactionalEm) => {
-      const inscripciones = await em.find(TorneoUsuario, 
+      // 1. Obtener todas las inscripciones con equipos
+      const inscripciones = await transactionalEm.find(TorneoUsuario, 
         { torneo: torneoId, equipo: { $ne: null } }, 
-        { fields: ['equipo.id'] } 
+        { populate: ['equipo'] }
       );
+      
       const idsEquipos = inscripciones
-      .map(i => i.equipo?.id)
-      .filter((id): id is number => id !== undefined);
+        .map(i => i.equipo?.id)
+        .filter((id): id is number => id !== undefined);
 
       if (idsEquipos.length > 0) {
-          await transactionalEm.nativeDelete(Equipo, { id: { $in: idsEquipos } });
+        // Crear string de IDs para SQL
+        const idsString = idsEquipos.join(',');
+        
+        // 2. Eliminar en orden correcto usando execute directo
+        await transactionalEm.execute(`DELETE FROM transacciones WHERE equipo_id IN (${idsString})`);
+        await transactionalEm.execute(`DELETE FROM equipo_jornada WHERE equipo_id IN (${idsString})`);
+        await transactionalEm.execute(`DELETE FROM equipos_jugadores WHERE equipo_id IN (${idsString})`);
+        await transactionalEm.execute(`DELETE FROM equipos WHERE id IN (${idsString})`);
       }
+      
+      // 3. Eliminar inscripciones
+      await transactionalEm.nativeDelete(TorneoUsuario, { torneo: torneoId });
+      
+      // 4. Eliminar el torneo
       await transactionalEm.nativeDelete(Torneo, { id: torneoId });
     });
+    
     res.status(200).json({ message: 'Torneo y equipos eliminados.' });
   } catch (error: any) {
+    console.error('Error detallado al eliminar torneo:', error);
     next(ErrorFactory.internal('Error al eliminar el torneo'));
   }
 }
