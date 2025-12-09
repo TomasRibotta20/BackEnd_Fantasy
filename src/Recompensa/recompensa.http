@@ -10,7 +10,7 @@ GET {{baseUrl}}/recompensas/pendientes
 ### 2. GET Opciones de Premio (ID válido)
 ### ========================================
 # @name getOpcionesRecompensa
-GET {{baseUrl}}/recompensas/6/opciones
+GET {{baseUrl}}/recompensas/13/opciones
 
 ### ========================================
 ### 3. GET Opciones de Premio (ID inválido - para probar validación)
@@ -200,7 +200,7 @@ GET {{baseUrl}}/recompensas/pendientes
 
 ### Paso 2: Ver opciones de la recompensa 5
 # @name escenario2_opciones
-GET {{baseUrl}}/recompensas/7/opciones
+GET {{baseUrl}}/recompensas/9/opciones
 
 ### Paso 3: Elegir PlayerPick (premio 7 - bronce)
 # @name escenario3_elegirPick
@@ -208,8 +208,8 @@ POST {{baseUrl}}/recompensas/elegir
 Content-Type: application/json
 
 {
-  "recompensaId": 7,
-  "premioId": 3
+  "recompensaId": 9,
+  "premioId": 24
 }
 
 ### Paso 4: Confirmar elección del jugador 456
@@ -218,8 +218,8 @@ POST {{baseUrl}}/recompensas/confirmar-pick
 Content-Type: application/json
 
 {
-  "recompensaId": 7,
-  "jugadorId": 106
+  "recompensaId": 9,
+  "jugadorId": 16
 }
 
 ### Paso 5: Verificar que ya no aparece en pendientes

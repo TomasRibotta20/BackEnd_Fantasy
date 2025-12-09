@@ -17,6 +17,8 @@ import { Equipo } from '../Equipo/equipo.entity.js';
 import { TorneoUsuario } from '../Torneo/torneoUsuario.entity.js';
 import { calcularTierPorPosicion } from './recompensa.controller.js';
 import { Transaccion, TipoTransaccion } from '../Equipo/transaccion.entity.js';
+import { EstadoMercado } from '../Mercado/mercadoDiario.entity.js';
+import { JugadorTorneo } from '../Mercado/jugadorTorneo.entity.js';
 
 async function generarRecompensasFinJornada(em: EntityManager, jornadaId: number) {
 
@@ -110,7 +112,7 @@ async function sortearJugador(em: EntityManager, config: ConfigJuegoAzar, torneo
     .join('mi.mercado', 'm')
     .where({ 
       'm.torneo': torneoId,
-      'm.activo': true
+      'm.estado': EstadoMercado.ABIERTO
     })
     .getKnexQuery();
   qb.andWhere({ id: { $nin: subQueryOcupados } });
@@ -404,6 +406,14 @@ async function ficharJugadorLocal(em: EntityManager, equipo: Equipo, jugador: Pl
     jugador: jugador,
     es_titular: false
   });
+  em.persist(nuevoFichaje);
+  const jugadorTorneo = await em.findOne(JugadorTorneo, {
+          jugador: jugador.id,
+          torneo: equipo.torneoUsuario.torneo.id
+        });
+  if (jugadorTorneo) {
+    jugadorTorneo.equipo_jugador = nuevoFichaje;
+  }
   const transaccion = em.create(Transaccion, {
         equipo,
         tipo: TipoTransaccion.PREMIO,
@@ -412,7 +422,6 @@ async function ficharJugadorLocal(em: EntityManager, equipo: Equipo, jugador: Pl
         fecha: new Date(),
         descripcion: `Fichaje por recompensa de jugador pick: ${jugador.name}`
       });
-  em.persist(nuevoFichaje);
   em.persist(transaccion);
 }
 

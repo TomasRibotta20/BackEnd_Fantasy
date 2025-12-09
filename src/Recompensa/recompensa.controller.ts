@@ -74,8 +74,10 @@ async function getOpcionesRecompensa(req: Request, res: Response, next: NextFunc
     if (recompensa.fecha_reclamo) {
       throw ErrorFactory.conflict("Esta recompensa ya fue reclamada y finalizada.");
     }
-    if (new Date() > recompensa.fechaExpiracionPick!) {
-      throw ErrorFactory.conflict("El tiempo para elegir ha expirado. Se asignó una compensación automáticamente.");
+    if (recompensa.fechaExpiracionPick) {
+      if (new Date() > recompensa.fechaExpiracionPick) {
+        throw ErrorFactory.conflict("El tiempo para elegir ha expirado. Se asignó una compensación automáticamente.");
+      }
     }
     if (recompensa.premioConfiguracion && recompensa.opcionesPickDisponibles) {
       const jugadoresDisponibles = await em.find(Player, {
@@ -237,6 +239,7 @@ async function confirmarPick(req: Request, res: Response, next: NextFunction) {
           mensaje: `¡Tardaste mucho! Alguien fichó a ${resultadoTransaccion.nombre} mientras decidías. Te acreditamos su valor.`
       });
   }
+  
   return res.status(200).json({ 
       success: true,
       tipo: 'pick_confirmado', 

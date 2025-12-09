@@ -34,6 +34,7 @@ class AdminController {
         config.jornadaActiva = jornada
         config.updatedAt = new Date()
       }
+
       await em.persistAndFlush(config)
 
       res.json({
@@ -219,7 +220,6 @@ class AdminController {
         },
       })
     } catch (error: any) {
-      console.error('\nERROR procesando jornada:', error)
         return next(ErrorFactory.internal("Error desconocido al procesar jornada"))
     }
   }
