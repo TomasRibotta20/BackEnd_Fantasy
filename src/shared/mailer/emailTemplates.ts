@@ -277,7 +277,7 @@ export async function sendClausulaEjecutadaEmail(
       </div>
 
       <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #16a34a;">
-        <p style="margin: 0;"><strong>💵 Tu nuevo presupuesto:</strong> $${presupuestoNuevo.toLocaleString()}</p>
+        <p style="margin: 0;"><strong> Tu nuevo presupuesto:</strong> $${presupuestoNuevo.toLocaleString()}</p>
       </div>
 
       <p>El dinero de la cláusula ya está disponible en tu presupuesto. ¡Aprovecha para fichar nuevos talentos!</p>

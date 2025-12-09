@@ -9,7 +9,7 @@ Content-Type: application/json
 }
 
 ### Obtener el equipo del usuario autenticado (requiere autenticación previa)
-GET http://localhost:3000/api/equipos/mi-equipo/7
+GET http://localhost:3000/api/equipos/mi-equipo/13
 Content-Type: application/json
 
 ### Realizar un intercambio de jugadores en el equipo (requiere autenticación previa)
@@ -43,9 +43,9 @@ GET http://localhost:3000/api/equipos/todos
 Content-Type: application/json
 
 ### Vender un jugador del equipo (requiere autenticación previa)
-POST http://localhost:3000/api/equipos/mi-equipo/11/vender-jugador
+POST http://localhost:3000/api/equipos/mi-equipo/13/vender-jugador
 Content-Type: application/json
 
 {
-  "jugadorId": 101
+  "jugadorId": 617
 }

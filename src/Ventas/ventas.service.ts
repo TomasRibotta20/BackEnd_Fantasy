@@ -7,14 +7,6 @@ import { Transaccion, TipoTransaccion } from '../Equipo/transaccion.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 import { sendOfertaRecibidaEmail, sendOfertaAceptadaEmail, sendOfertaRechazadaEmail, sendOfertaVencidaEmail } from '../shared/mailer/emailTemplates.js';
 
-// Límites de posiciones
-const LIMITES_POSICIONES: Record<string, { max: number }> = {
-  'Goalkeeper': { max: 2 },   // 1 titular + 1 suplente
-  'Defender': { max: 5 },     // 4 titulares + 1 suplente
-  'Midfielder': { max: 4 },   // 3 titulares + 1 suplente
-  'Attacker': { max: 4 }      // 3 titulares + 1 suplente
-};
-
 const MAXIMO_JUGADORES_EQUIPO = 15;
 
 /**
@@ -244,28 +236,13 @@ export async function aceptarOferta(
     throw ErrorFactory.validationAppError('El jugador no tiene posición definida');
   }
 
-  // Contar jugadores del oferente por posición
+
   const jugadoresOferente = oferta.oferente.jugadores.getItems();
   const totalJugadores = jugadoresOferente.length;
 
   if (totalJugadores >= MAXIMO_JUGADORES_EQUIPO) {
     throw ErrorFactory.validationAppError(
       `El equipo comprador ya tiene el máximo de ${MAXIMO_JUGADORES_EQUIPO} jugadores`
-    );
-  }
-
-  const jugadoresPorPosicion = jugadoresOferente.filter(ej => {
-  const jug = ej.jugador as any;
-  return jug.position?.description === posicionJugador;
-    }).length;
-
-  const limitesPosicion = LIMITES_POSICIONES[posicionJugador];
-  if (!limitesPosicion) {
-  throw ErrorFactory.validationAppError(`Posición no válida: ${posicionJugador}`);
-  }
-  if (jugadoresPorPosicion >= limitesPosicion.max) {
-    throw ErrorFactory.validationAppError(
-      `El equipo comprador ya tiene el máximo de jugadores en la posición ${posicionJugador} (${limitesPosicion.max})`
     );
   }
 

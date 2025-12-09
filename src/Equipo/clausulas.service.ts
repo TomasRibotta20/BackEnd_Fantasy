@@ -8,48 +8,7 @@ import { Transaccion, TipoTransaccion } from './transaccion.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 import { sendClausulaEjecutadaEmail, sendClausulaExitosaEmail } from '../shared/mailer/emailTemplates.js';
 
-// Límites por formación 4-3-3 + 1 suplente por posición
-const LIMITES_POSICION: Record<string, number> = {
-  'Goalkeeper': 2,
-  'Defender': 5,
-  'Midfielder': 4,
-  'Attacker': 4
-};
-
-/**
- * Valida que no se supere el límite de jugadores por posición
- */
-async function validarLimitePosicion(
-  em: EntityManager,
-  equipoId: number,
-  posicionDescription: string,
-  jugadorIdExcluir?: number
-): Promise<void> {
-  const jugadoresEquipo = await em.find(
-    EquipoJugador,
-    { equipo: equipoId },
-    { populate: ['jugador.position'] }
-  );
-  
-  const cantidadPosicion = jugadoresEquipo.filter(ej => {
-    const jugador = ej.jugador as any;
-    return jugador.position?.description === posicionDescription 
-      && jugador.id !== jugadorIdExcluir;
-  }).length;
-  
-  const limite = LIMITES_POSICION[posicionDescription];
-  
-  if (!limite) {
-    throw ErrorFactory.badRequest(`Posición ${posicionDescription} no válida`);
-  }
-  
-  if (cantidadPosicion >= limite) {
-    throw ErrorFactory.badRequest(
-      `Ya tienes el máximo de ${limite} jugadores en la posición ${posicionDescription}`
-    );
-  }
-}
-
+const JUGADORES_MAXIMOS_POR_EQUIPO = 15;
 export interface BlindajeResultante {
   jugador: {
     id: number;
@@ -265,19 +224,17 @@ export async function ejecutarClausula(
       );
     }
     
-    // 9. CHECK DE CUPO TOTAL (15 jugadores)
+    // 9. CHECK DE CUPO TOTAL 
     const jugadoresComprador = await em.count(EquipoJugador, { 
       equipo: compradorEquipoId 
     });
     
-    if (jugadoresComprador >= 15) {
-      throw ErrorFactory.badRequest('Tu equipo está completo (15 jugadores)');
+    if (jugadoresComprador >= JUGADORES_MAXIMOS_POR_EQUIPO) {
+      throw ErrorFactory.badRequest(`Tu equipo está completo (${JUGADORES_MAXIMOS_POR_EQUIPO} jugadores)`);
     }
     
-    // 10. CHECK DE LÍMITE POR POSICIÓN (4-3-3)
-    await validarLimitePosicion(em, compradorEquipoId, posicion.description);
     
-    // 11. EJECUCIÓN ATÓMICA
+    // 10. EJECUCIÓN ATÓMICA
     
     // a) Movimiento de dinero
     equipoComprador.presupuesto -= precioFinal;

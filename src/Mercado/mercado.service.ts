@@ -11,14 +11,6 @@ import { EquipoJugador } from '../Equipo/equipoJugador.entity.js';
 import { Transaccion, TipoTransaccion } from '../Equipo/transaccion.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 
-// Configuración de límites por posición
-const LIMITES_POSICIONES: Record<string, { min: number; max: number }> = {
-  'Goalkeeper': { min: 1, max: 2 },
-  'Defender': { min: 3, max: 6 },
-  'Midfielder': { min: 2, max: 6 },
-  'Attacker': { min: 2, max: 5 }
-};
-
 const MAXIMO_JUGADORES_EQUIPO = 15;
 const JUGADORES_POR_MERCADO = 10;
 
@@ -278,35 +270,6 @@ export async function validarCupoParaCompra(
       razon: `Límite de ${MAXIMO_JUGADORES_EQUIPO} jugadores alcanzado (tienes ${cantidadActual})`
     };
   }
-
-  // 2. Validar límite por posición
-  const posicionNueva = jugadorNuevo.position?.description;
-
-  if (!posicionNueva) {
-    return { valido: false, razon: 'Jugador sin posición definida' };
-  }
-
-  const limite = LIMITES_POSICIONES[posicionNueva];
-
-  if (!limite) {
-    return { valido: false, razon: `Posición no válida: ${posicionNueva}` };
-  }
-
-  const cantidadPosicion = equipo.jugadores
-    .getItems()
-    .filter(ej => {
-      const jugador = ej.jugador as any;
-      return jugador.position?.description === posicionNueva;
-    })
-    .length;
-
-  if (cantidadPosicion >= limite.max) {
-    return {
-      valido: false,
-      razon: `Límite de ${limite.max} ${posicionNueva}(s) alcanzado (tienes ${cantidadPosicion})`
-    };
-  }
-
   return { valido: true };
 }
 
