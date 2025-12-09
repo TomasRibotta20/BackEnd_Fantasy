@@ -187,7 +187,8 @@ async function confirmarPick(req: Request, res: Response, next: NextFunction) {
         throw ErrorFactory.badRequest("El jugador seleccionado no estaba entre tus opciones válidas.");
     }
     if (recompensa.fechaExpiracionPick && new Date() > recompensa.fechaExpiracionPick) {
-        throw ErrorFactory.conflict("El tiempo para elegir ha expirado.");
+        await procesarPicksExpiradosDelUsuario(em, usuarioId);
+        throw ErrorFactory.conflict("El tiempo para elegir ha expirado. Se asignó una compensación automáticamente.");
     }
 
     const resultadoTransaccion = await em.transactional(async (txEm) => {
