@@ -1,4 +1,4 @@
-import { Entity, Property, OneToOne, OneToMany, Collection, Check } from '@mikro-orm/core';
+import { Entity, Property, OneToOne, OneToMany, Collection, Check, Formula } from '@mikro-orm/core';
 import { BaseEntity } from '../shared/db/baseEntity.entity.js';
 import { EquipoJugador } from './equipoJugador.entity.js';
 import type { TorneoUsuario } from '../Torneo/torneoUsuario.entity.js';
@@ -9,8 +9,8 @@ export class Equipo extends BaseEntity {
   @Property({ nullable: false })
   nombre!: string;
 
-  @Property({ default: 0 })
-  puntos: number = 0;
+  @Formula(alias => `(SELECT COALESCE(SUM(ej.puntaje_total), 0) FROM equipo_jornada ej WHERE ej.equipo_id = ${alias}.id)`)
+  puntos?: number;
 
   @OneToOne({ 
     entity: 'TorneoUsuario',

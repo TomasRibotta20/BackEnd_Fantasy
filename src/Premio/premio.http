@@ -1,0 +1,119 @@
+### GET all premios
+GET http://localhost:3000/api/premios
+
+### GET premios by tier - ORO
+GET http://localhost:3000/api/premios/tier/oro
+
+### GET premios by tier - PLATA
+GET http://localhost:3000/api/premios/tier/plata
+
+### GET premios by tier - BRONCE
+GET http://localhost:3000/api/premios/tier/bronce
+
+### GET premios by tipo - SALDO
+GET http://localhost:3000/api/premios/tipo/saldo
+
+### GET premios by tipo - RULETA
+GET http://localhost:3000/api/premios/tipo/ruleta
+
+### GET premios by tipo - PICK
+GET http://localhost:3000/api/premios/tipo/pick
+
+### GET one premio
+GET http://localhost:3000/api/premios/5
+
+### POST a Saldo
+# @nombre createSaldo
+POST http://localhost:3000/api/premios
+Content-Type: application/json
+
+{
+  "tipo": "saldo",
+  "tier": "oro",
+  "descripcion": "Premio en efectivo de oro",
+  "monto": 5000000
+}
+
+### POST a Ruleta
+# @nombre createRuleta
+POST http://localhost:3000/api/premios
+Content-Type: application/json
+
+{
+  "tipo": "ruleta",
+  "tier": "plata",
+  "descripcion": "Ruleta de la suerte",
+  "configuracion": {
+    "distribucion": [
+      { "min": 5000000, "max": 10000000, "peso": 20 },
+      { "min": 1000000, "max": 5000000, "peso": 50 },
+      { "min": 0, "max": 1000000, "peso": 30 }
+    ]
+  }
+}
+
+### POST a PlayerPick
+# @nombre createPlayerPick
+POST http://localhost:3000/api/premios
+Content-Type: application/json
+
+{
+  "tipo": "pick",
+  "tier": "bronce",
+  "descripcion": "Elige tu jugador favorito",
+  "configuracion": {
+    "distribucion": [
+      { "min": 3000000, "max": null, "peso": 10 },
+      { "min": 1000000, "max": 3000000, "peso": 40 },
+      { "min": 0, "max": 1000000, "peso": 50 }
+    ]
+  }
+}
+
+### POST a Saldo to delete
+# @nombre createSaldoToDelete
+POST http://localhost:3000/api/premios
+Content-Type: application/json
+
+{
+  "tipo": "saldo",
+  "tier": "bronce",
+  "descripcion": "Premio temporal",
+  "monto": 500000
+}
+
+### PUT update Saldo
+PUT http://localhost:3000/api/premios/11
+Content-Type: application/json
+
+{
+  "tier": "plata",
+  "descripcion": "Premio actualizado",
+  "monto": 7500000
+}
+
+### PATCH update Ruleta
+PATCH http://localhost:3000/api/premios/2
+Content-Type: application/json
+
+{
+  "descripcion": "Ruleta mejorada",
+  "configuracion": {
+    "distribucion": [
+      { "min": 10000000, "max": null, "peso": 10 },
+      { "min": 5000000, "max": 10000000, "peso": 30 },
+      { "min": 0, "max": 5000000, "peso": 60 }
+    ]
+  }
+}
+
+### PATCH update PlayerPick - only tier
+PATCH http://localhost:3000/api/premios/3
+Content-Type: application/json
+
+{
+  "tier": "oro"
+}
+
+### DELETE a premio
+DELETE http://localhost:3000/api/premios/4

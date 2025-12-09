@@ -7,6 +7,7 @@ import { EstadisticaJugadorService } from '../EstadisticaJugador/estadistica-jug
 import { EquipoJornada } from '../Equipo/equipoJornada.entity.js'
 import {ErrorFactory} from "../shared/errors/errors.factory.js";
 import { HistorialPrecioService } from '../HistorialPrecio/historial-precio.service.js';
+import { generarRecompensasFinJornada } from '../Recompensa/recompensa.service.js'
 class AdminController {
   // Establecer jornada activa
   async setJornadaActiva(req: Request, res: Response, next: NextFunction) {
@@ -33,7 +34,6 @@ class AdminController {
         config.jornadaActiva = jornada
         config.updatedAt = new Date()
       }
-
       await em.persistAndFlush(config)
 
       res.json({
@@ -108,8 +108,8 @@ class AdminController {
       const { cupoMaximo } = req.body
       const em = orm.em.fork()
 
-      if (!cupoMaximo || cupoMaximo < 2) {
-        return next(ErrorFactory.badRequest('El cupo máximo debe ser al menos 2'))
+      if (!cupoMaximo || cupoMaximo < 1) {
+        return next(ErrorFactory.badRequest('El cupo máximo debe ser al menos 1'))
       }
 
       if (cupoMaximo > 10) {
@@ -195,6 +195,10 @@ class AdminController {
 
       // 6. Actualizar precios de jugadores según rendimiento
       const resultadoPrecios = await HistorialPrecioService.actualizarPreciosPorRendimiento(em, jornadaId)
+
+      //6.5 Generar recompensas de la jornada
+      await generarRecompensasFinJornada(em, jornadaId);
+
       // 7. Activar jornada (si se solicitó)
       if (activarJornada) {
         console.log('\nPASO 4: Activando jornada...')
@@ -215,6 +219,7 @@ class AdminController {
         },
       })
     } catch (error: any) {
+      console.error('\nERROR procesando jornada:', error)
         return next(ErrorFactory.internal("Error desconocido al procesar jornada"))
     }
   }

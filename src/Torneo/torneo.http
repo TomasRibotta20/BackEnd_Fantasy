@@ -219,7 +219,7 @@ POST http://localhost:3000/api/torneos/mis-torneos
 Content-Type: application/json
 
 ### 4. Ver detalles del torneo y otros participantes
-GET http://localhost:3000/api/torneos/mi-torneo/5
+GET http://localhost:3000/api/torneos/mi-torneo/20
 Content-Type: application/json
 
 ### 5. Abandonar torneo si es necesario
@@ -479,4 +479,4 @@ Content-Type: application/json
 
 
 ### Expulsar participante de un torneo (exitoso)
-DELETE http://localhost:3000/api/torneos/1/participante/7s
+DELETE http://localhost:3000/api/torneos/12/participante/8

@@ -37,7 +37,7 @@ static async join(codigo_acceso: string, nombre_equipo: string, userId: number) 
       
       const nuevoEquipo = new Equipo();
       nuevoEquipo.nombre = nombre_equipo;
-      nuevoEquipo.presupuesto = 0;
+      nuevoEquipo.presupuesto = 90000000;
       nuevoEquipo.puntos = 0;
       nuevoEquipo.torneoUsuario = nuevaInscripcion;
       nuevaInscripcion.equipo = nuevoEquipo;
