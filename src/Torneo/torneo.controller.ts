@@ -183,10 +183,6 @@ async function add(req: Request, res: Response, next: NextFunction) {
       ));
     }
 
-    if (cupoMaximo < 2) {
-      return next(ErrorFactory.badRequest('El cupo máximo debe ser al menos 2 participantes'));
-    }
-
     const nuevoTorneo = new Torneo();
     nuevoTorneo.nombre = nombre;
     nuevoTorneo.descripcion = descripcion;
@@ -284,10 +280,6 @@ async function update(req: Request, res: Response, next: NextFunction) {
             return next(ErrorFactory.badRequest(
                 `El cupo máximo del torneo (${cupoMaximo}) no puede exceder el límite global configurado (${cupoMaximoGlobal})`
             ));
-        }
-        
-        if (cupoMaximo < 2) {
-            return next(ErrorFactory.badRequest('El cupo máximo debe ser al menos 2 participantes'));
         }
 
         const inscritosActuales = torneo.cantidadParticipantes || 0; 
@@ -542,9 +534,6 @@ async function leave(req: Request, res: Response, next: NextFunction) {
     const result = await TorneoService.leaveTorneo(Number(req.params.id), req.authUser.user?.userId!);
     res.status(200).json(result);
   } catch (error: any) {
-    if (error.name === 'NotFoundError') {
-        return next(ErrorFactory.notFound('Torneo no encontrado'));
-    }
     next(error);
   }
 }
@@ -570,9 +559,6 @@ async function expulsar(req: Request, res: Response, next: NextFunction) {
     const result = await TorneoService.kickUser(torneoId, creadorId, targetUserId);
     res.status(200).json(result);
   } catch (error: any) {
-    if (error.name === 'NotFoundError') {
-        return next(ErrorFactory.notFound('Usuario o torneo no encontrado'));
-    }
     next(error);
   }
 }

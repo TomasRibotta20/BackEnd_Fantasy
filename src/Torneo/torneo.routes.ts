@@ -20,6 +20,5 @@ torneoRouter.delete('/abandonar/:id', requireAuth, validateParams(idTorneoParams
 torneoRouter.get('/mi-torneo/:id', requireAuth, validateParams(idTorneoParamsSchema), getTorneoUsuario);  
 torneoRouter.delete('/:id/participante/:userId', requireAuth, validateParams(idTorneoUsuarioExpulsarSchema), expulsar);
 //hay que enviar el id del ususario y del torneo a la funcion expulsar
-torneoRouter.post('/expulsar/:id', requireAuth, validateParams(idTorneoParamsSchema), expulsar);
 torneoRouter.post('/iniciar/:id', requireAuth, validateParams(idTorneoParamsSchema), iniciarTorneo);
 export { torneoRouter };

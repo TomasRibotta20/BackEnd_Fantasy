@@ -3,7 +3,7 @@ POST http://localhost:3000/api/mercado/abrir
 Content-Type: application/json
 
 {
-  "torneoId": 2
+  "torneoId": 22
 }
 
 ### Cerrar mercado (Admin)

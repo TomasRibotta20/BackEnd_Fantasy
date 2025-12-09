@@ -27,8 +27,8 @@ export class Transaccion extends BaseEntity {
   @Enum(() => TipoTransaccion)
   tipo!: TipoTransaccion;
   
-  @Property()
-  monto!: number; // Positivo = ingreso, Negativo = gasto
+  @Property({ nullable: true })
+  monto?: number; // Positivo = ingreso, Negativo = gasto
   
   @ManyToOne(() => Player, { nullable: true })
   jugador?: Player;

@@ -1,15 +1,7 @@
 ### ========== RUTAS DE ADMIN ==========
 
-### Obtener todos los torneos con filtros (Admin) - Sin filtros
-GET http://localhost:3000/api/torneos
-Content-Type: application/json
-
 ### Obtener todos los torneos con filtros específicos (Admin)
-GET http://localhost:3000/api/torneos?estado=ACTIVO&min_participantes=1&max_participantes=10&limit=5&offset=0
-Content-Type: application/json
-
-### Obtener todos los torneos por rango de fechas (Admin)
-GET http://localhost:3000/api/torneos?fecha_creacion_desde=2025-12-03T20:00:00Z&fecha_creacion_hasta=2025-12-03T23:59:00Z&min_participantes=1
+GET http://localhost:3000/api/torneos?estado=ACTIVO&min_participantes=1&max_participantes=10&limit=5&offset=0&fecha_creacion_desde=2025-12-03T20:00:00Z&fecha_creacion_hasta=2025-12-03T23:59:00Z
 Content-Type: application/json
 
 ### Obtener un torneo específico con detalles completos (Admin)
@@ -29,17 +21,6 @@ Content-Type: application/json
   "cupoMaximo": 3,
   "nombre_equipo": "Equipo del creador",
   "fecha_inicio": "2024-01-15T10:00:00Z"
-}
-
-### Crear torneo mínimo (solo campos obligatorios)
-POST http://localhost:3000/api/torneos
-Content-Type: application/json
-
-{
-  "nombre": "Torneo Express",
-  "descripcion": "Descripción básica",
-  "nombre_equipo": "mazaTeam",
-  "cupoMaximo": 8
 }
 
 ### ========== ACTUALIZACIÓN ==========
@@ -105,128 +86,15 @@ Content-Type: application/json
 POST http://localhost:3000/api/torneos/mis-torneos
 Content-Type: application/json
 
-### Ver mis torneos filtrados por estado
-GET http://localhost:3000/api/torneos/mis-torneos?estado=ACTIVO
-Content-Type: application/json
-
-### Ver mis torneos en espera
-GET http://localhost:3000/api/torneos/mis-torneos?estado=EN_ESPERA
-Content-Type: application/json
-
 ### Ver detalles de un torneo como participante
-GET http://localhost:3000/api/torneos/mi-torneo/1
+GET http://localhost:3000/api/torneos/mi-torneo/21
 Content-Type: application/json
 
 ### Abandonar un torneo
 DELETE http://localhost:3000/api/torneos/abandonar/5
 Content-Type: application/json
 
-### ========== CASOS DE ERROR ==========
-
-### Intentar obtener torneo inexistente
-GET http://localhost:3000/api/torneos/99999
-Content-Type: application/json
-
-### Intentar crear torneo sin autenticación (debería fallar)
-POST http://localhost:3000/api/torneos
-Content-Type: application/json
-
-{
-  "nombre": "Torneo Sin Auth"
-}
-
-### Intentar actualizar con cupo menor a participantes actuales (debería fallar)
-PATCH http://localhost:3000/api/torneos/1
-Content-Type: application/json
-
-{
-  "cupoMaximo": 1
-}
-
-### Validar código inválido (debería fallar)
-POST http://localhost:3000/api/torneos/validar-codigo
-Content-Type: application/json
-
-{
-  "codigo_acceso": "CODIGO_INEXISTENTE"
-}
-
-### Intentar unirse con código inválido (debería fallar)
-POST http://localhost:3000/api/torneos/unirse
-Content-Type: application/json
-
-{
-  "codigo_acceso": "MU9ELX",
-  "nombre_equipo": "Mi Equipo"
-}
-
-### Intentar unirse dos veces al mismo torneo (debería fallar)
-POST http://localhost:3000/api/torneos/unirse
-Content-Type: application/json
-
-{
-  "codigo_acceso": "ABC123",
-  "nombre_equipo": "Segundo Equipo"
-}
-
-### Intentar ver torneo sin estar inscrito (debería fallar)
-GET http://localhost:3000/api/torneos/mi-torneo/99
-Content-Type: application/json
-
-### Intentar abandonar torneo que no existe (debería fallar)
-DELETE http://localhost:3000/api/torneos/abandonar/99999
-Content-Type: application/json
-
-### ========== FILTROS AVANZADOS ==========
-
-### Filtrar solo torneos activos
-GET http://localhost:3000/api/torneos?estado=ACTIVO
-Content-Type: application/json
-
-### Filtrar por participantes exactos
-GET http://localhost:3000/api/torneos?min_participantes=5&max_participantes=5
-Content-Type: application/json
-
-### Paginación avanzada
-GET http://localhost:3000/api/torneos?limit=3&offset=6
-Content-Type: application/json
-
-### Combinación de todos los filtros
-GET http://localhost:3000/api/torneos?estado=EN_ESPERA&fecha_creacion_desde=2024-01-01&min_participantes=2&max_participantes=15&limit=10&offset=0
-Content-Type: application/json
-
-### ========== FLUJO COMPLETO DE USUARIO ==========
-
-### 1. Validar código antes de unirse
-POST http://localhost:3000/api/torneos/validar-codigo
-Content-Type: application/json
-
-{
-  "codigo_acceso": "PU0WTZ"
-}
-
-### 2. Unirse al torneo si el código es válido
-POST http://localhost:3000/api/torneos/unirse
-Content-Type: application/json
-
-{
-  "codigo_acceso": "PU0WTZ",
-  "nombre_equipo": "Dream Team"
-}
-
-### 3. Ver mis torneos para confirmar
-POST http://localhost:3000/api/torneos/mis-torneos
-Content-Type: application/json
-
-### 4. Ver detalles del torneo y otros participantes
-GET http://localhost:3000/api/torneos/mi-torneo/5
-Content-Type: application/json
-
-### 5. Abandonar torneo si es necesario
-DELETE http://localhost:3000/api/torneos/abandonar/9
-Content-Type: application/json
-
-#############################################
+###################################################################
 ### Flujo basico de creación de torneo
 ### 1. Usuario se loguea
 
@@ -294,7 +162,7 @@ Content-Type: application/json
   "codigo_acceso": "NUEVO123"
 }
 
-###
+###################################################
 POST http://localhost:3000/api/auth/login
 Content-Type: application/json
 
@@ -320,7 +188,7 @@ Content-Type: application/json
 {
   "nombre": "Liga Premier Fantasy",
   "descripcion": "Torneo basado en la Premier League",
-  "cupoMaximo": 8,
+  "cupoMaximo": 5,
   "nombre_equipo": "Manchester United FC",
   "fecha_inicio": "2024-01-15T10:00:00Z"
 }
@@ -332,7 +200,7 @@ Content-Type: application/json
 {
   "nombre": "Champions League Fantasy",
   "descripcion": "Torneo de la máxima competición europea",
-  "cupoMaximo": 6,
+  "cupoMaximo": 3,
   "nombre_equipo": "Real Madrid CF"
 }
 
@@ -479,4 +347,4 @@ Content-Type: application/json
 
 
 ### Expulsar participante de un torneo (exitoso)
-DELETE http://localhost:3000/api/torneos/1/participante/7s
+DELETE http://localhost:3000/api/torneos/12/participante/8

@@ -1,0 +1,340 @@
+@baseUrl = http://localhost:3000/api
+
+### ========================================
+### 1. GET Recompensas Pendientes
+### ========================================
+# @name getPendientes
+GET {{baseUrl}}/recompensas/pendientes
+
+### ========================================
+### 2. GET Opciones de Premio (ID válido)
+### ========================================
+# @name getOpcionesRecompensa
+GET {{baseUrl}}/recompensas/13/opciones
+
+### ========================================
+### 3. GET Opciones de Premio (ID inválido - para probar validación)
+### ========================================
+# @name getOpcionesInvalido
+GET {{baseUrl}}/recompensas/abc/opciones
+
+### ========================================
+### 4. GET Opciones de Premio (ID = 0 - para probar validación)
+### ========================================
+# @name getOpcionesCero
+GET {{baseUrl}}/recompensas/0/opciones
+
+### ========================================
+### 5. POST Elegir Premio - SALDO (ORO)
+### ========================================
+# @name elegirSaldo
+POST {{baseUrl}}/recompensas/elegir
+Content-Type: application/json
+
+{
+  "recompensaId": 4,
+  "premioId": 25
+}
+
+### ========================================
+### 6. POST Elegir Premio - RULETA (PLATA)
+### ========================================
+# @name elegirRuleta
+POST {{baseUrl}}/recompensas/elegir
+Content-Type: application/json
+
+{
+  "recompensaId": 6,
+  "premioId": 21
+}
+
+### ========================================
+### 7. POST Elegir Premio - PLAYERPICK (BRONCE)
+### ========================================
+# @name elegirPlayerPick
+POST {{baseUrl}}/recompensas/elegir
+Content-Type: application/json
+
+{
+  "recompensaId": 3,
+  "premioId": 7
+}
+
+### ========================================
+### 8. POST Elegir Premio - Sin recompensaId (validación)
+### ========================================
+# @name elegirSinRecompensaId
+POST {{baseUrl}}/recompensas/elegir
+Content-Type: application/json
+
+{
+  "premioId": 1
+}
+
+### ========================================
+### 9. POST Elegir Premio - recompensaId negativo (validación)
+### ========================================
+# @name elegirIdNegativo
+POST {{baseUrl}}/recompensas/elegir
+Content-Type: application/json
+
+{
+  "recompensaId": -5,
+  "premioId": 1
+}
+
+### ========================================
+### 10. POST Elegir Premio - premioId como string (validación)
+### ========================================
+# @name elegirPremioString
+POST {{baseUrl}}/recompensas/elegir
+Content-Type: application/json
+
+{
+  "recompensaId": 1,
+  "premioId": "abc"
+}
+
+### ========================================
+### 11. POST Elegir Premio - Recompensa ya reclamada
+### ========================================
+# @name elegirYaReclamada
+POST {{baseUrl}}/recompensas/elegir
+Content-Type: application/json
+
+{
+  "recompensaId": 4,
+  "premioId": 1
+}
+
+### ========================================
+### 12. POST Elegir Premio - Tier incorrecto
+### ========================================
+# @name elegirTierIncorrecto
+POST {{baseUrl}}/recompensas/elegir
+Content-Type: application/json
+
+{
+  "recompensaId": 6,
+  "premioId": 24
+}
+
+### ========================================
+### 13. POST Confirmar Pick - Jugador válido
+### ========================================
+# @name confirmarPickValido
+POST {{baseUrl}}/recompensas/confirmar-pick
+Content-Type: application/json
+
+{
+  "recompensaId": 6,
+  "jugadorId": 123
+}
+
+### ========================================
+### 14. POST Confirmar Pick - Jugador no en opciones
+### ========================================
+# @name confirmarPickNoValido
+POST {{baseUrl}}/recompensas/confirmar-pick
+Content-Type: application/json
+
+{
+  "recompensaId": 6,
+  "jugadorId": 860
+}
+
+### ========================================
+### 15. POST Confirmar Pick - Sin jugadorId (validación)
+### ========================================
+# @name confirmarPickSinJugador
+POST {{baseUrl}}/recompensas/confirmar-pick
+Content-Type: application/json
+
+{
+  "recompensaId": 6
+}
+
+### ========================================
+### 16. POST Confirmar Pick - jugadorId = 0 (validación)
+### ========================================
+# @name confirmarPickIdCero
+POST {{baseUrl}}/recompensas/confirmar-pick
+Content-Type: application/json
+
+{
+  "recompensaId": 3,
+  "jugadorId": 0
+}
+
+### ========================================
+### 17. POST Confirmar Pick - Recompensa sin proceso activo
+### ========================================
+# @name confirmarPickSinProceso
+POST {{baseUrl}}/recompensas/confirmar-pick
+Content-Type: application/json
+
+{
+  "recompensaId": 1,
+  "jugadorId": 123
+}
+
+### ========================================
+### 18. POST Confirmar Pick - Tiempo expirado
+### ========================================
+# @name confirmarPickExpirado
+POST {{baseUrl}}/recompensas/confirmar-pick
+Content-Type: application/json
+
+{
+  "recompensaId": 4,
+  "jugadorId": 123
+}
+
+### ========================================
+### ESCENARIO COMPLETO: PlayerPick
+### ========================================
+
+### Paso 1: Ver pendientes
+# @name escenario1_pendientes
+GET {{baseUrl}}/recompensas/pendientes
+
+### Paso 2: Ver opciones de la recompensa 5
+# @name escenario2_opciones
+GET {{baseUrl}}/recompensas/9/opciones
+
+### Paso 3: Elegir PlayerPick (premio 7 - bronce)
+# @name escenario3_elegirPick
+POST {{baseUrl}}/recompensas/elegir
+Content-Type: application/json
+
+{
+  "recompensaId": 9,
+  "premioId": 24
+}
+
+### Paso 4: Confirmar elección del jugador 456
+# @name escenario4_confirmarPick
+POST {{baseUrl}}/recompensas/confirmar-pick
+Content-Type: application/json
+
+{
+  "recompensaId": 9,
+  "jugadorId": 16
+}
+
+### Paso 5: Verificar que ya no aparece en pendientes
+# @name escenario5_verificar
+GET {{baseUrl}}/recompensas/pendientes
+
+### ========================================
+### ESCENARIO COMPLETO: Ruleta con Compensación
+### ========================================
+
+### Paso 1: Elegir Ruleta
+# @name escenarioRuleta1_elegir
+POST {{baseUrl}}/recompensas/elegir
+Content-Type: application/json
+
+{
+  "recompensaId": 6,
+  "premioId": 4
+}
+
+### Respuesta esperada (exitosa):
+# {
+#   "tipo": "ruleta",
+#   "jugador": {
+#     "id": 789,
+#     "name": "Cristiano Ronaldo",
+#     "precio_actual": 12000000
+#   },
+#   "mensaje": "¡Jugador fichado exitosamente!"
+# }
+
+### Respuesta esperada (compensación):
+# {
+#   "tipo": "compensacion_saldo",
+#   "montoCompensacion": 12000000,
+#   "jugadorIntentado": "Cristiano Ronaldo",
+#   "mensaje": "¡Qué lástima! Alguien fichó a Cristiano Ronaldo antes. Te acreditamos su valor."
+# }
+
+### ========================================
+### ESCENARIO: Mercado Vacío
+### ========================================
+
+### Elegir Ruleta con mercado vacío en ese rango
+# @name escenarioMercadoVacio
+POST {{baseUrl}}/recompensas/elegir
+Content-Type: application/json
+
+{
+  "recompensaId": 7,
+  "premioId": 5
+}
+
+### Respuesta esperada:
+# {
+#   "tipo": "dinero_fallback",
+#   "rangoOriginal": {
+#     "min": 10000000,
+#     "max": null,
+#     "peso": 10
+#   },
+#   "montoCompensacion": 10000000,
+#   "mensaje": "¡Tu suerte fue increíble! Pero el mercado está vacío en esa categoría. Te compensamos con el valor equivalente."
+# }
+
+### ========================================
+### ESCENARIO: Plantilla Llena
+### ========================================
+
+### Intentar elegir premio cuando la plantilla está llena
+# @name escenarioPlantillaLlena
+POST {{baseUrl}}/recompensas/elegir
+Content-Type: application/json
+
+{
+  "recompensaId": 8,
+  "premioId": 4
+}
+
+### Respuesta esperada:
+# {
+#   "error": "PLANTILLA_LLENA, No tienes espacio. Vende un jugador antes de jugar.",
+#   "statusCode": 409
+# }
+
+### ========================================
+### ESCENARIO: No es tu recompensa
+### ========================================
+
+### Intentar acceder a recompensa de otro usuario
+# @name escenarioNoEsTuya
+GET {{baseUrl}}/recompensas/999/opciones
+
+### Respuesta esperada:
+# {
+#   "error": "Esta recompensa no es tuya",
+#   "statusCode": 403
+# }
+
+### ========================================
+### ESCENARIO: Recompensa ya procesada
+### ========================================
+
+### Intentar elegir premio de nuevo
+# @name escenarioYaProcesada
+POST {{baseUrl}}/recompensas/elegir
+Content-Type: application/json
+
+{
+  "recompensaId": 1,
+  "premioId": 1
+}
+
+### Respuesta esperada:
+# {
+#   "error": "Ya elegiste opción. Resuelve la actual.",
+#   "statusCode": 409
+# }
