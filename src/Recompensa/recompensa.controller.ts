@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { orm } from '../shared/db/orm.js';
 import { LockMode } from '@mikro-orm/core';
 import { Recompensa } from './recompensa.entity.js';
-import { Premio, RangoPrecio, Tier } from '../Premio/premio.entity.js';
+import { Premio, Tier } from '../Premio/premio.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 import { Saldo } from '../Premio/saldo.entity.js';
 import { Ruleta } from '../Premio/ruleta.entity.js';
@@ -222,7 +222,7 @@ async function confirmarPick(req: Request, res: Response, next: NextFunction) {
       const equipo = await txEm.findOne(Equipo, { torneoUsuario: { usuario: usuarioId, torneo: torneoId } });
       if (!equipo) throw ErrorFactory.notFound("No tienes equipo");
 
-      await ficharJugadorLocal(txEm, equipo.id!, jugador);
+      await ficharJugadorLocal(txEm, equipo, jugador);
       recompensaTx.jugador = jugador;
       recompensaTx.fecha_reclamo = new Date();
       recompensaTx.opcionesPickDisponibles = undefined;
