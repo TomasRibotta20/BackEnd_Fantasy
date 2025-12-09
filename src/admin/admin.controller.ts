@@ -9,6 +9,56 @@ import {ErrorFactory} from "../shared/errors/errors.factory.js";
 import { HistorialPrecioService } from '../HistorialPrecio/historial-precio.service.js';
 import { generarRecompensasFinJornada } from '../Recompensa/recompensa.service.js'
 class AdminController {
+   /**
+   * Actualizar configuración de cláusulas (ADMIN)
+   */
+  async updateConfigClausulas(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { dias_proteccion_clausula, ratio_blindaje_clausula } = req.body
+      const em = orm.em.fork()
+
+      let config = await em.findOne(GameConfig, 1)
+      if (!config) {
+        config = em.create(GameConfig, {
+          modificacionesHabilitadas: true,
+          cupoMaximoTorneos: 5,
+          dias_proteccion_clausula: dias_proteccion_clausula || 2,
+          ratio_blindaje_clausula: ratio_blindaje_clausula || 2,
+          updatedAt: new Date()
+        })
+      }
+
+      // Validaciones
+      if (dias_proteccion_clausula !== undefined) {
+        if (dias_proteccion_clausula < 0 || dias_proteccion_clausula > 14) {
+          return next(ErrorFactory.badRequest('Los días de protección deben estar entre 0 y 14'))
+        }
+        config.dias_proteccion_clausula = dias_proteccion_clausula
+      }
+
+      if (ratio_blindaje_clausula !== undefined) {
+        if (ratio_blindaje_clausula < 1 || ratio_blindaje_clausula > 10) {
+          return next(ErrorFactory.badRequest('El ratio de blindaje debe estar entre 1 y 10'))
+        }
+        config.ratio_blindaje_clausula = ratio_blindaje_clausula
+      }
+
+      config.updatedAt = new Date()
+      await em.persistAndFlush(config)
+
+      res.json({
+        success: true,
+        message: 'Configuración de cláusulas actualizada exitosamente',
+        data: {
+          dias_proteccion_clausula: config.dias_proteccion_clausula,
+          ratio_blindaje_clausula: config.ratio_blindaje_clausula,
+          updatedAt: config.updatedAt
+        }
+      })
+    } catch (error: any) {
+      next(ErrorFactory.internal("Error al actualizar configuración de cláusulas"));
+    }
+  }
   // Establecer jornada activa
   async setJornadaActiva(req: Request, res: Response, next: NextFunction) {
     try {
@@ -25,11 +75,13 @@ class AdminController {
       let config = await em.findOne(GameConfig, 1)
       if (!config) {
         config = em.create(GameConfig, {
-          jornadaActiva: jornada,
           modificacionesHabilitadas: true,
           cupoMaximoTorneos: 5,
+          dias_proteccion_clausula: 2,
+          ratio_blindaje_clausula: 2,
           updatedAt: new Date()
         })
+        config.jornadaActiva = jornada
       } else {
         config.jornadaActiva = jornada
         config.updatedAt = new Date()
@@ -57,8 +109,10 @@ class AdminController {
       if (!config) {
         config = em.create(GameConfig, {
           modificacionesHabilitadas: true,
-          updatedAt: new Date(),
-          cupoMaximoTorneos: 5
+          cupoMaximoTorneos: 5,
+          dias_proteccion_clausula: 2,
+          ratio_blindaje_clausula: 2,
+          updatedAt: new Date()
         })
       } else {
         config.modificacionesHabilitadas = true
@@ -85,8 +139,10 @@ class AdminController {
       if (!config) {
         config = em.create(GameConfig, {
           modificacionesHabilitadas: false,
-          updatedAt: new Date(),
-          cupoMaximoTorneos: 5
+          cupoMaximoTorneos: 5,
+          dias_proteccion_clausula: 2,
+          ratio_blindaje_clausula: 2,
+          updatedAt: new Date()
         })
       } else {
         config.modificacionesHabilitadas = false
@@ -120,8 +176,10 @@ class AdminController {
       let config = await em.findOne(GameConfig, 1)
       if (!config) {
         config = em.create(GameConfig, {
-          cupoMaximoTorneos: cupoMaximo,
           modificacionesHabilitadas: true,
+          cupoMaximoTorneos: cupoMaximo,
+          dias_proteccion_clausula: 2,
+          ratio_blindaje_clausula: 2,
           updatedAt: new Date()
         })
       } else {

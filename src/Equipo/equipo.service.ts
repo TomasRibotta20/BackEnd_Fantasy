@@ -14,6 +14,18 @@ const PRESUPUESTO_MINIMO_EQUIPO = 56000000;
 const PRESUPUESTO_MAXIMO_EQUIPO = 70000000;
 const PRECIO_MINIMO_ESTRELLA = 8000000;
 const PORCENTAJE_VENTA_INSTANTANEA = 0.70; 
+
+/**
+ *Limite de jugadores por posición (4-3-3)
+ */
+const LIMITES_FORMACION = {
+  'Goalkeeper': 1,
+  'Defender': 4,
+  'Midfielder': 3,
+  'Attacker': 3
+} as const;
+
+
 /**
  * Selecciona jugadores por posicion y rango de precio
  */
@@ -336,6 +348,8 @@ export async function poblarEquipoAleatoriamente(
       equipo: equipo,
       jugador: jugador,
       es_titular: esTitular,
+      fecha_incorporacion: new Date(), 
+      valor_clausula: 0 
     });
     transactionalEm.persist(equipoJugador);
   }
@@ -440,6 +454,8 @@ export async function intercambiarJugador(
       equipo: equipo,
       jugador: jugadorEntra, // Asigna la entidad completa del jugador que entra.
       es_titular: eraTitular,
+       fecha_incorporacion: new Date(), 
+      valor_clausula: 0
     });
     em.persist(nuevaRelacion); // Persiste la nueva relación.
 
@@ -520,6 +536,118 @@ export async function cambiarAlineacion(
     relacionSuplente.es_titular = true;
 
     return { message: 'Alineación actualizada con éxito.' };
+  });
+}
+
+/**
+ * Cambia el estado de titularidad de un jugador.
+ * Si es titular, lo hace suplente. Si es suplente, lo hace titular validando límites de formación.
+ * @param equipoId - El ID del equipo.
+ * @param jugadorId - El ID del jugador cuyo estado se quiere cambiar.
+ * @returns Una promesa que se resuelve con un mensaje de éxito.
+ * @throws {ErrorFactory.notFound} Si el equipo o jugador no se encuentra.
+ * @throws {ErrorFactory.badRequest} Si se supera el límite de la formación al hacer titular.
+ */
+export async function cambiarEstadoTitularidad(equipoId: number, jugadorId: number) {
+  return await orm.em.transactional(async (em) => {
+    // 1. Buscar el equipo con todas sus relaciones
+    const equipo = await em.findOne(
+      Equipo, 
+      { id: equipoId },
+      { populate: ['jugadores', 'jugadores.jugador', 'jugadores.jugador.position'] }
+    );
+
+    if (!equipo) {
+      throw ErrorFactory.notFound('El equipo no existe');
+    }
+
+    // 2. Buscar la relación del jugador con el equipo
+    const relacionJugador = await em.findOne(
+      EquipoJugador,
+      { equipo: equipo, jugador: jugadorId },
+      { populate: ['jugador', 'jugador.position'] }
+    );
+
+    if (!relacionJugador) {
+      throw ErrorFactory.notFound('El jugador no pertenece a este equipo');
+    }
+
+    const jugador = relacionJugador.jugador as any as Player;
+    const posicion = jugador.position;
+
+    if (!posicion) {
+      throw ErrorFactory.badRequest('El jugador no tiene una posición definida');
+    }
+
+    const posicionDescripcion = posicion.description;
+
+    // 3. Validar que la posición esté en la formación
+    if (!(posicionDescripcion in LIMITES_FORMACION)) {
+      throw ErrorFactory.badRequest(`Posición inválida: ${posicionDescripcion}`);
+    }
+
+    const estadoActual = relacionJugador.es_titular;
+
+    // CASO 1: De titular a suplente (siempre permitido)
+    if (estadoActual) {
+      relacionJugador.es_titular = false;
+      
+      await em.flush();
+
+      return {
+        message: 'Jugador movido a suplente con éxito',
+        jugador: {
+          id: jugador.id,
+          nombre: jugador.name,
+          posicion: posicionDescripcion
+        },
+        estado_anterior: 'titular',
+        estado_nuevo: 'suplente'
+      };
+    }
+
+    // CASO 2: De suplente a titular (validar límites)
+    // Contar cuántos titulares hay actualmente en esa posición
+    const jugadoresEquipo = equipo.jugadores as any as EquipoJugador[];
+    const titularesEnPosicion = jugadoresEquipo.filter(ej => {
+      if (!ej.es_titular) return false;
+      const jugadorItem = ej.jugador as any as Player;
+      return jugadorItem.position?.description === posicionDescripcion;
+    });
+
+    const cantidadTitularesActual = titularesEnPosicion.length;
+    const limiteFormacion = LIMITES_FORMACION[posicionDescripcion as keyof typeof LIMITES_FORMACION];
+
+    // Validar que no se supere el límite de la formación
+    if (cantidadTitularesActual >= limiteFormacion) {
+      throw ErrorFactory.badRequest(
+        `No puedes agregar más titulares en la posición ${posicionDescripcion}. ` +
+        `Límite de la formación 4-3-3: ${limiteFormacion}. ` +
+        `Actualmente tienes ${cantidadTitularesActual} titular(es). ` +
+        `Primero debes hacer suplente a otro jugador de esta posición.`
+      );
+    }
+
+    relacionJugador.es_titular = true;
+
+    await em.flush();
+
+    return {
+      message: 'Jugador promovido a titular con éxito',
+      jugador: {
+        id: jugador.id,
+        nombre: jugador.name,
+        posicion: posicionDescripcion
+      },
+      estado_anterior: 'suplente',
+      estado_nuevo: 'titular',
+      estadisticas_posicion: {
+        posicion: posicionDescripcion,
+        titulares_actuales: cantidadTitularesActual + 1,
+        limite_formacion: limiteFormacion,
+        espacios_disponibles: limiteFormacion - (cantidadTitularesActual + 1)
+      }
+    };
   });
 }
 

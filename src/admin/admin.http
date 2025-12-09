@@ -34,3 +34,12 @@ Content-Type: application/json
 
 ### Recalcular puntajes de una jornada (sin llamar a la API)
 POST {{baseUrl}}/api/admin/jornadas/2/recalcular
+
+### Actualizar configuración de cláusulas
+PATCH http://localhost:3000/api/admin/config/clausulas
+Content-Type: application/json
+
+{
+  "dias_proteccion_clausula": 3,
+  "ratio_blindaje_clausula": 2
+}

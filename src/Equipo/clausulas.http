@@ -1,0 +1,10 @@
+### Blindar jugador
+POST http://localhost:3000/api/clausulas/12/jugadores/828/blindar
+Content-Type: application/json
+
+{
+  "monto_incremento": 1000000
+}
+
+### Ejecutar cláusula
+POST http://localhost:3000/api/clausulas/13/jugadores/828/ejecutar-clausula

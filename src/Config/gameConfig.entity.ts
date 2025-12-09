@@ -13,6 +13,12 @@ export class GameConfig extends BaseEntity {
   @Property({ default: 5 })
   cupoMaximoTorneos: number = 5
 
+  @Property({ default: 2 })
+  dias_proteccion_clausula: number = 2
+
+  @Property({ default: 2 })
+  ratio_blindaje_clausula: number = 2
+
   @Property()
   updatedAt: Date = new Date()
 }
