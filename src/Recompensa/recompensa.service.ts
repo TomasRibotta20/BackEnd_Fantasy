@@ -404,7 +404,9 @@ async function ficharJugadorLocal(em: EntityManager, equipo: Equipo, jugador: Pl
   const nuevoFichaje = em.create(EquipoJugador, {
     equipo: equipo,
     jugador: jugador,
-    es_titular: false
+    es_titular: false,
+    fecha_incorporacion: new Date(),
+    valor_clausula: 0
   });
   em.persist(nuevoFichaje);
   const jugadorTorneo = await em.findOne(JugadorTorneo, {
