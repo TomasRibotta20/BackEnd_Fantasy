@@ -6,7 +6,7 @@ import { Recompensa } from './recompensa.entity.js';
 import { ConfigJuegoAzar, RangoPrecio, Tier } from "../Premio/premio.entity.js";
 import { Player } from '../Player/player.entity.js';
 import { EquipoJugador } from '../Equipo/equipoJugador.entity.js';
-//import { MercadoItem } from '../Mercado/mercadoItem.entity.js';
+import { ItemMercado } from '../Mercado/itemMercado.entity.js';
 import { raw } from '@mikro-orm/core';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 import { LockMode } from '@mikro-orm/core';
@@ -16,6 +16,9 @@ import { PlayerPick } from '../Premio/playerpick.entity.js';
 import { Equipo } from '../Equipo/equipo.entity.js';
 import { TorneoUsuario } from '../Torneo/torneoUsuario.entity.js';
 import { calcularTierPorPosicion } from './recompensa.controller.js';
+import { Transaccion, TipoTransaccion } from '../Equipo/transaccion.entity.js';
+import { EstadoMercado } from '../Mercado/mercadoDiario.entity.js';
+import { JugadorTorneo } from '../Mercado/jugadorTorneo.entity.js';
 
 async function generarRecompensasFinJornada(em: EntityManager, jornadaId: number) {
 
@@ -104,15 +107,16 @@ async function sortearJugador(em: EntityManager, config: ConfigJuegoAzar, torneo
     .join('e.torneoUsuario', 'tu')
     .where({ 'tu.torneo': torneoId })
     .getKnexQuery();
-  /*
-  const subQueryMercado = em.createQueryBuilder(MercadoItem, 'mi')
+  const subQueryMercado = em.createQueryBuilder(ItemMercado, 'mi')
     .select('mi.jugador')
-    .where({ 'mi.activo': true, 'mi.torneo': torneoId })//////////////////////////////////////
+    .join('mi.mercado', 'm')
+    .where({ 
+      'm.torneo': torneoId,
+      'm.estado': EstadoMercado.ABIERTO
+    })
     .getKnexQuery();
-  */
   qb.andWhere({ id: { $nin: subQueryOcupados } });
-  //qb.andWhere({ id: { $nin: subQueryMercado } });
-
+  qb.andWhere({ id: { $nin: subQueryMercado } });
   if (excluidosIds.length > 0) {
     qb.andWhere({ id: { $nin: excluidosIds } });
   }
@@ -177,15 +181,15 @@ export async function procesarRuleta(
   if (cantidad >= 15) {
     throw ErrorFactory.conflict("PLANTILLA_LLENA, No tienes espacio. Vende un jugador antes de jugar.");
   }
-  
   const resultado = await sortearJugador(em, premioConfig.configuracion, torneoId);
-  const { jugador: jugadorGanado, rangoSorteado } = resultado;
+
+  const {jugador: jugadorGanado, rangoSorteado} = resultado;
   if (!jugadorGanado) {
     let montoCompensacion: number;
-    if (rangoSorteado.max) {
-      montoCompensacion = (Number(rangoSorteado.min) + Number(rangoSorteado.max)) / 2;
+    if (rangoSorteado!.max) {
+      montoCompensacion = (Number(rangoSorteado!.min) + Number(rangoSorteado!.max)) / 2;
     } else {
-      montoCompensacion = Number(rangoSorteado.min);
+      montoCompensacion = Number(rangoSorteado!.min);
     }
     
     await em.transactional(async (txEm) => {
@@ -240,7 +244,7 @@ export async function procesarRuleta(
     if (!equipo) {
       throw ErrorFactory.notFound("No tienes un equipo en este torneo.");
     }
-    await ficharJugadorLocal(txEm, equipo.id!, jugador);
+    await ficharJugadorLocal(txEm, equipo, jugador);
     recompensaTx.jugador = jugador;
     recompensaTx.fecha_reclamo = new Date();
     return { status: 'EXITO' as const, jugador: jugador };
@@ -374,30 +378,51 @@ function calcularCompensacionPorTier(tier: Tier): number {
 }
 
 async function addSaldoLocal(em: EntityManager, usuarioId: number, torneoId: number, monto: number) {
-  const equipo = await em.findOne(Equipo, { 
+  const equipo = await em.findOneOrFail(Equipo, { 
       torneoUsuario: { usuario: usuarioId, torneo: torneoId } 
   }, {
       lockMode: LockMode.PESSIMISTIC_WRITE
   });
-  if (!equipo) {
-    throw ErrorFactory.notFound("Equipo no encontrado durante la transacción.");
-  }
+  const transaccion = em.create(Transaccion, {
+        equipo,
+        tipo: TipoTransaccion.PREMIO,
+        monto,
+        jugador: null,
+        fecha: new Date(),
+        descripcion: `Acreditación de saldo por recompensa de torneo ID: ${torneoId}`
+      });
   equipo.presupuesto = Number(equipo.presupuesto) + Number(monto);
   em.persist(equipo);
+  em.persist(transaccion);
 }
 
 /**
  * Simula el EquipoService.
  * Incorpora el jugador al equipo creando la relación.
  */
-async function ficharJugadorLocal(em: EntityManager, equipoId: number, jugador: Player) {
-  const equipoRef = em.getReference(Equipo, equipoId);
+async function ficharJugadorLocal(em: EntityManager, equipo: Equipo, jugador: Player) {
   const nuevoFichaje = em.create(EquipoJugador, {
-    equipo: equipoRef,
+    equipo: equipo,
     jugador: jugador,
     es_titular: false
   });
-  em.persist(nuevoFichaje);;
+  em.persist(nuevoFichaje);
+  const jugadorTorneo = await em.findOne(JugadorTorneo, {
+          jugador: jugador.id,
+          torneo: equipo.torneoUsuario.torneo.id
+        });
+  if (jugadorTorneo) {
+    jugadorTorneo.equipo_jugador = nuevoFichaje;
+  }
+  const transaccion = em.create(Transaccion, {
+        equipo,
+        tipo: TipoTransaccion.PREMIO,
+        monto: null,
+        jugador,
+        fecha: new Date(),
+        descripcion: `Fichaje por recompensa de jugador pick: ${jugador.name}`
+      });
+  em.persist(transaccion);
 }
 
 export { generarRecompensasFinJornada, sortearJugador, procesarPlayerPick, procesarPicksExpiradosDelUsuario, ficharJugadorLocal, addSaldoLocal };
