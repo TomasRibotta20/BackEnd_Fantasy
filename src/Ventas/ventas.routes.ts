@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../Auth/auth.requires.js';
-
+import { verificarModificacionesHabilitadas as verificarModi } from '../shared/middleware/verificarModificaciones.middleware.js';
 import { crearOfertaSchema, ofertaIdParamSchema, rechazarOfertaSchema, misOfertasQuerySchema } from './ventas.schema.js';
 import { crearOfertaController, aceptarOfertaController, rechazarOfertaController, cancelarOfertaController, obtenerOfertasEnviadasController, obtenerOfertasRecibidasController, obtenerDetalleOfertaController, procesarOfertasVencidasController } from './ventas.controller.js';
 
@@ -19,7 +19,7 @@ ventasRouter.get('/mis-ofertas-recibidas',requireAuth,obtenerOfertasRecibidasCon
 ventasRouter.get('/:ofertaId',requireAuth,obtenerDetalleOfertaController);
 
 // Aceptar oferta
-ventasRouter.post('/:ofertaId/aceptar',requireAuth,aceptarOfertaController);
+ventasRouter.post('/:ofertaId/aceptar',requireAuth,verificarModi,aceptarOfertaController);
 
 // Rechazar oferta
 ventasRouter.post('/:ofertaId/rechazar',requireAuth,rechazarOfertaController);

@@ -27,7 +27,7 @@ Content-Type: application/json
   "nombre": "La Jorgeliga",
   "descripcion": "Torneo de fantasy",
   "cupoMaximo": 3,
-  "nombre_equipo": "Equipo del Admin",
+  "nombre_equipo": "Equipo del creador",
   "fecha_inicio": "2024-01-15T10:00:00Z"
 }
 
@@ -79,7 +79,7 @@ Content-Type: application/json
 ### ========== ELIMINACIÓN ==========
 
 ### Eliminar torneo (solo admin)
-DELETE http://localhost:3000/api/torneos/3
+DELETE http://localhost:3000/api/torneos/4
 Content-Type: application/json
 
 ### ========== RUTAS DE USUARIO ==========
@@ -97,8 +97,8 @@ POST http://localhost:3000/api/torneos/unirse
 Content-Type: application/json
 
 {
-  "codigo_acceso": "O6BH4G",
-  "nombre_equipo": "Chiquilines Fc"
+  "codigo_acceso": "421H24",
+  "nombre_equipo": "chicana Fc"
 }
 
 ### Ver mis torneos (con filtro opcional por estado)
@@ -474,7 +474,7 @@ Content-Type: application/json
 }
 ###########################################
 ### Iniciar torneo como creador (exitoso)
-POST http://localhost:3000/api/torneos/iniciar/4
+POST http://localhost:3000/api/torneos/iniciar/5
 Content-Type: application/json
 
 

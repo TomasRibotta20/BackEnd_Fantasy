@@ -15,3 +15,6 @@ adminRouter.post('/set-cupo-maximo-torneos', adminController.setCupoMaximoTorneo
 
 adminRouter.post('/jornadas/:jornadaId/procesar', adminController.procesarJornada)
 adminRouter.post('/jornadas/:jornadaId/recalcular', adminController.recalcularPuntajesJornada)
+
+
+adminRouter.patch('/config/clausulas', requireAdmin, adminController.updateConfigClausulas)

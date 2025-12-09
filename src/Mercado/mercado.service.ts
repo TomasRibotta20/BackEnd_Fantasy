@@ -402,7 +402,9 @@ export async function cerrarMercado(mercadoId: number) {
         const equipoJugador = em.create(EquipoJugador, {
           equipo,
           jugador: item.jugador,
-          es_titular: false
+          es_titular: false,
+          fecha_incorporacion: new Date(),
+          valor_clausula: 0
         });
         em.persist(equipoJugador);
 

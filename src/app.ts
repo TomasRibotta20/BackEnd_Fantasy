@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import { setupSwagger } from './swagger.js';
 import 'reflect-metadata';
+import { clausulasRouter } from './Equipo/clausulas.routes.js';
 import { ventasRouter } from './Ventas/ventas.routes.js';
 import { mercadoRouter } from './Mercado/mercado.routes.js';
 import { mercadoPujaRouter } from './Mercado/mercadoPuja.routes.js';
@@ -117,7 +118,7 @@ app.use('/api/precios', historialPrecioRouter);
 app.use('/api/mercado', mercadoRouter);
 app.use('/api/mercado-puja', mercadoPujaRouter);
 app.use('/api/ventas', ventasRouter);
-
+app.use('/api/clausulas', clausulasRouter);
 app.use((req, _, next) => {
   next(ErrorFactory.notFoundRoute(req.originalUrl));
 });

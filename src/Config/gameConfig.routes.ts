@@ -6,3 +6,5 @@ export const gameConfigRoutes = Router()
 // Rutas para usuarios necesitan estar logeados
 gameConfigRoutes.get('/jornada-activa', requireAuth, gameConfigController.getJornadaActiva)
 gameConfigRoutes.get('/estado-modificaciones', requireAuth, gameConfigController.getEstadoModificaciones)
+gameConfigRoutes.get('/', requireAuth, gameConfigController.getConfig)
+gameConfigRoutes.get('/clausulas', requireAuth, gameConfigController.getConfigClausulas)

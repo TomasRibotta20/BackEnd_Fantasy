@@ -336,6 +336,8 @@ export async function poblarEquipoAleatoriamente(
       equipo: equipo,
       jugador: jugador,
       es_titular: esTitular,
+      fecha_incorporacion: new Date(), 
+      valor_clausula: 0 
     });
     transactionalEm.persist(equipoJugador);
   }
@@ -440,6 +442,8 @@ export async function intercambiarJugador(
       equipo: equipo,
       jugador: jugadorEntra, // Asigna la entidad completa del jugador que entra.
       es_titular: eraTitular,
+       fecha_incorporacion: new Date(), 
+      valor_clausula: 0
     });
     em.persist(nuevaRelacion); // Persiste la nueva relación.
 

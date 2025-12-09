@@ -244,3 +244,152 @@ export async function sendOfertaVencidaEmail(
     console.error(' Error enviando email de vencimiento:', error);
   }
 }
+
+/**
+ * Email cuando te ejecutan una cláusula (te roban un jugador)
+ */
+export async function sendClausulaEjecutadaEmail(
+  to: string,
+  username: string,
+  jugadorNombre: string,
+  jugadorPosicion: string,
+  montoRecibido: number,
+  equipoComprador: string,
+  usuarioComprador: string,
+  torneoNombre: string,
+  presupuestoNuevo: number
+) {
+  const subject = `[${torneoNombre}]  ¡Te han ejecutado una cláusula!`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #f59e0b;"> ¡Cláusula Ejecutada!</h2>
+      <p>Hola <strong>${username}</strong>,</p>
+      <p>Te informamos que <strong>${usuarioComprador}</strong> ha ejecutado la cláusula de tu jugador en el torneo <strong>${torneoNombre}</strong>:</p>
+      
+      <div style="background: #fffbeb; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+        <p><strong> Jugador:</strong> ${jugadorNombre}</p>
+        <p><strong> Posición:</strong> ${jugadorPosicion}</p>
+        <p><strong> Monto recibido:</strong> $${montoRecibido.toLocaleString()}</p>
+        <p><strong> Torneo:</strong> ${torneoNombre}</p>
+        <p><strong> Usuario comprador:</strong> ${usuarioComprador}</p>
+        <p><strong> Equipo comprador:</strong> ${equipoComprador}</p>
+      </div>
+
+      <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #16a34a;">
+        <p style="margin: 0;"><strong>💵 Tu nuevo presupuesto:</strong> $${presupuestoNuevo.toLocaleString()}</p>
+      </div>
+
+      <p>El dinero de la cláusula ya está disponible en tu presupuesto. ¡Aprovecha para fichar nuevos talentos!</p>
+      
+      <p style="margin-top: 30px;">
+        <a href="http://localhost:5173/mercado" 
+           style="background: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+           Buscar Jugadores
+        </a>
+      </p>
+
+      <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
+        Este es un correo automático del sistema Fantasy Football. Por favor no respondas a este correo.
+      </p>
+    </div>
+  `;
+
+  try {
+    if (process.env.GMAIL_PASS) {
+      await transporter.sendMail({
+        from: '"Fantasy Football" <arielmazalan15@gmail.com>',
+        to,
+        subject,
+        html
+      });
+      console.log(` Email de cláusula ejecutada enviado a ${to}`);
+    } else {
+      console.log(` [DEMO] Email de cláusula para ${to}: ${jugadorNombre} clausulado por ${usuarioComprador} en ${torneoNombre}`);
+    }
+  } catch (error) {
+    console.error(' Error enviando email de cláusula ejecutada:', error);
+  }
+}
+
+/**
+ * Email cuando ejecutas exitosamente una cláusula (compras un jugador)
+ */
+export async function sendClausulaExitosaEmail(
+  to: string,
+  username: string,
+  jugadorNombre: string,
+  jugadorPosicion: string,
+  montoPagado: number,
+  equipoVendedor: string,
+  usuarioVendedor: string,
+  torneoNombre: string,
+  presupuestoRestante: number,
+  fechaProteccionHasta: Date
+) {
+  const subject = `[${torneoNombre}]  ¡Clausulazo exitoso! ${jugadorNombre} es tuyo`;
+
+  const fechaFormateada = fechaProteccionHasta.toLocaleDateString('es-AR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #16a34a;"> ¡Clausulazo Exitoso!</h2>
+      <p>Hola <strong>${username}</strong>,</p>
+      <p>¡Felicitaciones! Has ejecutado exitosamente la cláusula de un jugador en el torneo <strong>${torneoNombre}</strong>:</p>
+      
+      <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #16a34a;">
+        <p><strong> Jugador adquirido:</strong> ${jugadorNombre}</p>
+        <p><strong> Posición:</strong> ${jugadorPosicion}</p>
+        <p><strong> Precio pagado:</strong> $${montoPagado.toLocaleString()}</p>
+        <p><strong> Torneo:</strong> ${torneoNombre}</p>
+        <p><strong> Usuario vendedor:</strong> ${usuarioVendedor}</p>
+        <p><strong> Equipo vendedor:</strong> ${equipoVendedor}</p>
+      </div>
+
+      <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+        <p style="margin: 0;"><strong> Protección:</strong> Este jugador está protegido hasta el <strong>${fechaFormateada}</strong></p>
+      </div>
+
+      <div style="background: #dbeafe; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
+        <p style="margin: 0;"><strong> Presupuesto restante:</strong> $${presupuestoRestante.toLocaleString()}</p>
+      </div>
+
+      <p>El jugador ya está en tu equipo como suplente. Puedes modificar tu alineación cuando lo desees.</p>
+      <p><strong>Recuerda:</strong> Durante el período de protección, nadie podrá ejecutar la cláusula de este jugador.</p>
+      
+      <p style="margin-top: 30px;">
+        <a href="http://localhost:5173/mi-equipo" 
+           style="background: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+           Ver Mi Equipo
+        </a>
+      </p>
+
+      <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
+        Este es un correo automático del sistema Fantasy Football. Por favor no respondas a este correo.
+      </p>
+    </div>
+  `;
+
+  try {
+    if (process.env.GMAIL_PASS) {
+      await transporter.sendMail({
+        from: '"Fantasy Football" <arielmazalan15@gmail.com>',
+        to,
+        subject,
+        html
+      });
+      console.log(` Email de clausulazo exitoso enviado a ${to}`);
+    } else {
+      console.log(` [DEMO] Email de clausulazo exitoso para ${to}: ${jugadorNombre} adquirido de ${usuarioVendedor} en ${torneoNombre}`);
+    }
+  } catch (error) {
+    console.error(' Error enviando email de clausulazo exitoso:', error);
+  }
+}
