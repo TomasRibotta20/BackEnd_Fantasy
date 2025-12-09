@@ -1,7 +1,13 @@
 import { z } from 'zod';
 
 export const forgotPasswordSchema = z.object({
-  email: z.string().min(3, "El email debe tener al menos 3 caracteres").max(100, "El email no puede tener más de 100 caracteres"),
+  email: z.string()
+    .min(3, "El email debe tener al menos 3 caracteres")
+    .max(100, "El email no puede tener más de 100 caracteres")
+    .refine(
+      (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
+      "Formato de email inválido"
+    ),
 });
 
 export const newPasswordSchema = z.object({
