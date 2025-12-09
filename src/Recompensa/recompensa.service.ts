@@ -113,6 +113,8 @@ async function sortearJugador(em: EntityManager, config: ConfigJuegoAzar, torneo
       'm.activo': true
     })
     .getKnexQuery();
+  qb.andWhere({ id: { $nin: subQueryOcupados } });
+  qb.andWhere({ id: { $nin: subQueryMercado } });
   if (excluidosIds.length > 0) {
     qb.andWhere({ id: { $nin: excluidosIds } });
   }
@@ -177,19 +179,9 @@ export async function procesarRuleta(
   if (cantidad >= 15) {
     throw ErrorFactory.conflict("PLANTILLA_LLENA, No tienes espacio. Vende un jugador antes de jugar.");
   }
-  let jugadorGanado: Player | null = null;
-  let rangoSorteado: RangoPrecio | null = null;
-  const maxIntentos = 3;
-  let intento = 0;
-  while (!jugadorGanado && intento < maxIntentos) {
-    intento++;
-    const resultado = await sortearJugador(em, premioConfig.configuracion, torneoId);
-    jugadorGanado = resultado.jugador;
-    rangoSorteado = resultado.rangoSorteado;
-    if (jugadorGanado) {
-      break;
-    }
-  }
+  const resultado = await sortearJugador(em, premioConfig.configuracion, torneoId);
+
+  const {jugador: jugadorGanado, rangoSorteado} = resultado;
   if (!jugadorGanado) {
     let montoCompensacion: number;
     if (rangoSorteado!.max) {
