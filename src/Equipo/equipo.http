@@ -9,7 +9,7 @@ Content-Type: application/json
 }
 
 ### Obtener el equipo del usuario autenticado (requiere autenticación previa)
-GET http://localhost:3000/api/equipos/mi-equipo/13
+GET http://localhost:3000/api/equipos/mi-equipo/29
 Content-Type: application/json
 
 ### Realizar un intercambio de jugadores en el equipo (requiere autenticación previa)

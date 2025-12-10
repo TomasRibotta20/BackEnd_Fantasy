@@ -8,22 +8,6 @@
 ### Ver configuración actual
 GET {{baseUrl}}/api/admin/config
 
-
-### Establecer jornada activa
-POST {{baseUrl}}/api/admin/set-jornada-activa
-Content-Type: application/json
-
-{
-  "jornadaId": "2"
-}
-
-### Deshabilitar modificaciones (bloquear equipos)
-POST {{baseUrl}}/api/admin/deshabilitar-modificaciones
-
-
-### Habilitar modificaciones (permitir cambios en equipos)
-POST {{baseUrl}}/api/admin/habilitar-modificaciones
-
 ### Procesar jornada (ejemplo: jornada ID 2)
 POST {{baseUrl}}/api/admin/jornadas/1/procesar
 Content-Type: application/json
@@ -35,11 +19,11 @@ Content-Type: application/json
 ### Recalcular puntajes de una jornada (sin llamar a la API)
 POST {{baseUrl}}/api/admin/jornadas/2/recalcular
 
-### Actualizar configuración de cláusulas
-PATCH http://localhost:3000/api/admin/config/clausulas
+### Actualizar configuración del juego
+PATCH {{baseUrl}}/api/admin/config
 Content-Type: application/json
 
 {
-  "dias_proteccion_clausula": 3,
-  "ratio_blindaje_clausula": 2
+  "modificacionesHabilitadas": true
 }
+

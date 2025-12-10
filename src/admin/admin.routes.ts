@@ -7,14 +7,13 @@ export const adminRouter = Router()
 // Todas las rutas requieren ser admin
 adminRouter.use(requireAdmin)
 
-adminRouter.post('/set-jornada-activa', adminController.setJornadaActiva)
-adminRouter.post('/habilitar-modificaciones', adminController.habilitarModificaciones)
-adminRouter.post('/deshabilitar-modificaciones', adminController.deshabilitarModificaciones)
+//Configuración del juego
+adminRouter.patch('/config', (req, res, next) => adminController.updateConfig(req, res, next));
 adminRouter.get('/config', adminController.getConfig)
-adminRouter.post('/set-cupo-maximo-torneos', adminController.setCupoMaximoTorneos)
 
+
+//Procesamiento de jornadas
 adminRouter.post('/jornadas/:jornadaId/procesar', adminController.procesarJornada)
 adminRouter.post('/jornadas/:jornadaId/recalcular', adminController.recalcularPuntajesJornada)
 
 
-adminRouter.patch('/config/clausulas', requireAdmin, adminController.updateConfigClausulas)

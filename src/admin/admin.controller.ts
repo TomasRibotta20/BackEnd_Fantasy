@@ -9,196 +9,151 @@ import {ErrorFactory} from "../shared/errors/errors.factory.js";
 import { HistorialPrecioService } from '../HistorialPrecio/historial-precio.service.js';
 import { generarRecompensasFinJornada } from '../Recompensa/recompensa.service.js'
 class AdminController {
-   /**
-   * Actualizar configuración de cláusulas (ADMIN)
+  /**
+   * Método auxiliar para obtener o crear la configuración
    */
-  async updateConfigClausulas(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { dias_proteccion_clausula, ratio_blindaje_clausula } = req.body
-      const em = orm.em.fork()
+  private async getOrCreateConfig(em: any): Promise<GameConfig> {
+    let config = await em.findOne(GameConfig, 1, { populate: ['jornadaActiva'] })
+    
+    if (!config) {
+      config = em.create(GameConfig, {
+        modificacionesHabilitadas: true,
+        cupoMaximoTorneos: 5,
+        dias_proteccion_clausula: 2,
+        ratio_blindaje_clausula: 2,
+        max_jugadores_por_equipo: 15,
+        updatedAt: new Date()
+      })
+      await em.persistAndFlush(config);
+    }
+    
+    return config
+  }
 
-      let config = await em.findOne(GameConfig, 1)
-      if (!config) {
-        config = em.create(GameConfig, {
-          modificacionesHabilitadas: true,
-          cupoMaximoTorneos: 5,
-          dias_proteccion_clausula: dias_proteccion_clausula || 2,
-          ratio_blindaje_clausula: ratio_blindaje_clausula || 2,
-          updatedAt: new Date()
-        })
+  /**
+   * Actualizar configuración del juego (ADMIN)
+   * Permite actualizar múltiples campos de configuración a la vez
+   */
+  async updateConfig(req: Request, res: Response, next: NextFunction) {
+    try {
+      console.log('=== INICIO updateConfig ===')
+      console.log('Body recibido:', req.body)
+      const { 
+        jornadaId,
+        modificacionesHabilitadas,
+        cupoMaximoTorneos,
+        dias_proteccion_clausula,
+        ratio_blindaje_clausula,
+        max_jugadores_por_equipo
+      } = req.body
+      console.log('Parámetros extraídos:', {
+      jornadaId,
+      modificacionesHabilitadas,
+      cupoMaximoTorneos,
+      dias_proteccion_clausula,
+      ratio_blindaje_clausula,
+      max_jugadores_por_equipo
+      })
+      console.log('Creando EntityManager...')
+      const em = orm.em.fork()
+      console.log('Obteniendo configuración...')
+      const config = await this.getOrCreateConfig(em)
+      console.log('Configuración obtenida:', {
+      id: config.id,
+      max_jugadores_por_equipo_actual: config.max_jugadores_por_equipo
+    })
+      // Actualizar jornada activa si se proporciona
+      if (jornadaId !== undefined) {
+        const jornada = await em.findOne(Jornada, Number(jornadaId))
+        if (!jornada) {
+          return next(ErrorFactory.notFound('Jornada no encontrada'))
+        }
+        config.jornadaActiva = jornada
       }
 
-      // Validaciones
+      // Actualizar estado de modificaciones
+      if (modificacionesHabilitadas !== undefined) {
+        if (typeof modificacionesHabilitadas !== 'boolean') {
+          return next(ErrorFactory.badRequest('modificacionesHabilitadas debe ser un booleano'))
+        }
+        config.modificacionesHabilitadas = modificacionesHabilitadas
+      }
+
+      // Actualizar cupo máximo de torneos
+      if (cupoMaximoTorneos !== undefined) {
+        if (cupoMaximoTorneos < 1) {
+          return next(ErrorFactory.badRequest('El cupo máximo debe ser al menos 1'))
+        }
+        if (cupoMaximoTorneos > 10) {
+          return next(ErrorFactory.badRequest('El cupo máximo no puede exceder 10 participantes'))
+        }
+        config.cupoMaximoTorneos = cupoMaximoTorneos
+      }
+
+      // Actualizar días de protección de cláusula
       if (dias_proteccion_clausula !== undefined) {
+        console.log('Actualizando dias_proteccion_clausula...')
         if (dias_proteccion_clausula < 0 || dias_proteccion_clausula > 14) {
           return next(ErrorFactory.badRequest('Los días de protección deben estar entre 0 y 14'))
         }
         config.dias_proteccion_clausula = dias_proteccion_clausula
+        console.log('dias_proteccion_clausula actualizado')
       }
 
+      // Actualizar ratio de blindaje de cláusula
       if (ratio_blindaje_clausula !== undefined) {
-        if (ratio_blindaje_clausula < 1 || ratio_blindaje_clausula > 10) {
-          return next(ErrorFactory.badRequest('El ratio de blindaje debe estar entre 1 y 10'))
+        if (ratio_blindaje_clausula < 1 || ratio_blindaje_clausula > 5) {
+          return next(ErrorFactory.badRequest('El ratio de blindaje debe estar entre 1 y 5'))
         }
         config.ratio_blindaje_clausula = ratio_blindaje_clausula
       }
 
+      // Actualizar máximo de jugadores por equipo
+      if (max_jugadores_por_equipo !== undefined) {
+        if (max_jugadores_por_equipo < 11) {
+          return next(ErrorFactory.badRequest('El máximo de jugadores por equipo debe ser al menos 11'))
+        }
+        if (max_jugadores_por_equipo > 25) {
+          return next(ErrorFactory.badRequest('El máximo de jugadores por equipo no puede exceder 25'))
+        }
+        config.max_jugadores_por_equipo = max_jugadores_por_equipo
+      }
+      console.log('Actualizando updatedAt...')
       config.updatedAt = new Date()
+      console.log('Persistiendo cambios...')
       await em.persistAndFlush(config)
-
+      console.log('Cambios persistidos exitosamente')
+      console.log('Preparando respuesta...')
       res.json({
         success: true,
-        message: 'Configuración de cláusulas actualizada exitosamente',
+        message: 'Configuración actualizada exitosamente',
         data: {
+          id: config.id,
+          jornadaActiva: config.jornadaActiva ? {
+            id: config.jornadaActiva.id,
+            nombre: config.jornadaActiva.nombre
+          } : null,
+          modificacionesHabilitadas: config.modificacionesHabilitadas,
+          cupoMaximoTorneos: config.cupoMaximoTorneos,
           dias_proteccion_clausula: config.dias_proteccion_clausula,
           ratio_blindaje_clausula: config.ratio_blindaje_clausula,
+          max_jugadores_por_equipo: config.max_jugadores_por_equipo,
           updatedAt: config.updatedAt
         }
       })
     } catch (error: any) {
-      next(ErrorFactory.internal("Error al actualizar configuración de cláusulas"));
-    }
-  }
-  // Establecer jornada activa
-  async setJornadaActiva(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { jornadaId } = req.body
-      const em = orm.em.fork()
-
-      // Verificar que la jornada existe
-      const jornada = await em.findOne(Jornada, Number(jornadaId))
-      if (!jornada) {
-        return next(ErrorFactory.notFound('Jornada no encontrada'))
-      }
-
-      // Obtener o crear config
-      let config = await em.findOne(GameConfig, 1)
-      if (!config) {
-        config = em.create(GameConfig, {
-          modificacionesHabilitadas: true,
-          cupoMaximoTorneos: 5,
-          dias_proteccion_clausula: 2,
-          ratio_blindaje_clausula: 2,
-          updatedAt: new Date()
-        })
-        config.jornadaActiva = jornada
-      } else {
-        config.jornadaActiva = jornada
-        config.updatedAt = new Date()
-      }
-
-      await em.persistAndFlush(config)
-
-      res.json({
-        success: true,
-        message: `Jornada ${jornada.nombre} establecida como activa`,
-        data: config
-      })
-    } catch (error: any) {
-        next(ErrorFactory.internal("Error al establecer jornada activa"));
-      }
-    }
-
-
-  // Habilitar modificaciones
-  async habilitarModificaciones(req: Request, res: Response, next: NextFunction) {
-    try {
-      const em = orm.em.fork()
-
-      let config = await em.findOne(GameConfig, 1)
-      if (!config) {
-        config = em.create(GameConfig, {
-          modificacionesHabilitadas: true,
-          cupoMaximoTorneos: 5,
-          dias_proteccion_clausula: 2,
-          ratio_blindaje_clausula: 2,
-          updatedAt: new Date()
-        })
-      } else {
-        config.modificacionesHabilitadas = true
-        config.updatedAt = new Date()
-      }
-
-      await em.persistAndFlush(config)
-
-      res.json({
-        success: true,
-        message: 'Modificaciones habilitadas para todos los usuarios'
-      })
-    } catch (error: any) {
-        next(ErrorFactory.internal("Error al habilitar modificaciones"));
+      console.error('=== ERROR EN updateConfig ===')
+      console.error('Tipo de error:', error.constructor.name)
+      console.error('Mensaje:', error.message)
+      console.error('Stack:', error.stack)
+      console.error('Error completo:', error)
+      next(ErrorFactory.internal("Error al actualizar configuración"));
     }
   }
 
-  // Deshabilitar modificaciones
-  async deshabilitarModificaciones(req: Request, res: Response, next: NextFunction) {
-    try {
-      const em = orm.em.fork()
-
-      let config = await em.findOne(GameConfig, 1)
-      if (!config) {
-        config = em.create(GameConfig, {
-          modificacionesHabilitadas: false,
-          cupoMaximoTorneos: 5,
-          dias_proteccion_clausula: 2,
-          ratio_blindaje_clausula: 2,
-          updatedAt: new Date()
-        })
-      } else {
-        config.modificacionesHabilitadas = false
-        config.updatedAt = new Date()
-      }
-
-      await em.persistAndFlush(config)
-
-      res.json({
-        success: true,
-        message: 'Modificaciones deshabilitadas para todos los usuarios'
-      })
-    } catch (error: any) {
-        next(ErrorFactory.internal("Error al deshabilitar modificaciones"));
-    }
-  }
-   // Establecer cupo máximo para torneos
-  async setCupoMaximoTorneos(req: Request, res: Response, next: NextFunction) {
-    try {
-      const { cupoMaximo } = req.body
-      const em = orm.em.fork()
-
-      if (!cupoMaximo || cupoMaximo < 1) {
-        return next(ErrorFactory.badRequest('El cupo máximo debe ser al menos 1'))
-      }
-
-      if (cupoMaximo > 10) {
-        return next(ErrorFactory.badRequest('El cupo máximo no puede exceder 10 participantes'))
-      }
-
-      let config = await em.findOne(GameConfig, 1)
-      if (!config) {
-        config = em.create(GameConfig, {
-          modificacionesHabilitadas: true,
-          cupoMaximoTorneos: cupoMaximo,
-          dias_proteccion_clausula: 2,
-          ratio_blindaje_clausula: 2,
-          updatedAt: new Date()
-        })
-      } else {
-        config.cupoMaximoTorneos = cupoMaximo
-        config.updatedAt = new Date()
-      }
-
-      await em.persistAndFlush(config)
-
-      res.json({
-        success: true,
-        message: `Cupo máximo para torneos establecido en ${cupoMaximo} participantes`,
-        data: { cupoMaximoTorneos: cupoMaximo }
-      })
-    } catch (error: any) {
-        next(ErrorFactory.internal("Error al establecer cupo máximo"));
-    }
-  }
-  // Ver configuración actual
+  /**
+   * Obtener configuración actual (ADMIN)
+   */
   async getConfig(req: Request, res: Response, next: NextFunction) {
     try {
       const em = orm.em.fork()
@@ -258,13 +213,33 @@ class AdminController {
       //6.5 Generar recompensas de la jornada
       await generarRecompensasFinJornada(em, jornadaId);
 
-      // 7. Activar jornada (si se solicitó)
+      // 7. Activar jornada siguiente (si se solicitó)
       if (activarJornada) {
         console.log('\nPASO 4: Activando jornada...')
-        config.jornadaActiva = jornada
+        // Buscar la jornada siguiente
+        const jornadaSiguiente = await em.findOne(Jornada, { id: jornadaId + 1 }) 
+        //Si no existe jornada siguiente, entendemos que es la última jornada
+        if (!jornadaSiguiente) {
+          console.log('No existe una jornada siguiente. No se activó ninguna jornada.')
+          await em.flush()
+          
+          return res.json({
+            success: true,
+            message: `Jornada ${jornada.nombre} procesada exitosamente. No hay jornada siguiente para activar.`,
+            data: {
+              jornadaNombre: jornada.nombre,
+              snapshotsCreados: true,
+              puntajesCalculados: true,
+              jornadaActivada: false,
+              advertencia: 'No existe jornada siguiente'
+            },
+          })
+        }
+
+        config.jornadaActiva = jornadaSiguiente
         config.updatedAt = new Date()
         await em.flush()
-        console.log(`✓ Jornada "${jornada.nombre}" establecida como activa`)
+        console.log(`✓ Jornada "${jornadaSiguiente.nombre}" establecida como activa`)
       }
 
       res.json({

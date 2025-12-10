@@ -6,6 +6,7 @@ import { ErrorFactory } from '../shared/errors/errors.factory.js';
 import { EquipoJugador } from './equipoJugador.entity.js';
 import { TorneoUsuario } from '../Torneo/torneoUsuario.entity.js';
 import { Transaccion, TipoTransaccion } from './transaccion.entity.js';
+import { GameConfig } from '../Config/gameConfig.entity.js';
 
 
 const PRESUPUESTO_INICIAL = 90000000;
@@ -345,6 +346,10 @@ export async function poblarEquipoAleatoriamente(
  */
 export async function getEquipoById(equipoId: number) {
   const em = orm.em.fork();
+
+  const gameConfig = await em.findOne(GameConfig, 1);
+  const diasProteccion = gameConfig?.dias_proteccion_clausula ?? 2;
+
   const equipo = await em.findOne(
     Equipo,
     { id: equipoId },
@@ -353,6 +358,14 @@ export async function getEquipoById(equipoId: number) {
   if (!equipo) {
     throw ErrorFactory.notFound('El equipo no existe');
   }
+
+  // Calcular y asignar los campos virtuales para cada jugador
+  equipo.jugadores.getItems().forEach((equipoJugador) => {
+    equipoJugador.valor_clausula_efectiva = equipoJugador.getValorClausulaEfectiva();
+    equipoJugador.dias_proteccion_restantes = equipoJugador.getDiasProteccionRestantes(diasProteccion);
+    equipoJugador.esta_protegido = equipoJugador.estaProtegido(diasProteccion);
+  });
+
   return equipo;
 }
 /**

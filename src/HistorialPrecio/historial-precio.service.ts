@@ -375,16 +375,15 @@ export class HistorialPrecioService {
       detalles.push('Tendencia descendente -4%');
     }
 
-    // C) Consistencia Alta (todas >= 8)
-    if (puntajes.every(p => p >= 8)) {
-      modificadorTotal += 6;
-      detalles.push('Consistencia alta +6%');
-    }
-
-    // D) Racha de Hat-tricks (todas >= 12)
+    //C) Racha de Buenas actuaciones (todas >= 12)
     if (puntajes.every(p => p >= 12)) {
       modificadorTotal += 10;
-      detalles.push('Racha hat-tricks +10%');
+      detalles.push('Racha buenas actuaciones +10%');
+    }
+    // D) Consistencia Alta (todas >= 8)
+    else if (puntajes.every(p => p >= 8)) {
+      modificadorTotal += 6;
+      detalles.push('Consistencia alta +6%');
     }
 
     // E) Inconsistencia Negativa
