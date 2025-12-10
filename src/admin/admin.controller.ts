@@ -258,13 +258,33 @@ class AdminController {
       //6.5 Generar recompensas de la jornada
       await generarRecompensasFinJornada(em, jornadaId);
 
-      // 7. Activar jornada (si se solicitó)
+      // 7. Activar jornada siguiente (si se solicitó)
       if (activarJornada) {
         console.log('\nPASO 4: Activando jornada...')
-        config.jornadaActiva = jornada
+        // Buscar la jornada siguiente
+        const jornadaSiguiente = await em.findOne(Jornada, { id: jornadaId + 1 }) 
+        //Si no existe jornada siguiente, entendemos que es la última jornada
+        if (!jornadaSiguiente) {
+          console.log('No existe una jornada siguiente. No se activó ninguna jornada.')
+          await em.flush()
+          
+          return res.json({
+            success: true,
+            message: `Jornada ${jornada.nombre} procesada exitosamente. No hay jornada siguiente para activar.`,
+            data: {
+              jornadaNombre: jornada.nombre,
+              snapshotsCreados: true,
+              puntajesCalculados: true,
+              jornadaActivada: false,
+              advertencia: 'No existe jornada siguiente'
+            },
+          })
+        }
+
+        config.jornadaActiva = jornadaSiguiente
         config.updatedAt = new Date()
         await em.flush()
-        console.log(`✓ Jornada "${jornada.nombre}" establecida como activa`)
+        console.log(`✓ Jornada "${jornadaSiguiente.nombre}" establecida como activa`)
       }
 
       res.json({
