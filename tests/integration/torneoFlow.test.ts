@@ -132,8 +132,8 @@ describe('Integration Test - Flujo completo de Torneo', () => {
     expect(createTorneo.status).toBe(201);
     expect(createTorneo.body.data).toHaveProperty('id');
     expect(createTorneo.body.data).toHaveProperty('codigo_acceso');
-    torneoId = createTorneo.body.data.id;  // ✅ CORREGIDO: sin .torneo
-    codigoAcceso = createTorneo.body.data.codigo_acceso;  // ✅ CORREGIDO: sin .torneo
+    torneoId = createTorneo.body.data.id;  
+    codigoAcceso = createTorneo.body.data.codigo_acceso; 
 
     // ========== PASO 6: Usuario 2 se une al torneo ==========
     const joinTorneo = await request(app)

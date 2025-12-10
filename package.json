@@ -17,7 +17,8 @@
     "test:unit": "pnpm test tests/unit",
     "test:integration": "pnpm test tests/integration",
     "test:watch": "pnpm test -- --watch",
-    "test:coverage": "pnpm test -- --coverage"
+    "test:coverage:unit": "node --experimental-vm-modules --max-old-space-size=4096 node_modules/jest/bin/jest.js --coverage tests/unit",
+    "test:coverage:integration": "node --experimental-vm-modules --max-old-space-size=4096 node_modules/jest/bin/jest.js --coverage tests/integration"
   },
   "keywords": [],
   "author": "",

@@ -101,7 +101,7 @@ describe('HistorialPrecioService - analizarTendencias', () => {
 
     expect(resultado.modificadorTotal).toBe(6);
     expect(resultado.detalles).toContain('Consistencia alta +6%');
-    expect(resultado.detalles).not.toContain('Racha hat-tricks');
+    expect(resultado.detalles).not.toContain('Racha buenas actuaciones');
   });
 
   /**
@@ -121,14 +121,14 @@ describe('HistorialPrecioService - analizarTendencias', () => {
 
     // Solo +10% (racha), NO +6% adicional
     expect(resultado.modificadorTotal).toBe(10);
-    expect(resultado.detalles).toContain('Racha hat-tricks +10%');
+    expect(resultado.detalles).toContain('Racha buenas actuaciones +10%');
     expect(resultado.detalles).not.toContain('Consistencia alta');
   });
 
   /**
    * TEST 6: Racha + Tendencia Ascendente (+14%)
    */
-  it('debe aplicar +14% con racha de hat-tricks y tendencia ascendente', async () => {
+  it('debe aplicar +14% con racha de buenas actuaciones y tendencia ascendente', async () => {
     const mockEM = crearMockEM([
       { jornadaId: 4, puntaje: 16 },
       { jornadaId: 3, puntaje: 15 },
