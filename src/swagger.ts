@@ -2,6 +2,11 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { Express } from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -21,7 +26,7 @@ const options: swaggerJsdoc.Options = {
         cookieAuth: {
           type: 'apiKey',
           in: 'cookie',
-          name: 'token', // Cambia si tu cookie tiene otro nombre
+          name: 'token', 
         },
         // Agrego bearerAuth por si también admites Authorization: Bearer <JWT>
         bearerAuth: {
@@ -349,7 +354,7 @@ const options: swaggerJsdoc.Options = {
   },
   // YAML de paths
   apis: [
-    './src/swagger/paths/*.yaml',
+    path.join(__dirname, 'swagger', 'paths', '*.yaml'),
   ],
 };
 

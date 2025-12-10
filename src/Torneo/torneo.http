@@ -342,7 +342,7 @@ Content-Type: application/json
 }
 ###########################################
 ### Iniciar torneo como creador (exitoso)
-POST http://localhost:3000/api/torneos/iniciar/5
+POST http://localhost:3000/api/torneos/iniciar/14
 Content-Type: application/json
 
 

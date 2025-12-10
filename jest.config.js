@@ -12,12 +12,7 @@ export default {
       'ts-jest',
       {
         useESM: true,
-        tsconfig: {
-          module: 'ESNext',
-          moduleResolution: 'node',
-          esModuleInterop: true,
-          allowSyntheticDefaultImports: true,
-        },
+        tsconfig: './tsconfig.json',
       },
     ],
   },
@@ -29,5 +24,5 @@ export default {
     '!src/app.ts',
     '!src/swagger.ts',
   ],
-  testTimeout: 30000, // 30 segundos para tests de integración
+  testTimeout: 30000,
 };

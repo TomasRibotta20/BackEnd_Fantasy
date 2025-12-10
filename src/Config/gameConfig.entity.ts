@@ -19,6 +19,9 @@ export class GameConfig extends BaseEntity {
   @Property({ default: 2 })
   ratio_blindaje_clausula: number = 2
 
+  @Property({ default: 15 })
+  max_jugadores_por_equipo: number = 15
+  
   @Property()
   updatedAt: Date = new Date()
 }

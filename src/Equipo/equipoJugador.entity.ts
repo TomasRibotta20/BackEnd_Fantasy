@@ -22,14 +22,25 @@ export class EquipoJugador extends BaseEntity {
   @Property({ default: 0 })
   valor_clausula: number = 0;
 
+  @Property({ persist: false })
+  valor_clausula_efectiva?: number;
+
+  @Property({ persist: false })
+  dias_proteccion_restantes?: number;
+
+  @Property({ persist: false })
+  esta_protegido?: boolean;
+
+  constructor() {
+    super();
+  }
+
   /**
    * Calcula la cláusula efectiva del jugador
-   * Si no hay blindaje (valor_clausula = 0), retorna el precio actual
-   * Si hay blindaje, retorna el máximo entre el valor fijado y el precio actual
    */
   getValorClausulaEfectiva(): number {
     const jugador = this.jugador as any;
-    const precioMercado = jugador.precio_actual || 0;
+    const precioMercado = jugador?.precio_actual || 0;
     
     if (this.valor_clausula === 0) {
       return precioMercado;
@@ -37,6 +48,7 @@ export class EquipoJugador extends BaseEntity {
     
     return Math.max(this.valor_clausula, precioMercado);
   }
+
 
   /**
    * Calcula los días de protección restantes
