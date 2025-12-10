@@ -1,5 +1,5 @@
 import Router from 'express';
-import { requireAuth } from '../Auth/auth.requires.js'; 
+import { requireAdmin, requireAuth } from '../Auth/auth.requires.js'; 
 import {
     findOne,
     findAll,
@@ -13,10 +13,10 @@ import { createPlayerSchema, updatePlayerSchema, findAllPlayersQuerySchema, idPl
 
 export const playerRouter = Router();
 playerRouter.get('/', requireAuth, getPlayers);
-playerRouter.get('/', validateQuery(findAllPlayersQuerySchema), findAll);
-playerRouter.get('/:id', validateParams(idPlayerParamsSchema), findOne);
-playerRouter.post('/', validate(createPlayerSchema), add);
-playerRouter.put('/:id', validateParams(idPlayerParamsSchema), validate(updatePlayerSchema), update);
-playerRouter.patch('/:id', validateParams(idPlayerParamsSchema), validate(updatePlayerSchema), update);
-playerRouter.delete('/:id', validateParams(idPlayerParamsSchema), remove);
+playerRouter.get('/', requireAuth, validateQuery(findAllPlayersQuerySchema), findAll);
+playerRouter.get('/:id', requireAuth, validateParams(idPlayerParamsSchema), findOne);
+playerRouter.post('/', requireAdmin, validate(createPlayerSchema), add);
+playerRouter.put('/:id', requireAdmin, validateParams(idPlayerParamsSchema), validate(updatePlayerSchema), update);
+playerRouter.patch('/:id', requireAdmin, validateParams(idPlayerParamsSchema), validate(updatePlayerSchema), update);
+playerRouter.delete('/:id', requireAdmin, validateParams(idPlayerParamsSchema), remove);
 

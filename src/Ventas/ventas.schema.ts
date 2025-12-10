@@ -7,7 +7,7 @@ export const crearOfertaSchema = z.object({
 });
 
 export const ofertaIdParamSchema = z.object({
-  ofertaId: z.string().regex(/^\d+$/, 'El ID de la oferta debe ser numérico').transform(Number)
+  ofertaId: z.string().regex(/^\d+$/, 'El ID de la oferta debe ser numérico')
 });
 
 export const rechazarOfertaSchema = z.object({
@@ -16,10 +16,11 @@ export const rechazarOfertaSchema = z.object({
 
 export const misOfertasQuerySchema = z.object({
   estado: z.enum(['PENDIENTE', 'ACEPTADA', 'RECHAZADA', 'VENCIDA', 'CANCELADA']).optional(),
-  limit: z.string().regex(/^\d+$/).transform(Number).optional(),
-  offset: z.string().regex(/^\d+$/).transform(Number).optional()
+  limit: z.string().regex(/^\d+$/).optional(),
+  offset: z.string().regex(/^\d+$/).optional()
 });
 
 export type CrearOfertaInput = z.infer<typeof crearOfertaSchema>;
 export type RechazarOfertaInput = z.infer<typeof rechazarOfertaSchema>;
 export type MisOfertasQuery = z.infer<typeof misOfertasQuerySchema>;
+export type OfertaIdParams = z.infer<typeof ofertaIdParamSchema>;

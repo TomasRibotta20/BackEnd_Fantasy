@@ -38,6 +38,22 @@ async function generarRecompensasFinJornada(em: EntityManager, jornadaId: number
 async function procesarTorneo(em: EntityManager, torneo: Torneo, jornada: Jornada) {
   const qb = em.createQueryBuilder(EquipoJornada, 'ej');
 
+/*
+set @miJornada := 1;
+set @miTorneo := 21;
+
+select equipj.id, equipj.puntaje_total, e.nombre, tu.id torneo_id, coalesce(sum(ej.goles), 0) goles_total, coalesce(sum(ej.asistencias), 0) asistencias_total
+from equipo_jornada equipj
+inner join equipos e on e.id = equipj.equipo_id
+inner join torneo_usuario tu on tu.equipo_id = e.id
+left join  equipo_jornada_jugadores ejj on ejj.equipo_jornada_id = equipj.id
+left join estadistica_jugador ej on ej.jugador_id = ejj.player_id
+inner join partidos p on p.id = ej.partido_id
+where tu.torneo_id = @miTorneo and equipj.jornada_id = @miJornada
+group by equipj.id, tu.id, e.nombre, equipj.puntaje_total
+order by equipj.puntaje_total desc, goles_total desc, asistencias_total desc;
+*/
+
 const resultados = await qb
     .select([
       'ej.id',

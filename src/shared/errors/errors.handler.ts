@@ -30,7 +30,7 @@ export const globalErrorHandler = (error: unknown, req: Request, res: Response, 
   }
   
   // Errores no controlados
-  console.error('❌ Error inesperado:', error);
+  console.error('Error inesperado:', error);
   return res.status(500).json({
     success: false,
     message: 'Error interno del servidor',

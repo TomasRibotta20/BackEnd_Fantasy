@@ -2,7 +2,6 @@ import { raw, EntityManager } from '@mikro-orm/core';
 import { orm } from '../shared/db/orm.js';
 import { Player } from '../Player/player.entity.js';
 import { Equipo } from './equipo.entity.js';
-import { Users } from '../User/user.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 import { EquipoJugador } from './equipoJugador.entity.js';
 import { TorneoUsuario } from '../Torneo/torneoUsuario.entity.js';
@@ -45,12 +44,10 @@ async function seleccionarJugadoresPorPrecio(
   };
 
   if (torneoId) {
-    // Obtener todos los equipos del torneo
     const equiposDelTorneo = await em.find(Equipo, {
       torneoUsuario: { torneo: torneoId }
     }, { populate: ['jugadores'] });
 
-    // Extraer todos los IDs de jugadores ya asignados
     const idsAsignados: number[] = [];
     for (const equipo of equiposDelTorneo) {
       const jugadoresEquipo = equipo.jugadores.getItems();
@@ -61,7 +58,6 @@ async function seleccionarJugadoresPorPrecio(
         }
       }
     }
-
     if (idsAsignados.length > 0) {
       whereConditions.id = { $nin: [...excluirIds, ...idsAsignados] };
     }
@@ -82,7 +78,6 @@ async function seleccionarJugadoresPorPrecio(
       `No hay suficientes jugadores en ${posicion} con precio entre ${precioMin} y ${precioMax}`
     );
   }
-
   return jugadores.slice(0, cantidad);
 }
 
@@ -99,7 +94,6 @@ export function crearEquipo(nombre: string, inscripcion: TorneoUsuario): Equipo 
   inscripcion.equipo = equipo; 
   return equipo;
 }
-////////////////////////////////
 
 /**
  * Pobla un equipo con jugadores considerando presupuesto y precios
@@ -111,7 +105,6 @@ export async function poblarEquipoAleatoriamente(
   const equipo = await transactionalEm.findOne(Equipo, { id: equipoId }, { 
     populate: ['torneoUsuario', 'torneoUsuario.torneo'] 
   });
-  
   if (!equipo) {
     throw ErrorFactory.notFound(`Equipo ${equipoId} no encontrado al intentar poblarlo.`);
   }
@@ -119,12 +112,8 @@ export async function poblarEquipoAleatoriamente(
   const torneoId = equipo.torneoUsuario?.torneo?.id;
   const idsExcluir: number[] = [];
   let costoTotal = 0;
-
   console.log(`Iniciando poblado de equipo ${equipo.nombre} (Torneo ID: ${torneoId})`);
-
   const jugadoresSeleccionados: Array<{ jugador: Player; esTitular: boolean }> = [];
-
-  // PASO 1: Seleccionar jugador estrella (>8M)
   console.log('Paso 1: Seleccionando jugador estrella...');
   
   const probabilidadPosicion = Math.random();
@@ -156,8 +145,6 @@ export async function poblarEquipoAleatoriamente(
   idsExcluir.push(estrella.id!);
 
   console.log(`Estrella seleccionada: ${estrella.name} (${posicionEstrella}) - $${estrella.precio_actual?.toLocaleString()}`);
-
-  // PASO 2: Completar titulares de la posición de la estrella
   console.log('Paso 2: Completando posicion de la estrella...');
   
   const cantidadPorPosicion: Record<string, number> = {
@@ -187,9 +174,7 @@ export async function poblarEquipoAleatoriamente(
     }
   }
 
-  // PASO 3: Completar resto de titulares
   console.log('Paso 3: Completando resto de titulares...');
-
   const posiciones = ['Goalkeeper', 'Defender', 'Midfielder', 'Attacker'];
   
   for (const pos of posiciones) {
@@ -226,9 +211,7 @@ export async function poblarEquipoAleatoriamente(
     }
   }
 
-  // PASO 4: Seleccionar suplentes (baratos)
   console.log('Paso 4: Seleccionando suplentes...');
-
   for (const pos of posiciones) {
     const suplente = await seleccionarJugadoresPorPrecio(
       transactionalEm,
@@ -247,16 +230,13 @@ export async function poblarEquipoAleatoriamente(
 
   console.log(`Costo total antes de ajustes: $${costoTotal.toLocaleString()}`);
 
-  // PASO 5: Ajustar presupuesto si es necesario
   let intentos = 0;
   const MAX_INTENTOS = 10;
 
   while ((costoTotal > PRESUPUESTO_MAXIMO_EQUIPO || costoTotal < PRESUPUESTO_MINIMO_EQUIPO) && intentos < MAX_INTENTOS) {
     intentos++;
-    
     if (costoTotal > PRESUPUESTO_MAXIMO_EQUIPO) {
       console.log(`Ajuste ${intentos}: Costo muy alto, reemplazando jugador caro...`);
-      
       const jugadoresTitulares = jugadoresSeleccionados
         .filter(j => j.esTitular && j.jugador.id !== estrella.id)
         .sort((a, b) => (b.jugador.precio_actual || 0) - (a.jugador.precio_actual || 0));
@@ -339,10 +319,8 @@ export async function poblarEquipoAleatoriamente(
       }
     }
   }
-
   console.log(`Costo total final: $${costoTotal.toLocaleString()}`);
 
-  // PASO 6: Persistir jugadores en el equipo
   for (const { jugador, esTitular } of jugadoresSeleccionados) {
     const equipoJugador = transactionalEm.create(EquipoJugador, {
       equipo: equipo,
@@ -353,11 +331,8 @@ export async function poblarEquipoAleatoriamente(
     });
     transactionalEm.persist(equipoJugador);
   }
-
-  // PASO 7: Actualizar presupuesto del equipo
   const presupuestoRestante = equipo.presupuesto - costoTotal;
   equipo.presupuesto = presupuestoRestante;
-
   console.log(`Presupuesto restante: $${presupuestoRestante.toLocaleString()}`);
   console.log(`Equipo ${equipo.nombre} poblado exitosamente con ${jugadoresSeleccionados.length} jugadores`);
 }
@@ -375,11 +350,9 @@ export async function getEquipoById(equipoId: number) {
     { id: equipoId },
     { populate: ['torneoUsuario', 'torneoUsuario.usuario','jugadores.jugador.position', 'jugadores.jugador.club'] }
   );
-
   if (!equipo) {
     throw ErrorFactory.notFound('El equipo no existe');
   }
-
   return equipo;
 }
 /**
@@ -399,13 +372,11 @@ export async function intercambiarJugador(
   jugadorEntraId: number
 ) {
   return await orm.em.transactional(async (em) => {
-    // 1. BUSCAR EL EQUIPO POR SU ID
     const equipo = await em.findOne(Equipo, { id: equipoId });
     if (!equipo) {
       throw ErrorFactory.notFound('El equipo no existe');
     }
 
-    // 2. Validar que el jugador que SALE está en el equipo.
     const relacionSale = await em.findOne(EquipoJugador, {
       equipo: equipo,
       jugador: jugadorSaleId,
@@ -414,7 +385,6 @@ export async function intercambiarJugador(
       throw ErrorFactory.badRequest('El jugador que intentas dar de baja no está en tu equipo');
     }
 
-    // 3. Validar que el jugador que ENTRA no esté ya en el equipo.
     const relacionEntraExistente = await em.findOne(EquipoJugador, {
       equipo: equipo,
       jugador: jugadorEntraId,
@@ -423,41 +393,33 @@ export async function intercambiarJugador(
       throw ErrorFactory.duplicate('El jugador que intentas fichar ya está en tu equipo');
     }
 
-    // 4. Cargar las entidades COMPLETAS de los jugadores con sus posiciones.
-    // Esta es la forma más segura de garantizar que tenemos todos los datos.
     const jugadorSale = await em.findOne(Player, { id: jugadorSaleId }, { populate: ['position'] });
     const jugadorEntra = await em.findOne(Player, { id: jugadorEntraId }, { populate: ['position'] });
-
-    // 5. Validar existencia de los jugadores y sus posiciones.
     if (!jugadorSale || !jugadorEntra) {
       throw ErrorFactory.notFound('Uno de los jugadores involucrados en el intercambio no fue encontrado.');
     }
     const posicionSale = jugadorSale.position;
     const posicionEntra = jugadorEntra.position;
-
     if (!posicionSale || !posicionEntra) {
       throw ErrorFactory.badRequest('Ambos jugadores deben tener una posición definida para ser intercambiados.');
     }
-
-    // 6. Validar que las posiciones coincidan.
     if (posicionSale.id !== posicionEntra.id) {
       throw ErrorFactory.badRequest(
         `No se puede intercambiar. El jugador que sale es ${posicionSale.description} y el que entra es ${posicionEntra.description}.`
       );
     }
 
-    // 7. Ejecutar el intercambio.
     const eraTitular = relacionSale.es_titular;
-    em.remove(relacionSale); // Elimina la relación antigua.
+    em.remove(relacionSale);
 
     const nuevaRelacion = em.create(EquipoJugador, {
       equipo: equipo,
-      jugador: jugadorEntra, // Asigna la entidad completa del jugador que entra.
+      jugador: jugadorEntra,
       es_titular: eraTitular,
        fecha_incorporacion: new Date(), 
       valor_clausula: 0
     });
-    em.persist(nuevaRelacion); // Persiste la nueva relación.
+    em.persist(nuevaRelacion);
 
     return { message: 'Intercambio realizado con éxito' };
   });
@@ -479,13 +441,10 @@ export async function cambiarAlineacion(
   jugadorSuplenteId: number
 ) {
   return await orm.em.transactional(async (em) => {
-    // 1. Buscar el equipo del usuario.
     const equipo = await em.findOne(Equipo, { id: equipoId });
     if (!equipo) {
       throw ErrorFactory.notFound('El usuario no tiene un equipo');
     }
-
-    // 2. Buscar las relaciones de AMBOS jugadores con el equipo.
     const relacionTitular = await em.findOne(EquipoJugador, {
       equipo: equipo,
       jugador: jugadorTitularId,
@@ -494,13 +453,9 @@ export async function cambiarAlineacion(
       equipo: equipo,
       jugador: jugadorSuplenteId,
     });
-
-    // 3. Validar que ambos jugadores pertenezcan al equipo.
     if (!relacionTitular || !relacionSuplente) {
       throw ErrorFactory.badRequest('Ambos jugadores deben pertenecer a tu equipo para ser intercambiados.');
     }
-
-    // 4. Validar que sus estados de titularidad sean los correctos.
     if (!relacionTitular.es_titular) {
       throw ErrorFactory.badRequest(`El jugador con ID ${jugadorTitularId} no es titular.`);
     }
@@ -508,12 +463,9 @@ export async function cambiarAlineacion(
       throw ErrorFactory.badRequest(`El jugador con ID ${jugadorSuplenteId} no es suplente.`);
     }
 
-    // 5. Cargar las entidades COMPLETAS de los jugadores con sus posiciones.
-    //    (Aplicando la misma lógica que en 'intercambiarJugador')
     const jugadorTitular = await em.findOne(Player, { id: jugadorTitularId }, { populate: ['position'] });
     const jugadorSuplente = await em.findOne(Player, { id: jugadorSuplenteId }, { populate: ['position'] });
 
-    // 6. Validar existencia de jugadores y posiciones.
     if (!jugadorTitular || !jugadorSuplente) {
       throw ErrorFactory.notFound('Uno de los jugadores no fue encontrado.');
     }
@@ -524,14 +476,11 @@ export async function cambiarAlineacion(
       throw ErrorFactory.badRequest('Ambos jugadores deben tener una posición definida.');
     }
 
-    // 7. Validar que las posiciones coincidan.
     if (posicionTitular.id !== posicionSuplente.id) {
       throw ErrorFactory.badRequest(
         `No se puede cambiar la alineación. El jugador titular es ${posicionTitular.description} y el suplente es ${posicionSuplente.description}.`
       );
     }
-
-    // 8. Ejecutar el intercambio de estado.
     relacionTitular.es_titular = false;
     relacionSuplente.es_titular = true;
 
@@ -550,7 +499,6 @@ export async function cambiarAlineacion(
  */
 export async function cambiarEstadoTitularidad(equipoId: number, jugadorId: number) {
   return await orm.em.transactional(async (em) => {
-    // 1. Buscar el equipo con todas sus relaciones
     const equipo = await em.findOne(
       Equipo, 
       { id: equipoId },
@@ -561,7 +509,6 @@ export async function cambiarEstadoTitularidad(equipoId: number, jugadorId: numb
       throw ErrorFactory.notFound('El equipo no existe');
     }
 
-    // 2. Buscar la relación del jugador con el equipo
     const relacionJugador = await em.findOne(
       EquipoJugador,
       { equipo: equipo, jugador: jugadorId },
@@ -581,18 +528,13 @@ export async function cambiarEstadoTitularidad(equipoId: number, jugadorId: numb
 
     const posicionDescripcion = posicion.description;
 
-    // 3. Validar que la posición esté en la formación
     if (!(posicionDescripcion in LIMITES_FORMACION)) {
       throw ErrorFactory.badRequest(`Posición inválida: ${posicionDescripcion}`);
     }
 
     const estadoActual = relacionJugador.es_titular;
-
-    // CASO 1: De titular a suplente (siempre permitido)
     if (estadoActual) {
       relacionJugador.es_titular = false;
-      
-      await em.flush();
 
       return {
         message: 'Jugador movido a suplente con éxito',
@@ -606,8 +548,6 @@ export async function cambiarEstadoTitularidad(equipoId: number, jugadorId: numb
       };
     }
 
-    // CASO 2: De suplente a titular (validar límites)
-    // Contar cuántos titulares hay actualmente en esa posición
     const jugadoresEquipo = equipo.jugadores as any as EquipoJugador[];
     const titularesEnPosicion = jugadoresEquipo.filter(ej => {
       if (!ej.es_titular) return false;
@@ -618,7 +558,6 @@ export async function cambiarEstadoTitularidad(equipoId: number, jugadorId: numb
     const cantidadTitularesActual = titularesEnPosicion.length;
     const limiteFormacion = LIMITES_FORMACION[posicionDescripcion as keyof typeof LIMITES_FORMACION];
 
-    // Validar que no se supere el límite de la formación
     if (cantidadTitularesActual >= limiteFormacion) {
       throw ErrorFactory.badRequest(
         `No puedes agregar más titulares en la posición ${posicionDescripcion}. ` +
@@ -629,8 +568,6 @@ export async function cambiarEstadoTitularidad(equipoId: number, jugadorId: numb
     }
 
     relacionJugador.es_titular = true;
-
-    await em.flush();
 
     return {
       message: 'Jugador promovido a titular con éxito',
@@ -657,7 +594,6 @@ export async function cambiarEstadoTitularidad(equipoId: number, jugadorId: numb
  */
 export async function venderJugador(equipoId: number, jugadorId: number, userId: number) {
   return await orm.em.transactional(async (em) => {
-    // 1. Buscar la relación equipo-jugador
     const equipoJugador = await em.findOne(
       EquipoJugador,
       { equipo: equipoId, jugador: jugadorId },
@@ -671,13 +607,10 @@ export async function venderJugador(equipoId: number, jugadorId: number, userId:
     const equipo = equipoJugador.equipo as any as Equipo;
     const jugador = equipoJugador.jugador as any as Player;
 
-    // 2. Verificar que el usuario es dueño del equipo
     const ownerId = equipo.torneoUsuario.usuario.id;
     if (ownerId !== userId) {
       throw ErrorFactory.forbidden('No tienes permisos para vender jugadores de este equipo');
     }
-
-    // 3. Calcular devolución (70% del precio actual)
     const precioActual = jugador.precio_actual || 0;
     
     if (precioActual <= 0) {
@@ -685,11 +618,8 @@ export async function venderJugador(equipoId: number, jugadorId: number, userId:
     }
 
     const devolucion = Math.floor(precioActual * PORCENTAJE_VENTA_INSTANTANEA);
-
-    // 4. Actualizar presupuesto del equipo
     equipo.presupuesto += devolucion;
 
-    // 5. Crear transacción
     const transaccion = em.create(Transaccion, {
       equipo,
       tipo: TipoTransaccion.VENTA_INSTANTANEA,
@@ -698,14 +628,8 @@ export async function venderJugador(equipoId: number, jugadorId: number, userId:
       fecha: new Date(),
       descripcion: `Venta instantánea de ${jugador.name} (${PORCENTAJE_VENTA_INSTANTANEA * 100}% de $${precioActual.toLocaleString()})`
     });
-
     em.persist(transaccion);
-
-    // 6. Eliminar al jugador del equipo
     em.remove(equipoJugador);
-
-    await em.flush();
-
     return {
       jugador: {
         id: jugador.id,

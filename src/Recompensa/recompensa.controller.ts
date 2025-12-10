@@ -3,7 +3,7 @@ import { orm } from '../shared/db/orm.js';
 import { LockMode } from '@mikro-orm/core';
 import { Recompensa } from './recompensa.entity.js';
 import { Premio, Tier } from '../Premio/premio.entity.js';
-import { ErrorFactory } from '../shared/errors/errors.factory.js';
+import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
 import { Saldo } from '../Premio/saldo.entity.js';
 import { Ruleta } from '../Premio/ruleta.entity.js';
 import { procesarSaldo, procesarRuleta, procesarPlayerPick } from './recompensa.service.js';
@@ -47,14 +47,19 @@ async function getPendientes(req: Request, res: Response, next: NextFunction) {
       hayPendientes: pendientes.length > 0,
       cantidad: pendientes.length,
       data: pendientes.map(p => ({
-        id: p.id,
+        id_recompensa: p.id,
+        id_torneo: p.torneoUsuario.torneo.id,
         torneo: p.torneoUsuario.torneo.nombre,
         jornada: `Fecha ${p.jornada.nombre}`,
         posicion: p.posicionJornada
       }))
     });
   } catch (error: any) {
-    next(ErrorFactory.internal("Error al obtener recompensas pendientes"));
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal("Error al obtener recompensas pendientes"));
+    }
   }
 }
 
@@ -112,7 +117,11 @@ async function getOpcionesRecompensa(req: Request, res: Response, next: NextFunc
       opciones: premiosDisponibles
     });
   } catch (error: any) {
-    next(error);
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal("Error al obtener opciones de recompensa"));
+    }
   }
 }
 
@@ -155,7 +164,11 @@ async function elegirPremio(req: Request, res: Response, next: NextFunction) {
     }
     return res.status(200).json(resultado);
   } catch (error: any) {
-    next(error);
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal("Error al elegir premio"));
+    }
   }
 }
 
@@ -248,7 +261,11 @@ async function confirmarPick(req: Request, res: Response, next: NextFunction) {
       mensaje: `¡Has fichado a ${resultadoTransaccion.jugador!.name}!`
   });
   } catch (error) {
-    next(error);
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal("Error al confirmar pick"));
+    }
   }
 }
 

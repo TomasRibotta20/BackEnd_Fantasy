@@ -21,7 +21,6 @@ export async function crearOferta(
 ) {
   const entityManager = em || orm.em.fork();
 
-  // 1. Obtener el EquipoJugador con todas las relaciones necesarias
   const equipoJugador = await entityManager.findOne(
     EquipoJugador,
     { id: equipoJugadorId },
@@ -43,7 +42,6 @@ export async function crearOferta(
 
   const equipoVendedor = equipoJugador.equipo as any;
 
-  // 2. Obtener el equipo del oferente (usuario logueado)
   const equipoOferente = await entityManager.findOne(
     Equipo,
     {
@@ -58,20 +56,15 @@ export async function crearOferta(
   if (!equipoOferente) {
     throw ErrorFactory.notFound('No tienes un equipo en este torneo');
   }
-
-  // 3. Validar que no sea su propio jugador
   if (equipoOferente.id === equipoVendedor.id) {
     throw ErrorFactory.validationAppError('No puedes hacer una oferta por tu propio jugador');
   }
-
-  // 4. Validar presupuesto disponible del oferente
   if (equipoOferente.presupuestoDisponible < montoOfertado) {
     throw ErrorFactory.validationAppError(
       `Presupuesto insuficiente. Disponible: $${equipoOferente.presupuestoDisponible.toLocaleString()}, Oferta: $${montoOfertado.toLocaleString()}`
     );
   }
 
-  // 5. Validar monto mínimo (precio actual del jugador)
   const jugador = equipoJugador.jugador as any;
   if (montoOfertado < (jugador.precio_actual || 0)) {
     throw ErrorFactory.validationAppError(
@@ -79,7 +72,6 @@ export async function crearOferta(
     );
   }
 
-  // 6. Buscar si ya existe una oferta PENDIENTE del mismo oferente para este jugador
   const ofertaExistente = await entityManager.findOne(OfertaVenta, {
     oferente: equipoOferente.id,
     equipoJugador: equipoJugadorId,
@@ -87,11 +79,8 @@ export async function crearOferta(
   });
 
   if (ofertaExistente) {
-    // Actualizar oferta existente
-    const diferenciaMonto = montoOfertado - ofertaExistente.monto_ofertado;
-
+  const diferenciaMonto = montoOfertado - ofertaExistente.monto_ofertado;
     if (diferenciaMonto > 0) {
-      // Necesita más presupuesto
       if (equipoOferente.presupuestoDisponible < diferenciaMonto) {
         throw ErrorFactory.validationAppError(
           `Presupuesto insuficiente para aumentar la oferta. Disponible: $${equipoOferente.presupuestoDisponible.toLocaleString()}`
@@ -99,8 +88,7 @@ export async function crearOferta(
       }
       equipoOferente.presupuesto_bloqueado += diferenciaMonto;
     } else if (diferenciaMonto < 0) {
-      // Libera presupuesto
-      equipoOferente.presupuesto_bloqueado += diferenciaMonto; // Resta porque es negativo
+      equipoOferente.presupuesto_bloqueado += diferenciaMonto;
     }
 
     ofertaExistente.monto_ofertado = montoOfertado;
@@ -112,7 +100,6 @@ export async function crearOferta(
 
     await entityManager.flush();
 
-    // Enviar email al vendedor
     await sendOfertaRecibidaEmail(
       equipoVendedor.torneoUsuario.usuario.email,
       equipoVendedor.torneoUsuario.usuario.username,
@@ -136,9 +123,7 @@ export async function crearOferta(
     };
   }
 
-  // 7. Crear nueva oferta
   equipoOferente.presupuesto_bloqueado += montoOfertado;
-
   const nuevaOferta = entityManager.create(OfertaVenta, {
     oferente: equipoOferente,
     vendedor: equipoVendedor,
@@ -153,7 +138,6 @@ export async function crearOferta(
   entityManager.persist(nuevaOferta);
   await entityManager.flush();
 
-  // Enviar email al vendedor
   await sendOfertaRecibidaEmail(
     equipoVendedor.torneoUsuario.usuario.email,
     equipoVendedor.torneoUsuario.usuario.username,
@@ -186,7 +170,6 @@ export async function aceptarOferta(
 ) {
   const entityManager = em || orm.em.fork();
 
-  // 1. Obtener la oferta con todas las relaciones
   const oferta = await entityManager.findOne(
     OfertaVenta,
     { id: ofertaId },
@@ -212,23 +195,16 @@ export async function aceptarOferta(
   if (!oferta) {
     throw ErrorFactory.notFound('Oferta no encontrada');
   }
-
-  // 2. Validar que el usuario sea el vendedor
   if (oferta.vendedor.torneoUsuario.usuario.id !== userId) {
     throw ErrorFactory.forbidden('No tienes permiso para aceptar esta oferta');
   }
-
-  // 3. Validar estado de la oferta
   if (oferta.estado !== EstadoOferta.PENDIENTE) {
     throw ErrorFactory.validationAppError(`Esta oferta ya fue ${oferta.estado.toLowerCase()}`);
   }
-
-  // 4. Validar que no esté vencida
   if (new Date() > oferta.fecha_vencimiento) {
     throw ErrorFactory.validationAppError('Esta oferta ya venció');
   }
 
-  // 5. Validar límites del equipo oferente
   const jugador = oferta.equipoJugador.jugador as any;
   const posicionJugador = jugador.position?.description;
 
@@ -246,23 +222,15 @@ export async function aceptarOferta(
     );
   }
 
-  // 6. Re-validar presupuesto del oferente (por si cambió algo)
   if (oferta.oferente.presupuestoDisponible < oferta.monto_ofertado) {
     throw ErrorFactory.validationAppError('El comprador ya no tiene presupuesto suficiente');
   }
-
-  // 7. Realizar la transferencia
-  // Desbloquear y restar dinero del oferente
   oferta.oferente.presupuesto_bloqueado -= oferta.monto_ofertado;
   oferta.oferente.presupuesto -= oferta.monto_ofertado;
-
-  // Sumar dinero al vendedor
   oferta.vendedor.presupuesto += oferta.monto_ofertado;
-
-  // Transferir el jugador
   oferta.equipoJugador.equipo = oferta.oferente as any;
   oferta.equipoJugador.es_titular = false;
-  // 8. Crear transacciones
+
   const transaccionCompra = entityManager.create(Transaccion, {
     equipo: oferta.oferente,
     tipo: TipoTransaccion.COMPRA_JUGADOR,
@@ -284,15 +252,12 @@ export async function aceptarOferta(
   entityManager.persist(transaccionCompra);
   entityManager.persist(transaccionVenta);
 
-  // 9. Actualizar estado de la oferta
   oferta.estado = EstadoOferta.ACEPTADA;
 
   await entityManager.flush();
 
-  // 10. Rechazar automáticamente otras ofertas pendientes del mismo jugador
   await rechazarOfertasAutomaticas(oferta.equipoJugador.id!, ofertaId, entityManager);
 
-  // 11. Enviar email al oferente
   await sendOfertaAceptadaEmail(
     oferta.oferente.torneoUsuario.usuario.email,
     oferta.oferente.torneoUsuario.usuario.username,
@@ -350,29 +315,20 @@ export async function rechazarOferta(
   if (!oferta) {
     throw ErrorFactory.notFound('Oferta no encontrada');
   }
-
-  // Validar que el usuario sea el vendedor
   if (oferta.vendedor.torneoUsuario.usuario.id !== userId) {
     throw ErrorFactory.forbidden('No tienes permiso para rechazar esta oferta');
   }
-
-  // Validar estado
   if (oferta.estado !== EstadoOferta.PENDIENTE) {
     throw ErrorFactory.validationAppError(`Esta oferta ya fue ${oferta.estado.toLowerCase()}`);
   }
 
-  // Desbloquear dinero del oferente
-  oferta.oferente.presupuesto_bloqueado -= oferta.monto_ofertado;
 
-  // Actualizar estado y mensaje
+  oferta.oferente.presupuesto_bloqueado -= oferta.monto_ofertado;
   oferta.estado = EstadoOferta.RECHAZADA;
   if (mensajeRespuesta) {
     oferta.mensaje_respuesta = mensajeRespuesta;
   }
-
   await entityManager.flush();
-
-  // Enviar email al oferente
   const jugador = oferta.equipoJugador.jugador as any;
   await sendOfertaRechazadaEmail(
     oferta.oferente.torneoUsuario.usuario.email,
@@ -420,21 +376,14 @@ export async function cancelarOferta(
   if (!oferta) {
     throw ErrorFactory.notFound('Oferta no encontrada');
   }
-
-  // Validar que el usuario sea el oferente
   if (oferta.oferente.torneoUsuario.usuario.id !== userId) {
     throw ErrorFactory.forbidden('No tienes permiso para cancelar esta oferta');
   }
-
-  // Validar estado
   if (oferta.estado !== EstadoOferta.PENDIENTE) {
     throw ErrorFactory.validationAppError(`Esta oferta ya fue ${oferta.estado.toLowerCase()}`);
   }
 
-  // Desbloquear dinero
   oferta.oferente.presupuesto_bloqueado -= oferta.monto_ofertado;
-
-  // Actualizar estado
   oferta.estado = EstadoOferta.CANCELADA;
 
   await entityManager.flush();
@@ -584,7 +533,6 @@ export async function obtenerDetalleOferta(
     throw ErrorFactory.notFound('Oferta no encontrada');
   }
 
-  // Validar que el usuario sea parte de la oferta
   const esOferente = oferta.oferente.torneoUsuario.usuario.id === userId;
   const esVendedor = oferta.vendedor.torneoUsuario.usuario.id === userId;
 
@@ -627,14 +575,11 @@ async function rechazarOfertasAutomaticas(
   );
 
   for (const oferta of ofertasPendientes) {
-    // Desbloquear dinero
+
     oferta.oferente.presupuesto_bloqueado -= oferta.monto_ofertado;
-    
-    // Marcar como rechazada
     oferta.estado = EstadoOferta.RECHAZADA;
     oferta.mensaje_respuesta = 'El jugador fue vendido a otro equipo';
 
-    // Enviar email
     const jugador = oferta.equipoJugador.jugador as any;
     await sendOfertaRechazadaEmail(
       oferta.oferente.torneoUsuario.usuario.email,
@@ -677,13 +622,10 @@ export async function procesarOfertasVencidas(em?: EntityManager) {
   let contadorVencidas = 0;
 
   for (const oferta of ofertasVencidas) {
-    // Desbloquear dinero
+
     oferta.oferente.presupuesto_bloqueado -= oferta.monto_ofertado;
-    
-    // Marcar como vencida
     oferta.estado = EstadoOferta.VENCIDA;
 
-    // Enviar email
     const jugador = oferta.equipoJugador.jugador as any;
     await sendOfertaVencidaEmail(
       oferta.oferente.torneoUsuario.usuario.email,
@@ -710,7 +652,6 @@ function formatearOferta(oferta: OfertaVenta, tipo: 'enviada' | 'recibida') {
   const tiempoRestante = oferta.fecha_vencimiento.getTime() - ahora.getTime();
   const horasRestantes = Math.max(0, Math.floor(tiempoRestante / (1000 * 60 * 60)));
 
-  // Obtener el torneo
   const torneo = tipo === 'enviada' 
     ? oferta.vendedor.torneoUsuario.torneo
     : oferta.oferente.torneoUsuario.torneo;

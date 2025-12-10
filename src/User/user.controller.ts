@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from 'express';
 import { Users } from './user.entity.js';
 import { orm } from '../shared/db/orm.js';
 import bcrypt from 'bcrypt';
-import { ErrorFactory } from '../shared/errors/errors.factory.js';
+import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
 
 const em = orm.em;
 
@@ -14,22 +14,23 @@ const em = orm.em;
  * @returns Una respuesta HTTP 200 con un mensaje y los datos del usuario, o un error HTTP 500, 404 si falla.
  */
 async function getMyProfile(req: Request, res: Response, next: NextFunction) {
-  // El middleware requireAuth ya verificó que hay usuario autenticado
   const { user } = req.authUser;
   try {
-    // Obtener datos frescos de la BD (por si se actualizó el perfil)
     const userFromDb = await em.findOne(Users, { id: user!.userId });
     if (!userFromDb) {
-      return next(ErrorFactory.notFound('Usuario no encontrado'));
+      throw ErrorFactory.notFound('Usuario no encontrado');
     }
-    // No devolver la contraseña
     const { password: pwd, resetToken: reset, refreshToken: refresh, ...userWithoutPassword } = userFromDb;
-    return res.status(200).json({
+    res.status(200).json({
       message: 'Perfil obtenido exitosamente',
       data: userWithoutPassword,
     });
   } catch (error: any) {
-    return next(ErrorFactory.internal(`Error obteniendo perfil`));
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal(`Error obteniendo perfil`));
+    }
   }
 }
 /**
@@ -39,25 +40,26 @@ async function getMyProfile(req: Request, res: Response, next: NextFunction) {
  * @returns Una respuesta HTTP 200 con un mensaje y los datos del usuario actualizado, o un error HTTP 500, 404 si falla.
  */
 async function updateMyName(req: Request, res: Response, next: NextFunction) {
-  // Usar el ID del usuario autenticado, NO del body
   const userId = req.authUser.user!.userId;
   const { username } = req.body;
   try {
     const user = await em.findOne(Users, { id: userId });
     if (!user) {
-      return next(ErrorFactory.notFound('Usuario no encontrado'));
+      throw ErrorFactory.notFound('Usuario no encontrado');
     }
-    // Actualizar solo los campos proporcionados
-    user.username = username; //Ya validado por Zod
+    user.username = username;
     await em.flush();
-    // No devolver la contraseña
     const { password: pwd, resetToken: reset, refreshToken: refresh, ...userWithoutPassword } = user;
-    return res.status(200).json({
+    res.status(200).json({
       message: 'Perfil actualizado exitosamente',
       data: userWithoutPassword,
     });
   } catch (error: any) {
-    return next(ErrorFactory.internal(`Error actualizando perfil`));
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal(`Error actualizando perfil`));
+    }
   }
 }
 /**
@@ -107,7 +109,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
   try {
     const user = em.create(Users, req.body);
     await em.flush();
-    return res.status(201).json({ message: 'User created successfully', data: user });
+    res.status(201).json({ message: 'User created successfully', data: user });
   } catch (error: any) {
     if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
       return next(ErrorFactory.duplicate('Ya existe un usuario con ese correo electrónico'));
@@ -130,7 +132,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
     try {
       hashedPassword = await bcrypt.hash(password, 10);
     } catch (error: any) {
-      next(ErrorFactory.internal(`Error al hashear la contraseña`));
+      return next(ErrorFactory.internal(`Error al hashear la contraseña`));
     }
     req.body.password = hashedPassword;
   }

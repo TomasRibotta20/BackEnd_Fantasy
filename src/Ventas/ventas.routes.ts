@@ -1,31 +1,17 @@
 import { Router } from 'express';
-import { requireAuth } from '../Auth/auth.requires.js';
+import { requireAuth, requireAdmin } from '../Auth/auth.requires.js';
 import { verificarModificacionesHabilitadas as verificarModi } from '../shared/middleware/verificarModificaciones.middleware.js';
 import { crearOfertaSchema, ofertaIdParamSchema, rechazarOfertaSchema, misOfertasQuerySchema } from './ventas.schema.js';
 import { crearOfertaController, aceptarOfertaController, rechazarOfertaController, cancelarOfertaController, obtenerOfertasEnviadasController, obtenerOfertasRecibidasController, obtenerDetalleOfertaController, procesarOfertasVencidasController } from './ventas.controller.js';
+import { validate, validateParams, validateQuery } from '../shared/zod/validate.js';
 
 export const ventasRouter = Router();
 
-// Crear o actualizar oferta
-ventasRouter.post('/ofertar',requireAuth,crearOfertaController);
-
-// Obtener ofertas enviadas
-ventasRouter.get('/mis-ofertas-enviadas',requireAuth,obtenerOfertasEnviadasController);
-
-// Obtener ofertas recibidas
-ventasRouter.get('/mis-ofertas-recibidas',requireAuth,obtenerOfertasRecibidasController);
-
-// Obtener detalle de una oferta
-ventasRouter.get('/:ofertaId',requireAuth,obtenerDetalleOfertaController);
-
-// Aceptar oferta
-ventasRouter.post('/:ofertaId/aceptar',requireAuth,verificarModi,aceptarOfertaController);
-
-// Rechazar oferta
-ventasRouter.post('/:ofertaId/rechazar',requireAuth,rechazarOfertaController);
-
-// Cancelar oferta
-ventasRouter.delete('/:ofertaId/cancelar',requireAuth,cancelarOfertaController);
-
-// Procesar ofertas vencidas (para cron job o admin)
-ventasRouter.post('/sistema/procesar-vencidas',procesarOfertasVencidasController);
+ventasRouter.post('/ofertar', requireAuth, verificarModi, validate(crearOfertaSchema), crearOfertaController);
+ventasRouter.get('/mis-ofertas-enviadas', requireAuth, validateQuery(misOfertasQuerySchema), obtenerOfertasEnviadasController);
+ventasRouter.get('/mis-ofertas-recibidas', requireAuth, validateQuery(misOfertasQuerySchema), obtenerOfertasRecibidasController);
+ventasRouter.get('/:ofertaId', requireAuth, validateParams(ofertaIdParamSchema), obtenerDetalleOfertaController);
+ventasRouter.post('/:ofertaId/aceptar', requireAuth, verificarModi, validateParams(ofertaIdParamSchema), aceptarOfertaController);
+ventasRouter.post('/:ofertaId/rechazar', requireAuth, validateParams(ofertaIdParamSchema), validate(rechazarOfertaSchema), rechazarOfertaController);
+ventasRouter.delete('/:ofertaId/cancelar', requireAuth, validateParams(ofertaIdParamSchema), cancelarOfertaController);
+ventasRouter.post('/sistema/procesar-vencidas', requireAdmin, procesarOfertasVencidasController);

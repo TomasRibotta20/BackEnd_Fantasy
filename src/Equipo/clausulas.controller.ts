@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
+import e, { Request, Response, NextFunction } from 'express';
 import { blindarJugador, ejecutarClausula } from './clausulas.service.js';
-import { ErrorFactory } from '../shared/errors/errors.factory.js';
+import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
 
 /**
  * Controller para blindar un jugador (subir su cláusula)
@@ -10,25 +10,19 @@ export async function blindarJugadorController(req: Request, res: Response, next
     const equipoId = parseInt(req.params.equipoId);
     const jugadorId = parseInt(req.params.jugadorId);
     const { monto_incremento } = req.body;
-
-    if (!req.authUser?.user?.userId) {
-      return next(ErrorFactory.unauthorized('Usuario no autenticado'));
-    }
-    const userId = req.authUser.user.userId;
-
-    if (!monto_incremento || monto_incremento <= 0) {
-      return next(ErrorFactory.badRequest('El monto de incremento debe ser positivo'));
-    }
-
+    const userId = req.authUser.user?.userId!;
     const resultado = await blindarJugador(equipoId, jugadorId, monto_incremento, userId);
-
     res.status(200).json({
       success: true,
       message: 'Jugador blindado exitosamente',
       data: resultado
     });
   } catch (error) {
-    next(error);
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error inesperado al blindar jugador'));
+    }
   }
 }
 
@@ -39,11 +33,7 @@ export async function ejecutarClausulaController(req: Request, res: Response, ne
   try {
     const equipoId = parseInt(req.params.equipoId);
     const jugadorId = parseInt(req.params.jugadorId);
-    if (!req.authUser?.user?.userId) {
-      return next(ErrorFactory.unauthorized('Usuario no autenticado'));
-    }
-    
-    const userId = req.authUser.user.userId;
+    const userId = req.authUser.user?.userId!;
 
     const resultado = await ejecutarClausula(equipoId, jugadorId, userId);
 
@@ -53,6 +43,10 @@ export async function ejecutarClausulaController(req: Request, res: Response, ne
       data: resultado
     });
   } catch (error) {
-    next(error);
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error inesperado al ejecutar cláusula'));
+    }
   }
 }

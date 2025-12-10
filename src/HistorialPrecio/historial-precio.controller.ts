@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { orm } from '../shared/db/orm.js';
 import { HistorialPrecioService } from './historial-precio.service.js';
-import { ErrorFactory } from '../shared/errors/errors.factory.js';
+import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
 
 export class HistorialPrecioController {
   
@@ -23,7 +23,11 @@ export class HistorialPrecioController {
       });
 
     } catch (error: any) {
-      next(error);
+      if (error instanceof AppError) {
+        next(error);
+      } else {
+        next(ErrorFactory.internal('Error obteniendo preview de precios'));
+      }
     }
   }
 
@@ -34,7 +38,6 @@ export class HistorialPrecioController {
   static async calcularYGuardarPreciosClub(req: Request, res: Response, next: NextFunction) {
     try {
       const clubId = Number(req.params.clubId);
-      
       const em = orm.em.fork();
       const resultado = await HistorialPrecioService.calcularYGuardarPreciosClub(em, clubId);
 
@@ -45,8 +48,11 @@ export class HistorialPrecioController {
       });
 
     } catch (error: any) {
-      console.error('Error guardando precios:', error);
-      next(error);
+      if (error instanceof AppError) {
+        next(error);
+      } else {
+        next(ErrorFactory.internal('Error calculando y guardando precios del club'));
+      }
     }
   }
 
@@ -58,11 +64,7 @@ export class HistorialPrecioController {
   static async calcularYGuardarTodosLosClubes(req: Request, res: Response, next: NextFunction) {
     try {
       const em = orm.em.fork();
-      
-      console.log('Iniciando cálculo masivo de precios...');
-      
       const resultado = await HistorialPrecioService.calcularYGuardarPreciosTodosLosClubes(em);
-
       res.json({
         success: true,
         mensaje: 'Proceso completado',
@@ -70,8 +72,11 @@ export class HistorialPrecioController {
       });
 
     } catch (error: any) {
-      console.error('Error en cálculo masivo:', error);
-      next(error);
+      if (error instanceof AppError) {
+        next(error);
+      } else {
+        next(ErrorFactory.internal('Error calculando y guardando precios de todos los clubes'));
+      }
     }
   }
 
@@ -82,7 +87,6 @@ export class HistorialPrecioController {
   static async actualizarPreciosPorRendimiento(req: Request, res: Response, next: NextFunction) {
     try {
       const jornadaId = Number(req.params.jornadaId);
-
       const em = orm.em.fork();
       const resultado = await HistorialPrecioService.actualizarPreciosPorRendimiento(em, jornadaId);
 
@@ -93,8 +97,11 @@ export class HistorialPrecioController {
       });
 
     } catch (error: any) {
-      console.error('Error actualizando precios por rendimiento:', error);
-      next(error);
+      if (error instanceof AppError) {
+        next(error);
+      } else {
+        next(ErrorFactory.internal('Error actualizando precios por rendimiento'));
+      }
     }
   }
 

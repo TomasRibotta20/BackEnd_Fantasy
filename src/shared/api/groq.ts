@@ -1,4 +1,5 @@
 import Groq from 'groq-sdk';
+import { ErrorFactory } from '../errors/errors.factory.js';
 
 // Configurar con tu API Key de Groq (obtener en https://console.groq.com)
 const groq = new Groq({
@@ -73,26 +74,22 @@ OUTPUT (solo el array, sin markdown):
     const respuesta = completion.choices[0]?.message?.content;
     
     if (!respuesta) {
-      throw new Error('No se recibió respuesta de la IA');
+      throw ErrorFactory.internal('No se recibió respuesta de la IA');
     }
 
-    // Limpiar respuesta (por si viene con markdown)
     let jsonLimpio = respuesta.trim();
     
-    // Remover bloques de código markdown
     jsonLimpio = jsonLimpio.replace(/```json\s*/g, '');
     jsonLimpio = jsonLimpio.replace(/```\s*/g, '');
     jsonLimpio = jsonLimpio.trim();
     
-    // Parsear
     const datos = JSON.parse(jsonLimpio);
-    // Si la respuesta viene envuelta en un objeto, extraer el array
         let arrayPrecios: any[] = [];
     
     if (Array.isArray(datos)) {
       arrayPrecios = datos;
     } else if (typeof datos === 'object') {
-      // Buscar el array en el objeto
+
       const possibleKeys = ['precios', 'jugadores', 'data', 'results'];
       for (const key of possibleKeys) {
         if (Array.isArray(datos[key])) {
@@ -101,7 +98,6 @@ OUTPUT (solo el array, sin markdown):
         }
       }
       
-      // Si no encontró nada, tomar el primer valor que sea array
       if (arrayPrecios.length === 0) {
         const valores = Object.values(datos);
         const primerArray = valores.find(v => Array.isArray(v));
@@ -113,7 +109,7 @@ OUTPUT (solo el array, sin markdown):
     
     if (!Array.isArray(arrayPrecios) || arrayPrecios.length === 0) {
       console.error('No se pudo extraer array de precios. Datos recibidos:', datos);
-      throw new Error('La respuesta no contiene un array válido de precios');
+      throw ErrorFactory.internal('La respuesta no contiene un array válido de precios');
     }
     
     console.log(`Array extraído con ${arrayPrecios.length} elementos`);
@@ -124,9 +120,9 @@ OUTPUT (solo el array, sin markdown):
     console.error('Error llamando a Groq:', error);
     
     if (error.message?.includes('API key')) {
-      throw new Error('API Key de Groq no configurada o inválida. Configura GROQ_API_KEY en .env');
+      throw ErrorFactory.internal('API Key de Groq no configurada o inválida. Configura GROQ_API_KEY en .env');
     }
     
-    throw new Error(`Error procesando precios con IA: ${error.message}`);
+    throw ErrorFactory.internal(`Error procesando precios con IA: ${error.message}`);
   }
 }

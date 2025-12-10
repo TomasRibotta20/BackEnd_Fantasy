@@ -1,15 +1,16 @@
 import { Router } from 'express';
-import { requireAuth } from '../Auth/auth.requires.js';
-import { requireAdmin } from '../Auth/auth.requires.js';
+import { requireAuth, requireAdmin } from '../Auth/auth.requires.js';
 import { verificarModificacionesHabilitadas as verificarModi } from '../shared/middleware/verificarModificaciones.middleware.js';
-import {abrirMercado,cerrarMercado,obtenerMercadoActivo} from './mercado.controller.js';
+import { abrirMercado, cerrarMercado, obtenerMercadoActivo } from './mercado.controller.js';
+import { validate, validateParams } from '../shared/zod/validate.js';
+import { abrirMercadoSchema, cerrarMercadoParamsSchema, obtenerMercadoActivoParamsSchema } from './mercado.schema.js';
 
 
 export const mercadoRouter = Router();
 
 // Rutas de admin
-mercadoRouter.post('/abrir', requireAdmin, abrirMercado);
-mercadoRouter.post('/:mercadoId/cerrar', requireAdmin,verificarModi, cerrarMercado);
+mercadoRouter.post('/abrir', requireAdmin, validate(abrirMercadoSchema), abrirMercado);
+mercadoRouter.post('/:mercadoId/cerrar', requireAdmin, verificarModi, validateParams(cerrarMercadoParamsSchema), cerrarMercado);
 
 // Rutas públicas/usuarios
-mercadoRouter.get('/activo/:torneoId', requireAuth,obtenerMercadoActivo);
+mercadoRouter.get('/activo/:torneoId', requireAuth, validateParams(obtenerMercadoActivoParamsSchema), obtenerMercadoActivo);

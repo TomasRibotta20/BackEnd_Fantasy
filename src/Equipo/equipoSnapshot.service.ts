@@ -118,7 +118,6 @@ async obtenerEquipoEnJornada(equipoId: number, jornadaId: number) {
     return null
   }
 
-  // Obtener la info de titularidad
   const equipo = await this.em.findOne(
     Equipo,
     equipoId,
@@ -132,8 +131,6 @@ async obtenerEquipoEnJornada(equipoId: number, jornadaId: number) {
       titularidadMap.set(jugadorId, ej.es_titular)
     }
   }
-
-  // Construir respuesta optimizada
   const jugadores = equipoJornada.jugadores.getItems()
   const jugadoresData = await Promise.all(
     jugadores.map(async (jugador) => {
@@ -141,10 +138,8 @@ async obtenerEquipoEnJornada(equipoId: number, jornadaId: number) {
         jugador: jugador.id,
         partido: { jornada: jornadaId },
       })
-
       const stats = estadisticas[0]
       const puntaje = estadisticas.reduce((sum, stat) => sum + stat.puntaje_total, 0)
-
       return {
         id: jugador.id,
         nombre: jugador.name,
@@ -170,7 +165,6 @@ async obtenerEquipoEnJornada(equipoId: number, jornadaId: number) {
     })
   )
 
-  // Ordenar: titulares primero, luego por posición
   const ordenPosiciones: Record<string, number> = {
     'Goalkeeper': 1,
     'Defender': 2,
@@ -202,7 +196,6 @@ async obtenerEquipoEnJornada(equipoId: number, jornadaId: number) {
   }
 }
 
-  // Historial de un equipo
   async obtenerHistorialEquipo(equipoId: number) {
     return await this.em.find(
       EquipoJornada,
@@ -214,15 +207,17 @@ async obtenerEquipoEnJornada(equipoId: number, jornadaId: number) {
     )
   }
 
-  // Ranking de jornada
-  async obtenerRankingJornada(jornadaId: number) {
+  async obtenerRankingJornadaPorTorneo(torneoId: number, jornadaId: number) {
     return await this.em.find(
       EquipoJornada,
-      { jornada: jornadaId },
-      {
-        populate: ['equipo', 'equipo.torneoUsuario', 'equipo.torneoUsuario.usuario', 'jornada'],
-        orderBy: { puntajeTotal: 'DESC' },
+      { 
+        jornada: jornadaId,
+        equipo: { torneoUsuario: { torneo: torneoId } }
+      },
+      { 
+        populate: ['equipo.torneoUsuario.usuario', 'jornada'],
+        orderBy: { puntajeTotal: 'DESC' }
       }
-    )
+    );
   }
 }

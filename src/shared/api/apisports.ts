@@ -1,10 +1,6 @@
-// ...existing code...
 const BASE_URL = process.env.APISPORTS_BASE_URL || 'https://v3.football.api-sports.io';
-
-// Límite por minuto (déjalo en 9 para margen con el free de 10/min)
 const REQ_LIMIT_PER_MIN = Number(process.env.APISPORTS_REQ_PER_MIN || 9);
 
-// Ventana de 60s con timestamps
 const requestTimestamps: number[] = [];
 
 function sleep(ms: number) {
@@ -13,21 +9,15 @@ function sleep(ms: number) {
 
 async function waitForSlot() {
   const now = Date.now();
-  // Limpia timestamps fuera de ventana
   while (requestTimestamps.length && now - requestTimestamps[0] > 60_000) {
     requestTimestamps.shift();
   }
-  
   if (requestTimestamps.length >= REQ_LIMIT_PER_MIN) {
-    // Calculamos tiempo exacto a esperar + margen
-    const waitMs = 60_000 - (now - requestTimestamps[0]) + 500; // 500ms de margen
+    const waitMs = 60_000 - (now - requestTimestamps[0]) + 500; 
     console.log(`Límite de peticiones alcanzado. Esperando ${waitMs}ms...`);
     await sleep(waitMs);
-    // Verificar nuevamente después de esperar (por si acaso)
     return waitForSlot();
   }
-  
-  // Registrar timestamp actual
   requestTimestamps.push(now);
 }
 
@@ -48,9 +38,8 @@ async function apiFetch(
   try {
     const res = await fetch(url, { headers });
     if (res.status === 429) {
-      // Rate limit excedido: espera según headers o 10s exponencial
       const retryAfter = Number(res.headers.get('retry-after')) || 0;
-      const reset = Number(res.headers.get('x-ratelimit-requests-reset')) || 0; // API-FOOTBALL suele enviarlo
+      const reset = Number(res.headers.get('x-ratelimit-requests-reset')) || 0;
       const delay =
         retryAfter > 0
           ? retryAfter * 1000
@@ -198,19 +187,15 @@ const HEADERS = {
  * Obtiene las estadísticas de los jugadores de un partido específico
  * @param partidoApiId ID de API del partido
  */
-// Añade esta función para verificar si un partido tiene estadísticas disponibles antes de intentar obtenerlas
 export async function verificarDisponibilidadEstadisticas(partidoId: number): Promise<boolean> {
   await waitForSlot();
-  
   try {
     const response = await fetch(`${BASE_URL}/fixtures/statistics?fixture=${partidoId}`, {
       method: 'GET',
       headers: HEADERS
     });
-
     const data = await response.json();
     
-    // Si la respuesta tiene datos, hay estadísticas disponibles
     return data.response && data.response.length > 0;
   } catch (error) {
     console.error(`Error verificando disponibilidad de estadísticas para partido ${partidoId}:`, error);
@@ -218,36 +203,27 @@ export async function verificarDisponibilidadEstadisticas(partidoId: number): Pr
   }
 }
 
-// Mejora la función de obtención de estadísticas para ser más robusta
 export async function obtenerEstadisticasJugadoresPorPartido(
   partidoId: number, 
   intentos = 3,
   esperaBase = 2000
 ): Promise<any[]> {
   try {
-    // Primero verificamos si hay estadísticas disponibles
     const hayEstadisticas = await verificarDisponibilidadEstadisticas(partidoId);
-    
     if (!hayEstadisticas) {
       console.log(`No hay estadísticas disponibles en la API para el partido ${partidoId}`);
       return [];
     }
-    
     await waitForSlot();
-    
     const response = await fetch(`${BASE_URL}/fixtures/players?fixture=${partidoId}`, {
       method: 'GET',
       headers: HEADERS
     });
-
     const data = await response.json();
 
-    // Mejor manejo de respuestas vacías
     if (!data.response || data.response.length === 0) {
       throw new Error(`No se encontraron estadísticas para el partido ${partidoId}`);
     }
-
-    // Extraer estadísticas de jugadores
     let jugadores: any[] = [];
     
     data.response.forEach((item: any) => {
@@ -276,7 +252,6 @@ export async function obtenerEstadisticasJugadoresPorPartido(
     return jugadores;
   } catch (error) {
     if (intentos > 1) {
-      // Backoff exponencial con jitter aleatorio
       const jitter = Math.random() * 0.3 + 0.85; // Entre 0.85 y 1.15
       const esperaMs = Math.floor(esperaBase * jitter);
       
@@ -301,12 +276,10 @@ export async function obtenerDetallesPartido(partidoApiId: number) {
     });
 
     const data = await response.json();
-    
+
     if (!data.response || data.response.length === 0) {
       throw new Error(`No se encontraron detalles para el partido ${partidoApiId}`);
     }
-
-    // La API devuelve un array, pero nosotros queremos el primer elemento
     return data.response[0];
   } catch (error) {
     console.error(`Error obteniendo detalles del partido ${partidoApiId}:`, error);

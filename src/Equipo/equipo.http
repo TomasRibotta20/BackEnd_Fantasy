@@ -49,3 +49,7 @@ Content-Type: application/json
 {
   "jugadorId": 617
 }
+
+### Obtener el ranking de un torneo en una jornada (requiere autenticación previa)
+GET http://localhost:3000/api/equipos/ranking/torneo/2/jornada/1
+Content-Type: application/json

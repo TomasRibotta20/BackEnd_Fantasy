@@ -1,10 +1,10 @@
-import { Request, Response, NextFunction } from 'express';
+import e, { Request, Response, NextFunction } from 'express';
 import {
   ofertar as ofertarService,
   cancelarOferta as cancelarOfertaService,
   obtenerMisOfertas as obtenerMisOfertasService
 } from './mercadoPuja.service.js';
-import { ErrorFactory } from '../shared/errors/errors.factory.js';
+import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
 
 /**
  * Crea o actualiza una oferta por un jugador del mercado
@@ -21,8 +21,12 @@ export async function ofertar(req: Request, res: Response, next: NextFunction) {
       message: `Oferta ${resultado.accion} exitosamente`,
       data: resultado
     });
-  } catch (error) {
-    return next(error);
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error inesperado al crear la oferta'));
+    }
   }
 }
 
@@ -37,8 +41,12 @@ export async function cancelarOferta(req: Request, res: Response, next: NextFunc
     const resultado = await cancelarOfertaService(pujaId, userId);
 
     return res.status(200).json(resultado);
-  } catch (error) {
-    return next(error);
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error inesperado al cancelar la oferta'));
+    }
   }
 }
 
@@ -55,7 +63,11 @@ export async function obtenerMisOfertas(req: Request, res: Response, next: NextF
     return res.status(200).json({
       data: ofertas
     });
-  } catch (error) {
-    return next(error);
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error inesperado al obtener las ofertas'));
+    }
   }
 }

@@ -1,12 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { orm } from '../shared/db/orm.js';
-import { ErrorFactory } from '../shared/errors/errors.factory.js';
+import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
 import { EstadoTorneo, Torneo } from './torneo.entity.js';
 import { TorneoUsuario } from './torneoUsuario.entity.js';
 import { Users } from '../User/user.entity.js';
 import { FilterQuery } from '@mikro-orm/core';
 import { TorneoService } from './torneo.service.js';
-import { Equipo } from '../Equipo/equipo.entity.js';
 import { crearEquipo } from '../Equipo/equipo.service.js';
 import { GameConfig } from '../Config/gameConfig.entity.js';
 
@@ -26,7 +25,7 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
       fecha_creacion_hasta, 
       min_participantes, 
       max_participantes,
-      limit, // Agregamos paginación
+      limit,
       offset 
     } = req.query; 
     
@@ -39,7 +38,7 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
     const desde = fecha_creacion_desde ? new Date(fecha_creacion_desde as string) : undefined;
     const hasta = fecha_creacion_hasta ? new Date(fecha_creacion_hasta as string) : undefined;
     if (desde && hasta && desde > hasta) {
-      return next(ErrorFactory.badRequest('Rango de fechas inválido: "fechas desde" no puede ser mayor que "fechas hasta".'));
+      throw ErrorFactory.badRequest('Rango de fechas inválido: "fechas desde" no puede ser mayor que "fechas hasta".');
     }
 
     if (desde || hasta) {
@@ -68,12 +67,16 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
     res.status(200).json({ 
       message: 'Torneos encontrados exitosamente', 
       data: torneos,
-      total: total, // Total real en BD (útil para saber cuántas páginas hay)
+      total: total,
       filtros: { estado, fecha_creacion_desde, fecha_creacion_hasta, min_participantes, max_participantes }
     });
     
   } catch (error: any) {
-    next(ErrorFactory.internal('Error al obtener los torneos'));
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error al obtener los torneos'));
+    }
   }
 }
 
@@ -173,14 +176,13 @@ async function add(req: Request, res: Response, next: NextFunction) {
     
     const currentUserId = req.authUser.user?.userId;
 
-     // Validar contra el cupo máximo global configurado
     const config = await em.findOne(GameConfig, 1);
     const cupoMaximoGlobal = config?.cupoMaximoTorneos || 8;
 
     if (cupoMaximo > cupoMaximoGlobal) {
-      return next(ErrorFactory.badRequest(
+      throw ErrorFactory.badRequest(
         `El cupo máximo del torneo (${cupoMaximo}) no puede exceder el límite global configurado (${cupoMaximoGlobal})`
-      ));
+      );
     }
 
     const nuevoTorneo = new Torneo();
@@ -206,7 +208,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
     let guardadoExitoso = false;
     while (intentos < maxIntentos && !guardadoExitoso) {
         try {
-            await em.flush(); //Ya es transaccional
+            await em.flush();
             guardadoExitoso = true;  
         } catch (error: any) {
             if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
@@ -218,7 +220,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
         }       
     }
     if (!guardadoExitoso) {
-        return next(ErrorFactory.internal('No se pudo generar un código de acceso único para el torneo'));
+        throw ErrorFactory.internal('No se pudo generar un código de acceso único para el torneo');
     }
     res.status(201).json({ 
       message: 'Torneo creado exitosamente', 
@@ -231,7 +233,11 @@ async function add(req: Request, res: Response, next: NextFunction) {
       }
     })
   } catch (error: any) {
-    next(ErrorFactory.internal('Error al crear el torneo'));
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error al crear el torneo'));
+    }
   }
 }
 
@@ -252,7 +258,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
         esSuperAdmin = true;
     }
     const torneo = await em.findOne(Torneo, { id: torneoId });
-    if (!torneo) return next(ErrorFactory.notFound('Torneo no encontrado'));
+    if (!torneo) throw ErrorFactory.notFound('Torneo no encontrado');
     
     let esCreador = false;
     if (!esSuperAdmin) {
@@ -264,39 +270,38 @@ async function update(req: Request, res: Response, next: NextFunction) {
         esCreador = count > 0;
     }
     if (!esSuperAdmin && !esCreador) {
-        return next(ErrorFactory.forbidden('No tienes permisos para modificar este torneo'));
+        throw ErrorFactory.forbidden('No tienes permisos para modificar este torneo');
     }
     if (nombre) torneo.nombre = nombre;
     if (cupoMaximo) {
         if (torneo.estado !== EstadoTorneo.ESPERA) {
-            return next(ErrorFactory.badRequest('No puedes cambiar el cupo de un torneo ya iniciado.'));
+            throw ErrorFactory.badRequest('No puedes cambiar el cupo de un torneo ya iniciado.');
         }
          
-        // Validar contra el cupo máximo global
         const config = await em.findOne(GameConfig, 1);
         const cupoMaximoGlobal = config?.cupoMaximoTorneos || 8;
         
         if (cupoMaximo > cupoMaximoGlobal) {
-            return next(ErrorFactory.badRequest(
+            throw ErrorFactory.badRequest(
                 `El cupo máximo del torneo (${cupoMaximo}) no puede exceder el límite global configurado (${cupoMaximoGlobal})`
-            ));
+            );
         }
 
         const inscritosActuales = torneo.cantidadParticipantes || 0; 
         if (cupoMaximo < inscritosActuales) {
-            return next(ErrorFactory.badRequest(`El cupo máximo no puede ser menor a los participantes actuales (${inscritosActuales}).`));
+            throw ErrorFactory.badRequest(`El cupo máximo no puede ser menor a los participantes actuales (${inscritosActuales}).`);
         }
         torneo.cupoMaximo = cupoMaximo;
     }
     if (fecha_inicio) {
         if (torneo.estado !== EstadoTorneo.ESPERA) {
-            return next(ErrorFactory.badRequest('No puedes cambiar la fecha de un torneo ya iniciado.'));
+            throw ErrorFactory.badRequest('No puedes cambiar la fecha de un torneo ya iniciado.');
         }
         torneo.fecha_inicio = new Date(fecha_inicio);
     }
     if (codigo_acceso) {
         if (!esSuperAdmin) {
-            return next(ErrorFactory.forbidden('Solo el administrador del sistema puede cambiar el código de acceso manualmente.'));
+            throw ErrorFactory.forbidden('Solo el administrador del sistema puede cambiar el código de acceso manualmente.');
         }
         torneo.codigo_acceso = codigo_acceso;
     }
@@ -310,9 +315,12 @@ async function update(req: Request, res: Response, next: NextFunction) {
 
   } catch (error: any) {
     if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
-        return next(ErrorFactory.duplicate('El código de acceso ya existe.'));
+      return next(ErrorFactory.duplicate('El código de acceso ya existe.'));
+    } else if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error al actualizar el torneo'));
     }
-    next(ErrorFactory.internal('Error al actualizar el torneo'));
   }
 }
 
@@ -326,7 +334,6 @@ async function remove(req: Request, res: Response, next: NextFunction) {
     const torneoId = Number(req.params.id);
     
     await em.transactional(async (transactionalEm) => {
-      // 1. Obtener todas las inscripciones con equipos
       const inscripciones = await transactionalEm.find(TorneoUsuario, 
         { torneo: torneoId, equipo: { $ne: null } }, 
         { populate: ['equipo'] }
@@ -336,28 +343,21 @@ async function remove(req: Request, res: Response, next: NextFunction) {
         .map(i => i.equipo?.id)
         .filter((id): id is number => id !== undefined);
 
-      if (idsEquipos.length > 0) {
-        // Crear string de IDs para SQL
+      if (idsEquipos.length > 0) {  
         const idsString = idsEquipos.join(',');
-        
-        // 2. Eliminar en orden correcto usando execute directo
-        await transactionalEm.execute(`DELETE FROM transacciones WHERE equipo_id IN (${idsString})`);
-        await transactionalEm.execute(`DELETE FROM equipo_jornada WHERE equipo_id IN (${idsString})`);
-        await transactionalEm.execute(`DELETE FROM equipos_jugadores WHERE equipo_id IN (${idsString})`);
         await transactionalEm.execute(`DELETE FROM equipos WHERE id IN (${idsString})`);
-      }
-      
-      // 3. Eliminar inscripciones
-      await transactionalEm.nativeDelete(TorneoUsuario, { torneo: torneoId });
-      
-      // 4. Eliminar el torneo
+        //Verificar si se borra el equipo_jornada, el equipo_jugador, y si se borran las transacciones asociadas
+      }   
       await transactionalEm.nativeDelete(Torneo, { id: torneoId });
     });
     
     res.status(200).json({ message: 'Torneo y equipos eliminados.' });
   } catch (error: any) {
-    console.error('Error detallado al eliminar torneo:', error);
-    next(ErrorFactory.internal('Error al eliminar el torneo'));
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error al eliminar el torneo'));
+    }
   }
 }
 
@@ -369,16 +369,16 @@ async function validateAccessCode(req: Request, res: Response, next: NextFunctio
     const torneo = await em.findOneOrFail(Torneo, { codigo_acceso: codigo_acceso });
     
     if (torneo.estado !== EstadoTorneo.ESPERA) {
-        return next(ErrorFactory.conflict('El torneo ya ha comenzado, no se permiten nuevas inscripciones.'));
+        throw ErrorFactory.conflict('El torneo ya ha comenzado, no se permiten nuevas inscripciones.');
     }
     const inscritos = torneo.cantidadParticipantes || 0;
     if (inscritos >= torneo.cupoMaximo) {
-        return next(ErrorFactory.conflict('El torneo ya está lleno, no se permiten nuevas inscripciones.'));
+        throw ErrorFactory.conflict('El torneo ya está lleno, no se permiten nuevas inscripciones.');
     }
     if (currentUserId) {
         const inscripcion = await em.findOne(TorneoUsuario, { torneo: torneo.id, usuario: currentUserId });
         if (inscripcion) {
-            return next(ErrorFactory.duplicate('Ya estás inscrito en este torneo.'));
+            throw ErrorFactory.duplicate('Ya estás inscrito en este torneo.');
         }
     }
     res.status(200).json({
@@ -396,9 +396,12 @@ async function validateAccessCode(req: Request, res: Response, next: NextFunctio
 
   } catch (error: any) {
     if (error.name === 'NotFoundError') {
-        return next(ErrorFactory.notFound('Código de acceso inválido'));
+      next(ErrorFactory.notFound('Código de acceso inválido'));
+    } else if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error al validar código'));
     }
-    next(ErrorFactory.internal('Error al validar código'));
   }
 }
 
@@ -445,7 +448,7 @@ async function getMisTorneos(req: Request, res: Response, next: NextFunction) {
         data: data
     });
 
-  } catch (error) {
+  } catch (error: any) {
     next(ErrorFactory.internal('Error al obtener mis torneos'));
   }
 }
@@ -468,7 +471,7 @@ async function getTorneoUsuario(req: Request, res: Response, next: NextFunction)
     });
 
     if (!miInscripcion) {
-        return next(ErrorFactory.forbidden('No tienes acceso a este torneo.'));
+        throw ErrorFactory.forbidden('No tienes acceso a este torneo.');
     }
     const miEquipoId = miInscripcion?.equipo?.id || null;
     const soyCreador = miInscripcion?.rol === 'creador';
@@ -514,27 +517,38 @@ async function getTorneoUsuario(req: Request, res: Response, next: NextFunction)
 
   } catch (error: any) {
     if (error.name === 'NotFoundError') {
-        return next(ErrorFactory.notFound('Torneo no encontrado'));
+      next(ErrorFactory.notFound('Torneo no encontrado'));
+    } else if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error al cargar torneo'));
     }
-    next(ErrorFactory.internal('Error al cargar torneo')); 
   }
 }
 
 async function joinTorneo(req: Request, res: Response, next: NextFunction) {
   try {
-    const result = await TorneoService.join(req.body.codigo_acceso, req.body.nombre_equipo, req.authUser.user?.userId!);
+    const result = await TorneoService.join(em, req.body.codigo_acceso, req.body.nombre_equipo, req.authUser.user?.userId!);
     res.status(201).json(result);
   } catch (error: any) {
-    next(error);
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error al unirse al torneo'));
+    }
   }
 }
 
 async function leave(req: Request, res: Response, next: NextFunction) {
   try {
-    const result = await TorneoService.leaveTorneo(Number(req.params.id), req.authUser.user?.userId!);
+    const result = await TorneoService.leaveTorneo(em, Number(req.params.id), req.authUser.user?.userId!);
     res.status(200).json(result);
   } catch (error: any) {
-    next(error);
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error al abandonar el torneo'));
+    }
   }
 }
 
@@ -542,10 +556,14 @@ async function iniciarTorneo(req: Request, res: Response, next: NextFunction) {
   try {
     const torneoId = Number(req.params.id);
     const userId = req.authUser.user?.userId!;
-    const result = await TorneoService.start(torneoId, userId);
+    const result = await TorneoService.start(em, torneoId, userId);
     res.status(200).json(result);
-  } catch (error) {
-    next(error);
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error al iniciar el torneo'));
+    }
   }
 }
 
@@ -556,10 +574,14 @@ async function expulsar(req: Request, res: Response, next: NextFunction) {
     
     const creadorId = req.authUser.user?.userId!;
 
-    const result = await TorneoService.kickUser(torneoId, creadorId, targetUserId);
+    const result = await TorneoService.kickUser(em, torneoId, creadorId, targetUserId);
     res.status(200).json(result);
   } catch (error: any) {
-    next(error);
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error al expulsar participante'));
+    }
   }
 }
 

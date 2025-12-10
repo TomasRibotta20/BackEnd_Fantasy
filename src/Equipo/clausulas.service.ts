@@ -1,8 +1,6 @@
-import { EntityManager } from '@mikro-orm/core';
 import { orm } from '../shared/db/orm.js';
 import { EquipoJugador } from './equipoJugador.entity.js';
 import { Equipo } from './equipo.entity.js';
-import { Player } from '../Player/player.entity.js';
 import { GameConfig } from '../Config/gameConfig.entity.js';
 import { Transaccion, TipoTransaccion } from './transaccion.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
@@ -34,13 +32,10 @@ export async function blindarJugador(
   
   return await orm.em.transactional(async (em) => {
     
-    // 1. Cargar gameConfig
     const gameConfig = await em.findOne(GameConfig, 1);
     if (!gameConfig) {
       throw ErrorFactory.internal('Configuración del juego no encontrada');
     }
-    
-    // 2. Buscar relación equipo-jugador
     const equipoJugador = await em.findOne(
       EquipoJugador,
       { equipo: equipoId, jugador: jugadorId },
@@ -54,20 +49,10 @@ export async function blindarJugador(
     const equipo = equipoJugador.equipo as any;
     const jugador = equipoJugador.jugador as any;
     
-    // 3. Verificar propiedad
     if (equipo.torneoUsuario.usuario.id !== userId) {
       throw ErrorFactory.forbidden('No tienes permisos para blindar jugadores de este equipo');
     }
-    
-    // 4. Validar monto positivo
-    if (montoIncremento <= 0) {
-      throw ErrorFactory.badRequest('El monto debe ser positivo');
-    }
-    
-    // 5. Calcular costo en presupuesto
     const costoPresupuesto = Math.ceil(montoIncremento / gameConfig.ratio_blindaje_clausula);
-    
-    // 6. Verificar fondos disponibles
     if (equipo.presupuestoDisponible < costoPresupuesto) {
       throw ErrorFactory.badRequest(
         `Presupuesto insuficiente. Necesitas $${costoPresupuesto.toLocaleString()} pero solo tienes $${equipo.presupuestoDisponible.toLocaleString()}`
@@ -76,15 +61,12 @@ export async function blindarJugador(
     
     const precioActual = jugador.precio_actual || 0;
     const clausulaAnterior = equipoJugador.getValorClausulaEfectiva();
-    
-    // 7. Aplicar cambios
+
     equipo.presupuesto -= costoPresupuesto;
-    
-    // Calcular nueva cláusula absoluta
+
     const nuevaClausula = clausulaAnterior + montoIncremento;
     equipoJugador.valor_clausula = Math.max(nuevaClausula, precioActual);
     
-    // 8. Crear transacción
     const transaccion = em.create(Transaccion, {
       equipo,
       tipo: TipoTransaccion.GASTO_BLINDAJE,
@@ -93,9 +75,7 @@ export async function blindarJugador(
       fecha: new Date(),
       descripcion: `Blindaje de ${jugador.name}: +$${montoIncremento.toLocaleString()} a la cláusula (Costo: $${costoPresupuesto.toLocaleString()})`
     });
-    
     em.persist(transaccion);
-    await em.flush();
     
     return {
       jugador: {
@@ -141,13 +121,10 @@ export async function ejecutarClausula(
   
   return await orm.em.transactional(async (em) => {
     
-    // 1. Cargar gameConfig
     const gameConfig = await em.findOne(GameConfig, 1);
     if (!gameConfig) {
       throw ErrorFactory.internal('Configuración del juego no encontrada');
     }
-    
-    // 2. Cargar equipo comprador primero para saber su torneo
     const equipoComprador = await em.findOne(
       Equipo,
       { id: compradorEquipoId },
@@ -158,14 +135,11 @@ export async function ejecutarClausula(
       throw ErrorFactory.notFound('Tu equipo no existe');
     }
     
-    // 3. Validar propiedad del comprador
     if (equipoComprador.torneoUsuario.usuario.id !== compradorUserId) {
       throw ErrorFactory.forbidden('No tienes permisos para ejecutar cláusulas con este equipo');
     }
     
     const torneoId = equipoComprador.torneoUsuario.torneo.id;
-    
-    // 4. Buscar al jugador SOLO en equipos del mismo torneo
     const equipoJugadorVendedor = await em.findOne(
       EquipoJugador,
       { 
@@ -196,35 +170,26 @@ export async function ejecutarClausula(
     if (!posicion) {
       throw ErrorFactory.badRequest('El jugador no tiene posición definida');
     }
-    
-    // 5. NO PUEDES COMPRAR TU PROPIO JUGADOR
     if (equipoComprador.id === equipoVendedor.id) {
       throw ErrorFactory.badRequest('No puedes ejecutar la cláusula de tu propio jugador');
     }
-    
-    // 6. CHECK ESCUDO DE PROTECCIÓN
     const diasRestantes = equipoJugadorVendedor.getDiasProteccionRestantes(
       gameConfig.dias_proteccion_clausula
     );
-    
     if (diasRestantes > 0) {
       throw ErrorFactory.badRequest(
         `Este jugador está protegido por ${diasRestantes} día(s) más`
       );
     }
-    
-    // 7. CALCULAR PRECIO FINAL (cláusula efectiva)
+
     const precioMercado = jugador.precio_actual || 0;
     const precioFinal = equipoJugadorVendedor.getValorClausulaEfectiva();
     
-    // 8. CHECK DE FONDOS
     if (equipoComprador.presupuestoDisponible < precioFinal) {
       throw ErrorFactory.badRequest(
         `Presupuesto insuficiente. Necesitas $${precioFinal.toLocaleString()} pero tienes $${equipoComprador.presupuestoDisponible.toLocaleString()}`
       );
     }
-    
-    // 9. CHECK DE CUPO TOTAL 
     const jugadoresComprador = await em.count(EquipoJugador, { 
       equipo: compradorEquipoId 
     });
@@ -232,21 +197,15 @@ export async function ejecutarClausula(
     if (jugadoresComprador >= JUGADORES_MAXIMOS_POR_EQUIPO) {
       throw ErrorFactory.badRequest(`Tu equipo está completo (${JUGADORES_MAXIMOS_POR_EQUIPO} jugadores)`);
     }
-    
-    
-    // 10. EJECUCIÓN ATÓMICA
-    
-    // a) Movimiento de dinero
+
     equipoComprador.presupuesto -= precioFinal;
     equipoVendedor.presupuesto += precioFinal;
     
-    // b) Transferencia del jugador
     equipoJugadorVendedor.equipo = equipoComprador as any;
     equipoJugadorVendedor.fecha_incorporacion = new Date();
     equipoJugadorVendedor.valor_clausula = 0;
     equipoJugadorVendedor.es_titular = false;
     
-    // c) Transacciones
     const transaccionCompra = em.create(Transaccion, {
       equipo: equipoComprador,
       tipo: TipoTransaccion.PAGO_CLAUSULA,
@@ -268,9 +227,6 @@ export async function ejecutarClausula(
     em.persist(transaccionCompra);
     em.persist(transaccionVenta);
     
-    await em.flush();
-    
-    // d) Enviar emails
     const vendedorEmail = equipoVendedor.torneoUsuario.usuario.email;
     const vendedorNombre = equipoVendedor.torneoUsuario.usuario.username;
     const compradorEmail = equipoComprador.torneoUsuario.usuario.email;
@@ -281,7 +237,6 @@ export async function ejecutarClausula(
       Date.now() + gameConfig.dias_proteccion_clausula * 86400000
     );
     
-    // Email al vendedor (le robaron el jugador)
     await sendClausulaEjecutadaEmail(
       vendedorEmail,
       vendedorNombre,
@@ -294,7 +249,6 @@ export async function ejecutarClausula(
       equipoVendedor.presupuesto
     );
     
-    // Email al comprador (clausulazo exitoso)
     await sendClausulaExitosaEmail(
       compradorEmail,
       compradorNombre,
@@ -307,7 +261,6 @@ export async function ejecutarClausula(
       equipoComprador.presupuesto,
       fechaProteccionHasta
     );
-    
     return {
       mensaje: `¡Clausulazo exitoso! ${jugador.name} ahora es parte de tu equipo`,
       jugador: {

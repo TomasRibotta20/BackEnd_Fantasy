@@ -1,10 +1,10 @@
-import { Request, Response, NextFunction } from 'express';
+import e, { Request, Response, NextFunction } from 'express';
 import { orm } from '../shared/db/orm.js';
 import { Premio, Tier } from './premio.entity.js';
 import { Saldo } from './saldo.entity.js';
 import { Ruleta } from './ruleta.entity.js';
 import { PlayerPick } from './playerpick.entity.js';
-import { ErrorFactory } from '../shared/errors/errors.factory.js';
+import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
 
 const em = orm.em;
 
@@ -64,12 +64,16 @@ async function findByTipo(req: Request, res: Response, next: NextFunction) {
         premios = await em.find(PlayerPick, {}, { orderBy: { id: 'ASC' } });
         break;
       default:
-        return next(ErrorFactory.badRequest('Tipo de premio inválido'));
+        throw ErrorFactory.badRequest('Tipo de premio inválido');
     }
 
     res.status(200).json({ message: `Premios de tipo ${tipo} encontrados`, data: premios });
   } catch (error: any) {
-    next(ErrorFactory.internal('Error al obtener los premios por tipo'));
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error al obtener los premios por tipo'));
+    }
   }
 }
 
@@ -135,13 +139,16 @@ async function add(req: Request, res: Response, next: NextFunction) {
         break;
 
       default:
-        return next(ErrorFactory.badRequest('Tipo de premio inválido. Debe ser: saldo, ruleta o pick'));
+        throw ErrorFactory.badRequest('Tipo de premio inválido. Debe ser: saldo, ruleta o pick');
     }
-
     await em.flush();
     res.status(201).json({ message: 'Premio creado exitosamente', data: nuevoPremio });
   } catch (error: any) {
-    next(ErrorFactory.internal('Error al crear el premio'));
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error al crear el premio'));
+    }
   }
 }
 
@@ -170,7 +177,6 @@ async function update(req: Request, res: Response, next: NextFunction) {
     if (premio instanceof PlayerPick && configuracion) {
       premio.configuracion = configuracion;
     }
-
     await em.flush();
     res.status(200).json({ message: 'Premio actualizado exitosamente', data: premio });
   } catch (error: any) {

@@ -31,7 +31,6 @@ export async function inicializarJugadoresTorneo(torneoId: number, em?: EntityMa
   
   console.log(`Inicializando ${todosLosJugadores.length} jugadores para el torneo ${torneo.nombre}...`);
 
-  // Crear registros JugadorTorneo
   for (const jugador of todosLosJugadores) {
     const jugadorTorneo = entityManager.create(JugadorTorneo, {
       jugador,
@@ -43,9 +42,10 @@ export async function inicializarJugadoresTorneo(torneoId: number, em?: EntityMa
     entityManager.persist(jugadorTorneo);
   }
   
-  await entityManager.flush();
+  if (!em) {
+    await entityManager.flush();
+  }
 
-  // Actualizar relaciones para jugadores que ya tienen equipo
   const equiposDelTorneo = await entityManager.find(
     Equipo,
     { torneoUsuario: { torneo: torneoId } },
@@ -72,7 +72,9 @@ export async function inicializarJugadoresTorneo(torneoId: number, em?: EntityMa
     }
   }
 
-  await entityManager.flush();
+  if (!em) {
+    await entityManager.flush();
+  }
 
   console.log(`Inicialización completada para torneo ${torneo.nombre}`);
   console.log(`   - Jugadores totales: ${todosLosJugadores.length}`);
@@ -126,39 +128,31 @@ export async function abrirMercado(torneoId: number) {
       throw ErrorFactory.conflict('Ya existe un mercado abierto para este torneo');
     }
 
-    // 2. Obtener jugadores libres
     const jugadoresLibres = await obtenerJugadoresLibresTorneo(torneoId, em);
 
     if (jugadoresLibres.length === 0) {
       throw ErrorFactory.badRequest('No hay jugadores libres en el torneo');
     }
 
-    // 3. Filtrar los que NO han aparecido en mercado
     const disponibles = jugadoresLibres.filter(jt => !jt.aparecio_en_mercado);
 
     let jugadoresSeleccionados: JugadorTorneo[];
     let huboReset = false;
     let idsCompletados: Set<number> | undefined;
-    // 4. ¿Hay suficientes disponibles?
+
     if (disponibles.length < JUGADORES_POR_MERCADO) {
       console.log(`Reset del pool. Disponibles: ${disponibles.length}/${JUGADORES_POR_MERCADO}`);
 
-      // Agarramos todos los jugadores que sobran del pool actual
       jugadoresSeleccionados = shuffle(disponibles);
       const faltantes = JUGADORES_POR_MERCADO - jugadoresSeleccionados.length;
-      
-      // RESET: Limpiar flag de todos los libres
+
       for (const jt of jugadoresLibres) {
         jt.aparecio_en_mercado = false;
       }
-
       huboReset = true;
-      
-      //Completamos con los reseteados, excluyendo los que ya agarramos
       const idsSeleccionados = new Set(jugadoresSeleccionados.map(jt => jt.jugador.id));
       const recienReseteados = jugadoresLibres.filter(jt => !idsSeleccionados.has(jt.jugador.id));
 
-      // Validar que haya mas jugadores recien reseteados que faltantes
       if (recienReseteados.length < faltantes) {
         throw ErrorFactory.badRequest(
           `Insuficientes jugadores libres en el torneo: ${jugadoresLibres.length} disponibles, se necesitan ${JUGADORES_POR_MERCADO}`
@@ -171,8 +165,6 @@ export async function abrirMercado(torneoId: number) {
     } else {
       jugadoresSeleccionados = shuffle(disponibles).slice(0, JUGADORES_POR_MERCADO);
     }
-
-    // 5. Obtener número de mercado
     const ultimoMercado = await em.findOne(
       MercadoDiario,
       { torneo: torneoId },
@@ -181,7 +173,6 @@ export async function abrirMercado(torneoId: number) {
 
     const numeroMercado = ultimoMercado ? ultimoMercado.numero_mercado + 1 : 1;
 
-    // 6. Crear mercado
     const torneo = await em.getReference(Torneo, torneoId);
     const mercado = em.create(MercadoDiario, {
       torneo,
@@ -193,7 +184,6 @@ export async function abrirMercado(torneoId: number) {
 
     em.persist(mercado);
 
-    // 7. Crear items y marcar jugadores
     for (const jugadorTorneo of jugadoresSeleccionados) {
       const item = em.create(ItemMercado, {
         mercado,
@@ -202,12 +192,9 @@ export async function abrirMercado(torneoId: number) {
       });
       em.persist(item);
 
-      // Solo marcar los que vinieron del completar (segunda vuelta)
-      // Los del pool viejo (primera vuelta) quedan en false
       if (huboReset && idsCompletados && jugadorTorneo.jugador.id && idsCompletados.has(jugadorTorneo.jugador.id)) {
       jugadorTorneo.aparecio_en_mercado = true;
       } else if (!huboReset) {
-      // Si no hubo reset, marcar todos normalmente
       jugadorTorneo.aparecio_en_mercado = true;
       }
     }
@@ -248,20 +235,16 @@ export async function validarCupoParaCompra(
   const equipo = await em.findOne(Equipo, equipoId, {
     populate: ['jugadores.jugador', 'jugadores.jugador.position']
   });
-
   if (!equipo) {
     return { valido: false, razon: 'Equipo no encontrado' };
   }
-
   const jugadorNuevo = await em.findOne(Player, jugadorId, {
     populate: ['position']
   });
-
   if (!jugadorNuevo) {
     return { valido: false, razon: 'Jugador no encontrado' };
   }
 
-  // 1. Validar límite total
   const cantidadActual = equipo.jugadores.length;
   
   if (cantidadActual >= MAXIMO_JUGADORES_EQUIPO) {
@@ -278,7 +261,6 @@ export async function validarCupoParaCompra(
  */
 export async function cerrarMercado(mercadoId: number) {
   return await orm.em.transactional(async (em) => {
-    // 1. Obtener mercado
     const mercado = await em.findOne(
       MercadoDiario,
       mercadoId,
@@ -295,11 +277,9 @@ export async function cerrarMercado(mercadoId: number) {
     if (!mercado) {
       throw ErrorFactory.notFound('Mercado no encontrado');
     }
-
     if (mercado.estado !== EstadoMercado.ABIERTO) {
       throw ErrorFactory.badRequest('El mercado ya está cerrado o cancelado');
     }
-
     const estadisticas = {
       vendidos: 0,
       sinVenta: 0,
@@ -307,18 +287,16 @@ export async function cerrarMercado(mercadoId: number) {
       dineroMovido: 0
     };
 
-    // 2. Cambiar estado
     mercado.estado = EstadoMercado.CERRADO;
     mercado.fecha_cierre = new Date();
 
-    // 3. Resolver cada item
     for (const item of mercado.items.getItems()) {
       const pujas = item.pujas
         .getItems()
         .filter(p => p.estado === EstadoPuja.PENDIENTE)
         .sort((a, b) => {
-          if (b.monto !== a.monto) return b.monto - a.monto; // Mayor monto primero
-          return a.fecha_oferta.getTime() - b.fecha_oferta.getTime(); // Desempate por timestamp
+          if (b.monto !== a.monto) return b.monto - a.monto;
+          return a.fecha_oferta.getTime() - b.fecha_oferta.getTime();
         });
 
       if (pujas.length === 0) {
@@ -328,7 +306,6 @@ export async function cerrarMercado(mercadoId: number) {
 
       let ganador: MercadoPuja | null = null;
 
-      // Buscar ganador válido
       for (const puja of pujas) {
         const validacion = await validarCupoParaCompra(puja.equipo.id!, item.jugador.id!, em);
 
@@ -336,7 +313,6 @@ export async function cerrarMercado(mercadoId: number) {
           ganador = puja;
           break;
         } else {
-          // Rechazar por cupo
           if (puja.equipo.id) {
             const equipo = await em.findOne(Equipo, { id: puja.equipo.id });
             if (equipo) {
@@ -350,7 +326,6 @@ export async function cerrarMercado(mercadoId: number) {
       }
 
       if (ganador) {
-        // Asignar jugador al ganador
         if (!ganador.equipo.id) {
           continue;
         }
@@ -361,7 +336,6 @@ export async function cerrarMercado(mercadoId: number) {
 
         if (!equipo) continue;
 
-        // Crear relación equipo-jugador
         const equipoJugador = em.create(EquipoJugador, {
           equipo,
           jugador: item.jugador,
@@ -371,7 +345,6 @@ export async function cerrarMercado(mercadoId: number) {
         });
         em.persist(equipoJugador);
 
-        // Actualizar JugadorTorneo
         const jugadorTorneo = await em.findOne(JugadorTorneo, {
           jugador: item.jugador.id,
           torneo: mercado.torneo.id
@@ -381,11 +354,9 @@ export async function cerrarMercado(mercadoId: number) {
           jugadorTorneo.equipo_jugador = equipoJugador;
         }
 
-        // Actualizar presupuesto
         equipo.presupuesto -= ganador.monto;
         equipo.presupuesto_bloqueado -= ganador.monto;
 
-        // Crear transacción
         const transaccion = em.create(Transaccion, {
           equipo,
           tipo: TipoTransaccion.COMPRA_MERCADO,
@@ -396,11 +367,9 @@ export async function cerrarMercado(mercadoId: number) {
         });
         em.persist(transaccion);
 
-        // Actualizar item
         item.puja_ganadora = ganador;
         ganador.estado = EstadoPuja.GANADA;
 
-        // Marcar perdedores
         for (const otraPuja of pujas) {
           if (otraPuja.id !== ganador.id && otraPuja.estado === EstadoPuja.PENDIENTE) {
             if (otraPuja.equipo.id) {

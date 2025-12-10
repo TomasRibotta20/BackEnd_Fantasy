@@ -1,3 +1,4 @@
+import e from 'express';
 import { z } from 'zod';
 
 export const ofertarSchema = z.object({
@@ -14,3 +15,5 @@ export const obtenerMisOfertasParamsSchema = z.object({
 });
 
 export type OfertarInput = z.infer<typeof ofertarSchema>;
+export type CancelarOfertaParams = z.infer<typeof cancelarOfertaParamsSchema>;
+export type ObtenerMisOfertasParams = z.infer<typeof obtenerMisOfertasParamsSchema>;

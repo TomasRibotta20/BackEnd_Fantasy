@@ -1,24 +1,13 @@
-// Equipo/clausulas.routes.ts - NUEVO
 import { Router } from 'express';
 import { requireAuth } from '../Auth/auth.requires.js';
 import { blindarJugadorController, ejecutarClausulaController } from './clausulas.controller.js';
 import { blindajeSchema, equipoJugadorParamsSchema } from './clausulas.schema.js';
 import { verificarModificacionesHabilitadas as verificarModi } from '../shared/middleware/verificarModificaciones.middleware.js';
+import { validateParams, validate } from '../shared/zod/validate.js';
 
 export const clausulasRouter = Router();
 
 // Blindar jugador (subir cláusula)
-clausulasRouter.post(
-  '/:equipoId/jugadores/:jugadorId/blindar',
-  requireAuth,
-  verificarModi,
-  blindarJugadorController
-);
-
+clausulasRouter.post('/:equipoId/jugadores/:jugadorId/blindar', requireAuth, verificarModi, validateParams(equipoJugadorParamsSchema), blindarJugadorController);
 // Ejecutar cláusula de jugador rival
-clausulasRouter.post(
-  '/:equipoId/jugadores/:jugadorId/ejecutar-clausula',
-  requireAuth,
-  verificarModi,
-  ejecutarClausulaController
-);
+clausulasRouter.post('/:equipoId/jugadores/:jugadorId/ejecutar-clausula', requireAuth, verificarModi, validateParams(equipoJugadorParamsSchema), validate(blindajeSchema), ejecutarClausulaController);

@@ -5,15 +5,14 @@ import { orm } from '../shared/db/orm.js';
 import { Users } from '../User/user.entity.js';
 import bcrypt from 'bcrypt';
 import rateLimit from 'express-rate-limit';
-import { ErrorFactory } from '../shared/errors/errors.factory.js';
+import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
 import { transporter } from '../shared/mailer/mailer.js';
 
 const em = orm.em;
 
-// Rate limiting para auth endpoints
 export const authLimiter = rateLimit({
-  windowMs: 5 * 1000, //5 segundos (para prubeba) //15 * 60 * 1000, // 15 minutos
-  max: 5, // máximo 5 intentos por IP
+  windowMs: 5 * 1000,
+  max: 5,
   message: { message: 'Demasiados intentos de login. Intenta nuevamente en  5 segundos.' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -22,28 +21,34 @@ export const authLimiter = rateLimit({
 async function register(req: Request, res: Response, next: NextFunction) {
   const { email, password } = req.body;
   try {
-    // Verificar si el usuario ya existe
+
     const existingUser = await em.findOne(Users, { email });
-    if (existingUser) return next(ErrorFactory.duplicate('User already exists'));
+    if (existingUser) throw ErrorFactory.duplicate('User already exists');
+
     const hashedPassword = await bcrypt.hash(password, 10);
     req.body.password = hashedPassword;
     const user = em.create(Users, req.body);
     await em.flush();
     const { password: _, ...userWithoutPassword } = user;
-    return res.status(201).json({ message: 'User created successfully', data: userWithoutPassword });
-  } catch (error) {
-    return next(ErrorFactory.internal('Error creating user'));
+    res.status(201).json({ message: 'User created successfully', data: userWithoutPassword });
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error creating user'));
+    }
   }
 }
 
 async function login(req: Request, res: Response, next: NextFunction) {
   const { email, password } = req.body;
   try {
-    // Verificar si el usuario ya existe
     const existingUser = await em.findOne(Users, { email });
-    if (!existingUser) return next(ErrorFactory.notFound('User not found'));
+    if (!existingUser) throw ErrorFactory.notFound('User not found');
+
     const isPasswordValid = await bcrypt.compare(password, existingUser.password);
-    if (!isPasswordValid) return next(ErrorFactory.validationAppError('Invalid password'));
+    if (!isPasswordValid) throw ErrorFactory.validationAppError('Invalid password');
+
     const accessToken = jwt.sign(
       { userId: existingUser.id, username: existingUser.username, email: existingUser.email, role: existingUser.role, type: 'access' },
       SECRET_JWT_KEY,
@@ -54,10 +59,11 @@ async function login(req: Request, res: Response, next: NextFunction) {
       SECRET_REFRESHJWT_KEY,
       { expiresIn: '7d' }
     );
+
     existingUser.refreshToken = await bcrypt.hash(refreshToken, 10);
     await em.flush();
     const { password: _, ...userWithoutPassword } = existingUser;
-    return res
+    res
       .cookie('access_token', accessToken, {
         httpOnly: true,
         sameSite: 'strict',
@@ -71,26 +77,26 @@ async function login(req: Request, res: Response, next: NextFunction) {
       })
       .status(200)
       .json({ message: 'Login successful', data: userWithoutPassword }); //Falta activar el secure en producción
-  } catch (error) {
-    return next(ErrorFactory.internal('Error interno del servidor'));
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error interno del servidor'));
+    }
   }
 }
 
 async function logout(req: Request, res: Response) {
-  console.log('🍪 Headers cookie en logout:', req.headers.cookie);
-  console.log('🍪 req.cookies en logout:', req.cookies);
   const refreshToken = req.cookies.refresh_token;
-  console.log('🔍 refreshToken encontrado:', !!refreshToken);
   if (refreshToken) {
     try {
       const payload = jwt.verify(refreshToken, SECRET_REFRESHJWT_KEY) as any;
       const user = await em.findOne(Users, { id: payload.userId });
       if (user) {
-        user.refreshToken = undefined; // Revocar refresh token
+        user.refreshToken = undefined;
         await em.flush();
       }
-    } catch (error) {
-      // Ignorar errores en logout
+    } catch (error: any) {
     }
   }
   return res.clearCookie('access_token', { httpOnly: true, sameSite: 'strict' }).clearCookie('refresh_token', { httpOnly: true, sameSite: 'strict', path: '/api/auth' }).json({ message: 'Logout successful' });
@@ -102,7 +108,7 @@ async function forgotPassword(req: Request, res: Response, next: NextFunction) {
   let existingUser;
   try {
     existingUser = await em.findOne(Users, { email });
-  } catch (error) {
+  } catch (error: any) {
     return next(ErrorFactory.internal('Error accediendo a la base de datos'));
   }
   if (!existingUser) {
@@ -111,13 +117,13 @@ async function forgotPassword(req: Request, res: Response, next: NextFunction) {
   let resetToken;
   try {
     resetToken = jwt.sign({ userId: existingUser.id, email: existingUser.email, type: 'password_reset' }, SECRET_RESETJWT_KEY, { expiresIn: '10m' });
-  } catch (error) {
+  } catch (error: any) {
     return next(ErrorFactory.internal('Error interno del servidor'));
   }
   let hashedToken;
   try {
     hashedToken = await bcrypt.hash(resetToken, 10);
-  } catch (error) {
+  } catch (error: any) {
     return next(ErrorFactory.internal('Error interno del servidor'));
   }
   existingUser.resetToken = hashedToken;
@@ -143,14 +149,14 @@ async function forgotPassword(req: Request, res: Response, next: NextFunction) {
   } else {
     try {
       await transporter.sendMail(mailOptions);
-    } catch (error) {
+    } catch (error: any) {
       return next(ErrorFactory.internal('Error interno del servidor'));
   }
   }
   ////////////////////////////////////////////////////////////////////////////
   try {
     await em.flush();
-  } catch (error) {
+  } catch (error: any) {
     return next(ErrorFactory.internal('Error interno del servidor'));
   }
   return res.status(200).json({ message });
@@ -167,10 +173,13 @@ async function createNewPassword(req: Request, res: Response, next: NextFunction
   try {
     jwtPayLoad = jwt.verify(resetToken, SECRET_RESETJWT_KEY);
     if (!jwtPayLoad || typeof jwtPayLoad === 'string' || jwtPayLoad.type !== 'password_reset') {
-      return next(ErrorFactory.internal('Token inválido'));
+      throw ErrorFactory.internal('Token inválido');
     }
     user = await em.findOne(Users, { id: jwtPayLoad.userId });
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      return next(error);
+    }
     return next(ErrorFactory.unauthorized('Token inválido o expirado'));
   }
   if (!user || !user.resetToken) {
@@ -186,7 +195,7 @@ async function createNewPassword(req: Request, res: Response, next: NextFunction
   try {
     await em.flush();
     return res.status(200).json({ message: 'Contraseña actualizada exitosamente' });
-  } catch (error) {
+  } catch (error: any) {
     return next(ErrorFactory.internal('Error interno del servidor'));
   }
 }
@@ -200,16 +209,19 @@ async function refreshToken(req: Request, res: Response, next: NextFunction) {
   try {
     payload = jwt.verify(refreshToken, SECRET_REFRESHJWT_KEY);
     if (!payload || typeof payload === 'string' || payload.type !== 'refresh') {
-      return next(ErrorFactory.unauthorized('Invalid refresh token format'));
+      throw ErrorFactory.unauthorized('Invalid refresh token format');
     }
-  } catch (error) {
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      return next(error);
+    }
     return next(ErrorFactory.unauthorized('Invalid or expired refresh token'));
   }
   let existingUser;
   try {
     const { email } = payload;
     existingUser = await em.findOne(Users, { email });
-  } catch (error) {
+  } catch (error: any) {
     return next(ErrorFactory.internal('Error interno del servidor'));
   }
   if (!existingUser) {
@@ -218,11 +230,11 @@ async function refreshToken(req: Request, res: Response, next: NextFunction) {
   if (!existingUser.refreshToken) {
     return next(ErrorFactory.unauthorized('Refresh token no encontrado'));
   }
-  // Comparar refresh token hasheado
+
   let isRefreshTokenValid;
   try {
     isRefreshTokenValid = await bcrypt.compare(refreshToken, existingUser.refreshToken);
-  } catch (error) {
+  } catch (error: any) {
     return next(ErrorFactory.internal('Error validando refresh token'));
   }
   if (!isRefreshTokenValid) {
@@ -242,7 +254,7 @@ async function refreshToken(req: Request, res: Response, next: NextFunction) {
   existingUser.refreshToken = hashedNewRefreshToken;
   try {
     await em.flush();
-  } catch (error) {
+  } catch (error: any) {
     return next(ErrorFactory.internal('Error interno del servidor'));
   }
   return res

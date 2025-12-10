@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { Player } from './player.entity.js';
 import { orm } from '../shared/db/orm.js';
 import { findAndPaginate } from './player.service.js';
-import { ErrorFactory } from '../shared/errors/errors.factory.js';
+import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
 import { clubes } from '../Club/club.entity.js';
 import { Position } from '../Position/position.entity.js';
 
@@ -15,7 +15,6 @@ const em = orm.em;
  * @param res El objeto de respuesta de Express para enviar los resultados.
  * @returns Una respuesta HTTP 200 con la lista de jugadores encontrados o un mensaje de error y una respuesta HTTP 500.
  */
-
 async function findAll(req: Request, res: Response, next: NextFunction){
     try{
         const players = await em.find(Player, {}, {orderBy: {id: 'ASC'}});
@@ -31,13 +30,12 @@ async function findAll(req: Request, res: Response, next: NextFunction){
  * @param res El objeto de respuesta de Express para enviar los resultados.
  * @returns Una respuesta HTTP 200 con el jugador encontrado o un mensaje de error y una respuesta HTTP 404, 500 si falla.
  */
-
 async function findOne(req: Request, res: Response, next: NextFunction){
     const id = Number.parseInt(req.params.id);
     try{
         const player = await em.findOneOrFail(Player, {id});
         res.status(200).json({message: 'found Player', data: player});
-    }catch (error:any) {
+    } catch (error:any) {
         if (error.name === 'NotFoundError') {
             return next(ErrorFactory.notFound(`Player with ID ${id} not found`));
         }
@@ -55,13 +53,12 @@ async function findOne(req: Request, res: Response, next: NextFunction){
 async function add(req: Request, res: Response, next: NextFunction){
     try{
         const { clubId, positionId, ...playerData } = req.body;
-    
         const club = await em.findOneOrFail(clubes, { id: clubId });
         let position = null;
         if (positionId) {
             position = await em.findOne(Position, { id: positionId });
             if (!position) {
-                return next(ErrorFactory.notFound(`Position with ID ${positionId} not found`));
+                throw ErrorFactory.notFound(`Position with ID ${positionId} not found`);
             }
         }
         const player = em.create(Player, {
@@ -73,9 +70,12 @@ async function add(req: Request, res: Response, next: NextFunction){
         res.status(201).json({message: 'Player created', data: player});
     } catch (error:any) {
         if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
-            return next(ErrorFactory.duplicate('Player with that name already exists'));
+            next(ErrorFactory.duplicate('Player with that name already exists'));
+        } else if (error instanceof AppError) {
+            next(error);
+        } else {
+            next(ErrorFactory.internal('Error creating player'));
         }
-        next(ErrorFactory.internal('Error creating player'));
     }
 }
 
@@ -110,14 +110,14 @@ async function update(req: Request, res: Response, next: NextFunction){
         if (clubId) {
             const club = await em.findOne(clubes, { id: clubId });
             if (!club) {
-                return next(ErrorFactory.notFound(`Club with ID ${clubId} not found`));
+                throw ErrorFactory.notFound(`Club with ID ${clubId} not found`);
             }
             playerData.club = club;
         }
         if (positionId) {
             const position = await em.findOne(Position, { id: positionId });
             if (!position) {
-                return next(ErrorFactory.notFound(`Position with ID ${positionId} not found`));
+                throw ErrorFactory.notFound(`Position with ID ${positionId} not found`);
             }
             playerData.position = position;
         } else if (positionId === null) {
@@ -128,9 +128,12 @@ async function update(req: Request, res: Response, next: NextFunction){
         res.status(200).json({message: 'Player updated', data: player});
     }catch (error: any) {
         if (error.name === 'NotFoundError') {
-            return next(ErrorFactory.notFound(`Player with ID ${id} not found`));
+            next(ErrorFactory.notFound(`Player with ID ${id} not found`));
+        } else if (error instanceof AppError) {
+            next(error);
+        } else {
+            next(ErrorFactory.internal('Error updating player'));
         }
-        next(ErrorFactory.internal('Error updating player'));
     }
 }
 /**
@@ -142,7 +145,6 @@ async function update(req: Request, res: Response, next: NextFunction){
  */
  async function getPlayers(req: Request, res: Response, next: NextFunction) {
   try {
-    // Parsear los parámetros de consulta
     const name = req.query.name as string;
     const position = req.query.position as string;
     const club = req.query.club as string;
@@ -156,10 +158,9 @@ async function update(req: Request, res: Response, next: NextFunction){
       page,
       limit
     });
-    
-    return res.status(200).json(result);
+    res.status(200).json(result);
   } catch (error: any) {
-    return next(ErrorFactory.internal('Error al obtener jugadores'));
+    next(ErrorFactory.internal('Error al obtener jugadores'));
   }
 }
 

@@ -62,11 +62,6 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
 async function add(req: Request, res: Response, next: NextFunction) {
   try {
     const { nombre, temporada, etapa, liga_id, fecha_inicio, fecha_fin } = req.body;
-  
-    //if (!nombre || temporada == null) {
-    //  return next(ErrorFactory.validationAppError('Nombre y temporada son campos requeridos'));
-    //}
-
     const jornada = em.create(Jornada, {
       nombre,
       temporada: Number(temporada),
@@ -93,7 +88,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
  * @returns Una respuesta HTTP 200 con un Json con la jornada actualizada o un error HTTP 404, 500 si falla
  */
 async function update(req: Request, res: Response, next: NextFunction) {
-  const id = Number(req.params.id); //Ya validado por Zod como number
+  const id = Number(req.params.id);
   try {
     const jornada = await em.findOneOrFail(Jornada, id);
 

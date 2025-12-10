@@ -7,7 +7,6 @@ import { HistorialPrecio, MotivoActualizacionPrecio } from './historial-precio.e
 import { EstadisticaJugador } from '../EstadisticaJugador/estadistica-jugador.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 
-
 interface TendenciasAnalisis {
   modificadorTotal: number;
   detalles: string[];
@@ -21,18 +20,15 @@ export class HistorialPrecioService {
     em: EntityManager, 
     clubId: number
   ) {
-    
-    // Buscar el club
-    const club = await em.findOne(clubes, { id: clubId });
 
+    const club = await em.findOne(clubes, { id: clubId });
     if (!club) {
       throw ErrorFactory.notFound(`Club con ID ${clubId} no encontrado`);
     }
 
-    // Usar el servicio existente de jugadores con filtro por club(sin paginación)
     const resultadoJugadores = await findAndPaginate({
       club: clubId.toString(),
-      limit: 1000 // Límite alto para obtener todos los jugadores
+      limit: 1000
     });
 
     const jugadores = resultadoJugadores.data;
@@ -40,10 +36,6 @@ export class HistorialPrecioService {
     if (jugadores.length === 0) {
       throw ErrorFactory.notFound(`No se encontraron jugadores para el club ${club.nombre}`);
     }
-
-    console.log(`rocesando ${jugadores.length} jugadores del club ${club.nombre}`);
-
-    // Preparar datos para la IA
     const jugadoresParaIA: JugadorParaPrecio[] = jugadores
       .filter(j => j.id !== undefined)
       .map(j => ({
@@ -53,12 +45,9 @@ export class HistorialPrecioService {
         edad: j.age || undefined
       }));
 
-    // Llamar a la IA
-    console.log("Consultando a groq");
-    const preciosSugeridos = await calcularPreciosConIA(club.nombre || 'Club', jugadoresParaIA);
-    console.log(` Obtuvimos ${preciosSugeridos.length} precios`);
 
-    // Combinar resultados con datos de jugadores
+    const preciosSugeridos = await calcularPreciosConIA(club.nombre || 'Club', jugadoresParaIA);
+
     const resultados = jugadores.map(jugador => {
       const precioIA = preciosSugeridos.find(p => p.id === jugador.id);
       
@@ -72,12 +61,10 @@ export class HistorialPrecioService {
       };
     });
 
-    // Ordenar por precio descendente
     const resultadosOrdenados = resultados.sort(
       (a, b) => (b.precio_sugerido || 0) - (a.precio_sugerido || 0)
     );
 
-    // Calcular estadísticas
     const preciosValidos = resultados.filter(r => r.precio_sugerido !== null);
     const precioPromedio = preciosValidos.length > 0
       ? Math.round(preciosValidos.reduce((sum, r) => sum + (r.precio_sugerido || 0), 0) / preciosValidos.length)
@@ -114,7 +101,6 @@ export class HistorialPrecioService {
     em: EntityManager,
     clubId: number
   ) {
-    // Obtener precios sugeridos
     const resultado = await this.obtenerPreciosSugeridosPorClub(em, clubId);
 
     let preciosActualizados = 0;
@@ -131,7 +117,6 @@ export class HistorialPrecioService {
       }
 
       try {
-        // Buscar el jugador
         const jugador = await em.findOne(Player, { id: jugadorData.id });
 
         if (!jugador) {
@@ -140,21 +125,17 @@ export class HistorialPrecioService {
           continue;
         }
 
-        // Verificar si ya tiene precio
         const yaTeníaPrecio = jugador.precio_actual !== null && jugador.precio_actual !== undefined;
 
-        // Actualizar precio actual del jugador
         jugador.precio_actual = jugadorData.precio_sugerido;
         jugador.ultima_actualizacion_precio = new Date();
 
-        // Crear registro en historial
         const historial = new HistorialPrecio();
         historial.jugador = jugador;
         historial.precio = jugadorData.precio_sugerido;
         historial.fecha = new Date();
         historial.motivo = MotivoActualizacionPrecio.INICIAL;
         historial.observaciones = `Precio calculado por IA para temporada 2021`;
-
         em.persist(historial);
 
         if (yaTeníaPrecio) {
@@ -168,8 +149,6 @@ export class HistorialPrecioService {
         errores++;
       }
     }
-
-    // Commit de todos los cambios
     await em.flush();
 
     return {
@@ -188,19 +167,13 @@ export class HistorialPrecioService {
    * Calcula y guarda precios para TODOS los clubes
    */
   static async calcularYGuardarPreciosTodosLosClubes(em: EntityManager) {
-    // Obtener todos los clubes
     const todosLosClubes = await em.find(clubes, {});
-
-    console.log(`Procesando ${clubes.length} clubes...`);
-
     const resultados = [];
     let totalExitosos = 0;
     let totalErrores = 0;
 
     for (const club of todosLosClubes) {
       try {
-        console.log(`\nProcesando ${club.nombre}...`);
-        
         if (!club.id) {
           throw ErrorFactory.notFound(`Club ${club.nombre} no tiene ID válido`);
         }
@@ -214,13 +187,8 @@ export class HistorialPrecioService {
         });
 
         totalExitosos++;
-
-        // Esperar 2 segundos entre clubes asi no saturaramos la API
         await new Promise(resolve => setTimeout(resolve, 2000));
-
       } catch (error: any) {
-        console.error(`Error procesando club ${club.nombre}:`, error.message);
-        
         resultados.push({
           club: club.nombre,
           exitoso: false,
@@ -230,7 +198,6 @@ export class HistorialPrecioService {
         totalErrores++;
       }
     }
-
     return {
       total_clubes: todosLosClubes.length,
       clubes_exitosos: totalExitosos,
@@ -239,15 +206,10 @@ export class HistorialPrecioService {
     };
   }
 
-
-  
 /**
    * Actualiza los precios de todos los jugadores basándose en su rendimiento en la jornada
    */
   static async actualizarPreciosPorRendimiento(em: EntityManager, jornadaId: number): Promise<any> {
-    console.log(`\nIniciando actualizacion de precios por rendimiento - Jornada ${jornadaId}`);
-
-    // Obtener directamente las estadísticas de la jornada usando la relación partido.jornada
     const estadisticas = await em.find(
       EstadisticaJugador, 
       { 
@@ -260,7 +222,6 @@ export class HistorialPrecioService {
     );
 
     if (estadisticas.length === 0) {
-      console.log('No hay estadisticas de jugadores en esta jornada');
       return {
         total_jugadores_procesados: 0,
         precios_actualizados: 0,
@@ -268,8 +229,6 @@ export class HistorialPrecioService {
         errores: 0
       };
     }
-
-    console.log(`Procesando ${estadisticas.length} estadisticas de jugadores`);
 
     let preciosActualizados = 0;
     let preciosSinCambio = 0;
@@ -280,50 +239,33 @@ export class HistorialPrecioService {
         const jugador = estadistica.jugador;
         const puntaje = estadistica.puntaje_total;
 
-        // Validar que el jugador tenga precio actual
         if (!jugador.precio_actual || jugador.precio_actual <= 0) {
           console.warn(`Jugador ${jugador.name} (ID: ${jugador.id}) no tiene precio actual valido, omitiendo...`);
           errores++;
           continue;
         }
-
-        // Validar que el jugador tenga ID válido
         if (!jugador.id) {
           console.warn(`Jugador ${jugador.name} no tiene ID valido, omitiendo...`);
           errores++;
           continue;
         }
 
-        // Calcular ajuste base por puntaje
         const ajusteBase = this.calcularAjusteBase(puntaje);
-
-        // Analizar tendencias (solo si jornada >= 4)
         const tendencias = await this.analizarTendencias(em, jugador.id, jornadaId);
-
-        // Calcular ajuste total
         const ajusteTotal = ajusteBase + tendencias.modificadorTotal;
 
-        // Si el ajuste es 0, no hacer nada
         if (ajusteTotal === 0) {
           preciosSinCambio++;
           continue;
         }
 
-        // Calcular nuevo precio
         const precioAnterior = jugador.precio_actual;
         let precioNuevo = Math.round(precioAnterior * (1 + ajusteTotal / 100));
 
-        // Aplicar redondeo según rango
         precioNuevo = this.redondearPrecio(precioNuevo);
-
-        // Aplicar precio mínimo
         precioNuevo = this.aplicarPrecioMinimo(precioNuevo);
-
-        // Actualizar precio del jugador
         jugador.precio_actual = precioNuevo;
         jugador.ultima_actualizacion_precio = new Date();
-
-        // Crear registro en historial
         const historial = new HistorialPrecio();
         historial.jugador = jugador;
         historial.precio = precioNuevo;
@@ -342,8 +284,6 @@ export class HistorialPrecioService {
         errores++;
       }
     }
-
-    // Guardar cambios
     await em.flush();
 
     console.log(`\nActualizacion completada:`);
@@ -399,29 +339,24 @@ export class HistorialPrecioService {
     const detalles: string[] = [];
     let modificadorTotal = 0;
 
-    // Obtener las últimas 3 jornadas (antes de la actual)
     const ultimasEstadisticas = await em.find(
       EstadisticaJugador,
       { jugador: jugadorId },
       {
         populate: ['partido', 'partido.jornada'],
         orderBy: { partido: { jornada: { id: 'DESC' } } },
-        limit: 4 // Obtener 4 para excluir la actual
+        limit: 4
       }
     );
-
-    // Filtrar para obtener solo las 3 anteriores a la actual
     const estadisticasPrevias = ultimasEstadisticas
       .filter(e => e.partido.jornada.id !== jornadaActualId)
       .slice(0, 3);
 
-    // Si no hay suficientes jornadas previas (menos de 3), no aplicar tendencias
     if (estadisticasPrevias.length < 3) {
       detalles.push('Sin tendencias (jornada < 4)');
       return { modificadorTotal: 0, detalles };
     }
 
-    // Ordenar por jornada ascendente para analizar cronológicamente
     const puntajes = estadisticasPrevias
       .sort((a, b) => (a.partido.jornada?.id || 0) - (b.partido.jornada?.id || 0))
       .map(e => e.puntaje_total);

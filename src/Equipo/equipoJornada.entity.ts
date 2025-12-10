@@ -6,7 +6,7 @@ import { Player } from '../Player/player.entity.js'
 
 @Entity()
 export class EquipoJornada extends BaseEntity {
-  @ManyToOne(() => Equipo)
+  @ManyToOne(() => Equipo, { deleteRule: 'cascade' })
   equipo!: Equipo
 
   @ManyToOne(() => Jornada)

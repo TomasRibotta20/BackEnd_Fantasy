@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import e, { Request, Response, NextFunction } from 'express';
 import {
   inicializarJugadoresTorneo,
   abrirMercado as abrirMercadoService,
@@ -15,19 +15,18 @@ import { MercadoDiario } from './mercadoDiario.entity.js';
 export async function inicializarJugadores(req: Request, res: Response, next: NextFunction) {
   try {
     const { torneoId } = req.body;
-
-    if (!torneoId) {
-      throw ErrorFactory.badRequest('El torneoId es requerido');
-    }
-
     const resultado = await inicializarJugadoresTorneo(torneoId);
 
-    return res.status(200).json({
+    res.status(200).json({
       message: 'Jugadores inicializados exitosamente',
       data: resultado
     });
-  } catch (error) {
-    return next(error);
+  } catch (error: any) {
+    if (error instanceof Error) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error desconocido al inicializar jugadores'));
+    }
   }
 }
 
@@ -37,15 +36,17 @@ export async function inicializarJugadores(req: Request, res: Response, next: Ne
 export async function abrirMercado(req: Request, res: Response, next: NextFunction) {
   try {
     const { torneoId } = req.body;
-
     const resultado = await abrirMercadoService(torneoId);
-
-    return res.status(201).json({
+    res.status(201).json({
       message: 'Mercado abierto exitosamente',
       data: resultado
     });
-  } catch (error) {
-    return next(error);
+  } catch (error: any) {
+    if (error instanceof Error) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error desconocido al abrir mercado'));
+    }
   }
 }
 
@@ -55,41 +56,35 @@ export async function abrirMercado(req: Request, res: Response, next: NextFuncti
 export async function cerrarMercado(req: Request, res: Response, next: NextFunction) {
   try {
     const mercadoId = Number(req.params.mercadoId);
-    //obtenemos el mercado para luego obtener el torneoId y asi abrir el siguiente mercado
     const em = orm.em.fork();
     const mercado = await em.findOne(MercadoDiario, Number(mercadoId));
-    
     if (!mercado) {
       throw ErrorFactory.notFound('Mercado no encontrado');
     }
-
     const torneoId = mercado.torneo.id;
-
     if (!torneoId) {
       throw ErrorFactory.badRequest('El torneoId del mercado es inválido');
     }
-    
-    //cerramos el mercado actual
     const resultado = await cerrarMercadoService(mercadoId);
-
-    //abrimos el siguiente mercado
     let nuevoMercado = null;
     try {
-      console.log('Abriendo automáticamente el siguiente mercado...');
       nuevoMercado = await abrirMercadoService(torneoId);
-      console.log(`✓ Mercado #${nuevoMercado.mercado.numero_mercado} abierto automáticamente`);
     } catch (error: any) {
       console.log('No se pudo abrir el siguiente mercado:', error.message);
     }
 
-    return res.status(200).json({
+    res.status(200).json({
       message: 'Mercado cerrado exitosamente',
       mercado_cerrado: resultado.mercado,
       estadisticas: resultado.estadisticas,
       nuevo_mercado: nuevoMercado?.mercado || null
     });
-  } catch (error) {
-    return next(error);
+  } catch (error: any) {
+    if (error instanceof Error) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error desconocido al cerrar mercado'));
+    }
   }
 }
 
@@ -99,9 +94,7 @@ export async function cerrarMercado(req: Request, res: Response, next: NextFunct
 export async function obtenerMercadoActivo(req: Request, res: Response, next: NextFunction) {
   try {
     const torneoId = Number(req.params.torneoId);
-
     const mercado = await obtenerMercadoActivoService(torneoId);
-
     if (!mercado) {
       return res.status(200).json({
         message: 'No hay mercado activo en este momento',
@@ -109,10 +102,14 @@ export async function obtenerMercadoActivo(req: Request, res: Response, next: Ne
       });
     }
 
-    return res.status(200).json({
+    res.status(200).json({
       data: mercado
     });
-  } catch (error) {
-    return next(error);
+  } catch (error: any) {
+    if (error instanceof Error) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error desconocido al obtener mercado activo'));
+    }
   }
 }

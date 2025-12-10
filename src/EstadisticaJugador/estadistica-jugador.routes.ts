@@ -4,14 +4,12 @@ import {
   getPuntajesPorJornada,
   getPuntajeJugadorPorJornada 
 } from './estadistica-jugador.controller.js';
+import { requireAdmin } from '../Auth/auth.requires.js';
+import { jornadaIdParamsSchema, jornadaJugadorParamsSchema } from './estadistica-jugador.schema.js';
+import { validateParams } from '../shared/zod/validate.js';
 
 export const estadisticaJugadorRouter = Router();
 
-// Actualizar estadísticas para una jornada
-estadisticaJugadorRouter.post('/jornadas/:jornadaId/actualizar', actualizarEstadisticasJornada);
-
-// Obtener puntajes de todos los jugadores para una jornada
-estadisticaJugadorRouter.get('/jornadas/:jornadaId/puntajes', getPuntajesPorJornada);
-
-// Obtener puntaje de un jugador específico en una jornada
-estadisticaJugadorRouter.get('/jornadas/:jornadaId/jugadores/:jugadorId', getPuntajeJugadorPorJornada);
+estadisticaJugadorRouter.post('/jornadas/:jornadaId/actualizar', requireAdmin, validateParams(jornadaIdParamsSchema), actualizarEstadisticasJornada);
+estadisticaJugadorRouter.get('/jornadas/:jornadaId/puntajes', requireAdmin, validateParams(jornadaIdParamsSchema), getPuntajesPorJornada);
+estadisticaJugadorRouter.get('/jornadas/:jornadaId/jugadores/:jugadorId', requireAdmin,validateParams(jornadaJugadorParamsSchema), getPuntajeJugadorPorJornada);

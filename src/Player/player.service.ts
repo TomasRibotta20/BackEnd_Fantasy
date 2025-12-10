@@ -20,13 +20,10 @@ export async function findAndPaginate({
   page?: number; 
   limit?: number; 
 }) {
-  // Usar una única conexión al EntityManager para toda la función
   const em = orm.em.fork();
   
   const where: FilterQuery<Player> = {};
-
   if (name) {
-    // Búsqueda case-insensitive usando regexp en lugar de ilike (más portable)
     where.$or = [
       { name: { $re: `(?i).*${name}.*` } },
       { firstname: { $re: `(?i).*${name}.*` } },
@@ -35,7 +32,6 @@ export async function findAndPaginate({
   }
 
   if (position) {
-    // Filtro por ID de posición si es numérico, o por descripción si es texto
     const positionFilter = !isNaN(Number(position)) 
       ? { id: Number(position) } 
       : { description: { $re: `(?i).*${position}.*` } };
@@ -44,7 +40,6 @@ export async function findAndPaginate({
   }
 
   if (club) {
-    // Similar a position, permite filtrar por ID o por nombre
     const clubFilter = !isNaN(Number(club))
       ? { id: Number(club) }
       : { nombre: { $re: `(?i).*${club}.*` } };
@@ -53,8 +48,6 @@ export async function findAndPaginate({
   }
 
   const offset = (page - 1) * limit;
-  
-  // Usar un tipo más específico para FindOptions que incluya las relaciones de Player
   const options: FindOptions<Player, 'position' | 'club'> = {
     populate: ['position', 'club'],
     orderBy: { name: QueryOrder.ASC },

@@ -10,7 +10,6 @@ import {
 } from './auth.controller.js';
 import { validate } from '../shared/zod/validate.js';
 import { forgotPasswordSchema, newPasswordSchema, loginSchema, registerSchema } from './auth.schema.js';
-//import { requireAuth } from './auth.requires.js';
 
 export const authRouter = Router();
 

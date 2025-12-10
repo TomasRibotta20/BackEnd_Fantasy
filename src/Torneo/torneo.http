@@ -1,350 +1,132 @@
-### ========== RUTAS DE ADMIN ==========
+### Variables
+@baseUrl = http://localhost:3000/api
+@torneoId = 28
+@userId = 8
+@codigoAcceso = R055O6
+### 5K79XN
+### 
 
-### Obtener todos los torneos con filtros específicos (Admin)
-GET http://localhost:3000/api/torneos?estado=ACTIVO&min_participantes=1&max_participantes=10&limit=5&offset=0&fecha_creacion_desde=2025-12-03T20:00:00Z&fecha_creacion_hasta=2025-12-03T23:59:00Z
-Content-Type: application/json
+### ==============================================
+### RUTAS DE ADMIN
+### ==============================================
 
-### Obtener un torneo específico con detalles completos (Admin)
-GET http://localhost:3000/api/torneos/12
-Content-Type: application/json
+### 1. GET - Obtener todos los torneos (Admin) - Sin filtros
+GET {{baseUrl}}/torneos
 
-### ========== CREACIÓN Y MODIFICACIÓN ==========
+### 2. GET - Obtener todos los torneos (Admin) - Con filtros
+GET {{baseUrl}}/torneos?estado=EN_ESPERA&limit=10&offset=0
 
-### Crear un nuevo torneo (requiere autenticación)
-# Primero hacer LOGIN desde auth.http
-POST http://localhost:3000/api/torneos
-Content-Type: application/json
+### 3. GET - Obtener todos los torneos (Admin) - Con filtros de fecha
+GET {{baseUrl}}/torneos?fecha_creacion_desde=2024-01-01T00:00:00.000Z&fecha_creacion_hasta=2025-12-31T23:59:59.999Z
 
-{
-  "nombre": "La Jorgeliga",
-  "descripcion": "Torneo de fantasy",
-  "cupoMaximo": 3,
-  "nombre_equipo": "Equipo del creador",
-  "fecha_inicio": "2024-01-15T10:00:00Z"
-}
+### 4. GET - Obtener todos los torneos (Admin) - Con filtros de participantes
+GET {{baseUrl}}/torneos?min_participantes=1&max_participantes=8
 
-### ========== ACTUALIZACIÓN ==========
+### 5. GET - Obtener un torneo específico (Admin)
+GET {{baseUrl}}/torneos/{{torneoId}}
 
-### Actualizar torneo completo (PUT) - Como creador o admin
-PUT http://localhost:3000/api/torneos/12
-Content-Type: application/json
+### 6. DELETE - Eliminar un torneo (Admin)
+DELETE {{baseUrl}}/torneos/{{torneoId}}
 
-{
-  "nombre": "Liga Fantasy 2024 - Actualizada"
-}
+### ==============================================
+### RUTAS DE USUARIO AUTENTICADO
+### ==============================================
 
-### Actualización parcial (PATCH) - Solo algunos campos
-PATCH http://localhost:3000/api/torneos/5
-Content-Type: application/json
-
-{
-  "cupoMaximo": 3
-}
-
-### Actualizar solo el cupo máximo
-PATCH http://localhost:3000/api/torneos/14
+### 7. POST - Crear un nuevo torneo
+POST {{baseUrl}}/torneos
 Content-Type: application/json
 
 {
-  "codigo_acceso": "WWFYZK"
-}
-
-### Actualizar código de acceso (solo admin)
-PATCH http://localhost:3000/api/torneos/3
-Content-Type: application/json
-
-{
-  "codigo_acceso": "NUEVO123"
-}
-
-### ========== ELIMINACIÓN ==========
-
-### Eliminar torneo (solo admin)
-DELETE http://localhost:3000/api/torneos/4
-Content-Type: application/json
-
-### ========== RUTAS DE USUARIO ==========
-
-### Validar código de acceso antes de unirse
-POST http://localhost:3000/api/torneos/validar-codigo
-Content-Type: application/json
-
-{
-  "codigo_acceso": "DLMSGC"
-}
-
-### Unirse a un torneo
-POST http://localhost:3000/api/torneos/unirse
-Content-Type: application/json
-
-{
-  "codigo_acceso": "421H24",
-  "nombre_equipo": "chicana Fc"
-}
-
-### Ver mis torneos (con filtro opcional por estado)
-POST http://localhost:3000/api/torneos/mis-torneos
-Content-Type: application/json
-
-### Ver detalles de un torneo como participante
-GET http://localhost:3000/api/torneos/mi-torneo/21
-Content-Type: application/json
-
-### Abandonar un torneo
-DELETE http://localhost:3000/api/torneos/abandonar/5
-Content-Type: application/json
-
-###################################################################
-### Flujo basico de creación de torneo
-### 1. Usuario se loguea
-
-POST http://localhost:3000/api/auth/login
-Content-Type: application/json
-
-{
-  "email": "admin@admin.com",
-  "password": "admin123"
-}
-
-### 2. Usuario crea un torneo
-
-### La descripción es opcional y la fecha de inicio también lo es
-POST http://localhost:3000/api/torneos
-Content-Type: application/json
-
-{
-  "nombre": "La LIGA",
-  "descripcion": "Torneo de fantasy", 
-  "cupoMaximo": 3,
-  "nombre_equipo": "Equipo de Prueba",
-  "fecha_inicio": "2024-01-15T10:00:00Z"
-}
-
-### 3. Usuario verifica que el torneo fue creado
-
-POST http://localhost:3000/api/torneos/mis-torneos
-Content-Type: application/json
-
-### Ahora hay que probar el update de ese torneo EN_ESPERA
-
-### 4. Usuario quiere actualizar el torneo
-### Actualizar torneo completo (PUT) - Como creador o admin
-PUT http://localhost:3000/api/torneos/5
-Content-Type: application/json
-
-{
-  "nombre": "Liga Fantasy 2024 - Actualizada",
-  "cupoMaximo": 5,
-  "fecha_inicio": "2024-02-01T15:00:00Z"
-}
-
-### Actualización parcial (PATCH) - Solo algunos campos
-PATCH http://localhost:3000/api/torneos/1
-Content-Type: application/json
-
-{
-  "nombre": "Nuevo Nombre de Torneo"
-}
-
-### Actualizar solo el cupo máximo
-PATCH http://localhost:3000/api/torneos/5
-Content-Type: application/json
-
-{
-  "cupoMaximo": 10
-}
-
-### Actualizar código de acceso (solo admin)
-PATCH http://localhost:3000/api/torneos/1
-Content-Type: application/json
-
-{
-  "codigo_acceso": "NUEVO123"
-}
-
-###################################################
-POST http://localhost:3000/api/auth/login
-Content-Type: application/json
-
-{
-  "email": "TomasRibotta20@gmail.com",
-  "password": "TeAmoMazalan69"
-}
-
-
-
-### TORNEO 1 - Liga Premier
-POST http://localhost:3000/api/auth/login
-Content-Type: application/json
-
-{
-  "email": "TomasRibotta20@gmail.com",
-  "password": "TeAmoMazalan69"
-}
-###
-POST http://localhost:3000/api/torneos
-Content-Type: application/json
-
-{
-  "nombre": "Liga Premier Fantasy",
-  "descripcion": "Torneo basado en la Premier League",
-  "cupoMaximo": 5,
-  "nombre_equipo": "Manchester United FC",
-  "fecha_inicio": "2024-01-15T10:00:00Z"
-}
-
-### TORNEO 2 - Champions League
-POST http://localhost:3000/api/torneos
-Content-Type: application/json
-
-{
-  "nombre": "Champions League Fantasy",
-  "descripcion": "Torneo de la máxima competición europea",
-  "cupoMaximo": 3,
-  "nombre_equipo": "Real Madrid CF"
-}
-
-### TORNEO 3 - Liga Argentina
-POST http://localhost:3000/api/torneos
-Content-Type: application/json
-
-{
-  "nombre": "Liga Profesional Argentina",
-  "descripcion": "Fantasy de la liga argentina",
-  "cupoMaximo": 10,
-  "nombre_equipo": "River Plate",
-  "fecha_inicio": "2024-02-01T15:00:00Z"
-}
-#######################################
-### TORNEO 4 - Copa Libertadores
-POST http://localhost:3000/api/torneos
-Content-Type: application/json
-
-{
-  "nombre": "Copa Libertadores Fantasy",
-  "descripcion": "La Copa más importante de América",
+  "nombre": "Liga de Prueba 2",
+  "nombre_equipo": "Mi Equipo Test 2",
+  "descripcion": "Torneo de prueba para testing",
   "cupoMaximo": 4,
-  "nombre_equipo": "Boca Juniors"
+  "fecha_inicio": "2025-01-15T10:00:00.000Z"
 }
-### LOGIN Usuario 1 - Test
-POST http://localhost:3000/api/auth/login
+
+### 8. PATCH - Actualizar torneo (creador o admin)
+PATCH {{baseUrl}}/torneos/{{torneoId}}
 Content-Type: application/json
 
 {
-  "email": "test@test.com",
-  "password": "Password123"
+  "nombre": "Liga Actualizada",
+  "cupoMaximo": 5
 }
-#####################################################
-### TORNEO 5 - Liga Española
-POST http://localhost:3000/api/torneos
+
+### 9. PUT - Actualizar torneo (creador o admin)
+PUT {{baseUrl}}/torneos/{{torneoId}}
 Content-Type: application/json
 
 {
-  "nombre": "La Liga Santander",
-  "descripcion": "Fantasy de la liga española",
-  "cupoMaximo": 10,
-  "nombre_equipo": "FC Barcelona",
-  "fecha_inicio": "2024-01-20T12:00:00Z"
+  "nombre": "Liga Modificada",
+  "descripcion": "Nueva descripción"
 }
 
-### TORNEO 6 - Serie A
-POST http://localhost:3000/api/torneos
+### 10. POST - Validar código de acceso
+POST {{baseUrl}}/torneos/validar-codigo
 Content-Type: application/json
 
 {
-  "nombre": "Serie A TIM Fantasy",
-  "descripcion": "Liga italiana de fantasy football",
-  "cupoMaximo": 8,
-  "nombre_equipo": "Juventus FC"
+  "codigo_acceso": "{{codigoAcceso}}"
 }
 
-### LOGIN Usuario 2 - Jugador 1
-POST http://localhost:3000/api/auth/login
+### 11. POST - Unirse a un torneo
+POST {{baseUrl}}/torneos/unirse
 Content-Type: application/json
 
 {
-  "email": "jugador1@fantasy.com",
-  "password": "Password123"
+  "codigo_acceso": "{{codigoAcceso}}",
+  "nombre_equipo": "Los Invencibles 7"
 }
-###########################################
-### TORNEO 7 - Bundesliga
-POST http://localhost:3000/api/torneos
+
+### 12. POST - Obtener mis torneos - Sin filtros
+POST {{baseUrl}}/torneos/mis-torneos
+
+### 13. POST - Obtener mis torneos - Con filtro de estado
+POST {{baseUrl}}/torneos/mis-torneos?estado=EN_ESPERA
+
+### 14. GET - Obtener detalle de mi torneo
+GET {{baseUrl}}/torneos/mi-torneo/{{torneoId}}
+
+### 15. DELETE - Abandonar torneo
+DELETE {{baseUrl}}/torneos/abandonar/{{torneoId}}
+
+### 16. POST - Iniciar torneo (solo creador)
+POST {{baseUrl}}/torneos/iniciar/{{torneoId}}
+
+### 17. DELETE - Expulsar participante (solo creador)
+DELETE {{baseUrl}}/torneos/{{torneoId}}/participante/{{userId}}
+
+### ==============================================
+### CASOS DE ERROR
+### ==============================================
+
+### 18. GET - Torneo no encontrado
+GET {{baseUrl}}/torneos/99999
+
+### 19. POST - Crear torneo con cupo excedido
+POST {{baseUrl}}/torneos
 Content-Type: application/json
 
 {
-  "nombre": "Bundesliga Fantasy",
-  "descripcion": "Liga alemana de máximo nivel",
-  "cupoMaximo": 6,
-  "nombre_equipo": "Bayern Munich",
-  "fecha_inicio": "2024-02-15T14:00:00Z"
+  "nombre": "Torneo Inválido",
+  "nombre_equipo": "Test",
+  "cupoMaximo": 100
 }
 
-### LOGIN Usuario 3 - Jugador 2
-POST http://localhost:3000/api/auth/login
+### 20. POST - Unirse con código inválido
+POST {{baseUrl}}/torneos/unirse
 Content-Type: application/json
 
 {
-  "email": "jugador2@fantasy.com",
-  "password": "Password123"
+  "codigo_acceso": "INVALIDO",
+  "nombre_equipo": "Test"
 }
-###########################################
 
-### TORNEO 8 - Liga MX
-POST http://localhost:3000/api/torneos
+### 21. PATCH - Actualizar sin permisos
+PATCH {{baseUrl}}/torneos/{{torneoId}}
 Content-Type: application/json
 
 {
-  "nombre": "Liga MX Clausura",
-  "descripcion": "Torneo mexicano de fantasy",
-  "cupoMaximo": 10,
-  "nombre_equipo": "Club América"
+  "codigo_acceso": "NUEVO123"
 }
-
-### LOGIN Usuario 4 - Futbolero
-POST http://localhost:3000/api/auth/login
-Content-Type: application/json
-
-{
-  "email": "futbolero@liga.com",
-  "password": "Password123"
-}
-###########################################
-
-### TORNEO 9 - Copa del Mundo
-POST http://localhost:3000/api/torneos
-Content-Type: application/json
-
-{
-  "nombre": "World Cup Fantasy",
-  "descripcion": "Fantasy de la Copa del Mundo",
-  "cupoMaximo": 10,
-  "nombre_equipo": "Argentina National Team",
-  "fecha_inicio": "2024-03-01T16:00:00Z"
-}
-
-### TORNEO 10 - Liga de Amigos
-POST http://localhost:3000/api/torneos
-Content-Type: application/json
-
-{
-  "nombre": "Liga Entre Amigos",
-  "descripcion": "Torneo privado para amigos",
-  "cupoMaximo": 5,
-  "nombre_equipo": "Los Galácticos"
-}
-### LOGIN Usuario 5 - Manager Pro
-POST http://localhost:3000/api/auth/login
-Content-Type: application/json
-
-{
-  "email": "manager@champions.com",
-  "password": "Password123"
-}
-###########################################
-### Iniciar torneo como creador (exitoso)
-POST http://localhost:3000/api/torneos/iniciar/5
-Content-Type: application/json
-
-
-### Expulsar participante de un torneo (exitoso)
-DELETE http://localhost:3000/api/torneos/12/participante/8

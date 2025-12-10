@@ -6,40 +6,37 @@ import { ErrorFactory } from '../shared/errors/errors.factory.js';
 export async function actualizarEstadisticasJornada(req: Request, res: Response, next: Function) {
   try {
     const jornadaId = Number(req.params.jornadaId);
-    
-    if (isNaN(jornadaId)) {
-      throw ErrorFactory.badRequest('El ID de jornada no es válido');
-    }
-    
     const em = orm.em.fork();
     const partidosProcesados = await EstadisticaJugadorService.actualizarEstadisticasJornada(em, jornadaId);
-    
-    return res.status(200).json({
+    res.status(200).json({
       message: `Estadísticas actualizadas correctamente para ${partidosProcesados} partidos de la jornada ${jornadaId}`
     });
   } catch (error: any) {
-    return next(ErrorFactory.internal('Error al actualizar estadísticas de la jornada'));
+    if (error instanceof Error) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error al actualizar las estadísticas de la jornada'));
+    }
   }
 }
 
 export async function getPuntajesPorJornada(req: Request, res: Response, next: Function) {
   try {
     const jornadaId = Number(req.params.jornadaId);
-    
-    if (isNaN(jornadaId)) {
-      throw ErrorFactory.badRequest('El ID de jornada no es válido');
-    }
-    
     const em = orm.em.fork();
     const estadisticas = await EstadisticaJugadorService.getPuntajesPorJornada(em, jornadaId);
     
-    return res.status(200).json({
+    res.status(200).json({
       message: `Puntajes para la jornada ${jornadaId}`,
       count: estadisticas.length,
       data: estadisticas
     });
   } catch (error: any) {
-    return next(ErrorFactory.internal('Error al obtener puntajes de la jornada'));
+    if (error instanceof Error) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error al obtener los puntajes de la jornada'));
+    }
   }
 }
 
@@ -47,23 +44,20 @@ export async function getPuntajeJugadorPorJornada(req: Request, res: Response, n
   try {
     const jornadaId = Number(req.params.jornadaId);
     const jugadorId = Number(req.params.jugadorId);
-    
-    if (isNaN(jornadaId) || isNaN(jugadorId)) {
-      throw ErrorFactory.badRequest('ID de jornada o jugador no válido');
-    }
-    
     const em = orm.em.fork();
-    const estadistica = await EstadisticaJugadorService.getPuntajeJugadorPorJornada(em, jugadorId, jornadaId);
-    
+    const estadistica = await EstadisticaJugadorService.getPuntajeJugadorPorJornada(em, jugadorId, jornadaId); 
     if (!estadistica) {
-      return next(ErrorFactory.notFound('No se encontró estadística para el jugador en la jornada especificada'));
+      throw ErrorFactory.notFound('No se encontró estadística para el jugador en la jornada especificada');
     }
-    
-    return res.status(200).json({
+    res.status(200).json({
       message: `Puntaje del jugador ${jugadorId} en la jornada ${jornadaId}`,
       data: estadistica
     });
-  } catch (error) {
-    return next(ErrorFactory.internal('Error al obtener puntaje del jugador en la jornada'));
+  } catch (error: any) {
+    if (error instanceof Error) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error al obtener el puntaje del jugador en la jornada'));
+    }
   }
 }

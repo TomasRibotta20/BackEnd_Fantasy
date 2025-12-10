@@ -10,7 +10,7 @@ import { ErrorFactory } from '../shared/errors/errors.factory.js';
  */
 export async function ofertar(equipoId: number, itemMercadoId: number, monto: number, userId: number) {
   return await orm.em.transactional(async (em) => {
-    // 1. Obtener item y validar mercado
+
     const item = await em.findOne(
       ItemMercado,
       itemMercadoId,
@@ -20,21 +20,18 @@ export async function ofertar(equipoId: number, itemMercadoId: number, monto: nu
     if (!item) {
       throw ErrorFactory.notFound('Item de mercado no encontrado');
     }
-
     if (item.mercado.estado !== EstadoMercado.ABIERTO) {
       throw ErrorFactory.conflict('El mercado está cerrado');
     }
 
-    // 2. Validar precio dinámico
-    const precioActual = item.jugador.precio_actual || 0;
 
+    const precioActual = item.jugador.precio_actual || 0;
     if (monto < precioActual) {
       throw ErrorFactory.badRequest(
         `El monto debe ser al menos $${precioActual.toLocaleString()} (precio actual del jugador)`
       );
     }
 
-    // 3. Obtener equipo y validar permisos
     const equipo = await em.findOne(
       Equipo,
       equipoId,
@@ -44,23 +41,18 @@ export async function ofertar(equipoId: number, itemMercadoId: number, monto: nu
     if (!equipo) {
       throw ErrorFactory.notFound('Equipo no encontrado');
     }
-
     const ownerId = equipo.torneoUsuario.usuario.id;
     if (ownerId !== userId) {
       throw ErrorFactory.forbidden('No tienes permisos para ofertar con este equipo');
     }
 
-    // 4. Verificar si ya ofertó
     const pujaExistente = await em.findOne(MercadoPuja, {
       item: itemMercadoId,
       equipo: equipoId,
       estado: EstadoPuja.PENDIENTE
     });
-
     if (pujaExistente) {
-      // Actualizar oferta
       const diferencia = monto - pujaExistente.monto;
-
       if (equipo.presupuestoDisponible < diferencia) {
         throw ErrorFactory.badRequest(
           `Presupuesto insuficiente. Disponible: $${equipo.presupuestoDisponible.toLocaleString()}`
@@ -71,9 +63,7 @@ export async function ofertar(equipoId: number, itemMercadoId: number, monto: nu
       pujaExistente.monto = monto;
       pujaExistente.precio_referencia = precioActual;
       pujaExistente.fecha_oferta = new Date();
-
       await em.flush();
-
       return {
         accion: 'actualizada',
         puja: {
@@ -88,15 +78,12 @@ export async function ofertar(equipoId: number, itemMercadoId: number, monto: nu
         }
       };
     } else {
-      // Nueva oferta
       if (equipo.presupuestoDisponible < monto) {
         throw ErrorFactory.badRequest(
           `Presupuesto insuficiente. Disponible: $${equipo.presupuestoDisponible.toLocaleString()}`
         );
       }
-
       equipo.presupuesto_bloqueado += monto;
-
       const puja = em.create(MercadoPuja, {
         item,
         equipo,
@@ -143,28 +130,21 @@ export async function cancelarOferta(pujaId: number, userId: number) {
       throw ErrorFactory.notFound('Oferta no encontrada');
     }
 
-    // Validar permisos
     const ownerId = puja.equipo.torneoUsuario.usuario.id;
     if (ownerId !== userId) {
       throw ErrorFactory.forbidden('No tienes permisos para cancelar esta oferta');
     }
-
-    // Validar estado del mercado
     if (puja.item.mercado.estado !== EstadoMercado.ABIERTO) {
       throw ErrorFactory.conflict('No se puede cancelar la oferta, el mercado está cerrado');
     }
-
-    // Validar estado de la puja
     if (puja.estado !== EstadoPuja.PENDIENTE) {
       throw ErrorFactory.badRequest('Solo se pueden cancelar ofertas pendientes');
     }
 
-    // Devolver dinero bloqueado
     puja.equipo.presupuesto_bloqueado -= puja.monto;
     puja.estado = EstadoPuja.CANCELADA;
     puja.observaciones = 'Cancelada por el usuario';
 
-    // Decrementar contador
     puja.item.cantidad_pujas = Math.max(0, puja.item.cantidad_pujas - 1);
 
     await em.flush();

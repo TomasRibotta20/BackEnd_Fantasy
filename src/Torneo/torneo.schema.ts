@@ -24,12 +24,12 @@ export const idTorneoParamsSchema = z.object({
 
 export const torneoQuerySchema = z.object({
   estado: z.enum(['EN_ESPERA', 'ACTIVO', 'FINALIZADO']).optional(),
-  fecha_creacion_desde: z.string().datetime('Fecha debe estar en formato ISO').optional(), // ✅ Mejor validación
+  fecha_creacion_desde: z.string().datetime('Fecha debe estar en formato ISO').optional(),
   fecha_creacion_hasta: z.string().datetime('Fecha debe estar en formato ISO').optional(),
-  min_participantes: z.string().regex(/^[1-9][0-9]*$/).transform(val => Number(val)).refine(val => val >= 0).optional(),
-  max_participantes: z.string().regex(/^[1-9][0-9]*$/).transform(val => Number(val)).refine(val => val >= 1).optional(),
-  limit: z.string().regex(/^[1-9][0-9]*$/).transform(val => Number(val)).refine(val => val >= 1 && val <= 100).optional(),
-  offset: z.string().regex(/^[1-9][0-9]*$/).transform(val => Number(val)).refine(val => val >= 0).optional(),
+  min_participantes: z.string().regex(/^\d+$/, 'Debe ser un número').optional(),
+  max_participantes: z.string().regex(/^[1-9][0-9]*$/, 'Debe ser un número positivo').optional(),
+  limit: z.string().regex(/^[1-9][0-9]?$|^100$/, 'Límite debe ser 1-100').optional(),
+  offset: z.string().regex(/^\d+$/, 'Offset debe ser un número').optional(),
 });
 
 export const validateAccessCodeSchema = z.object({

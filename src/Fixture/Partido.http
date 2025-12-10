@@ -29,12 +29,13 @@ Content-Type: application/json
 }
 
 ### Actualizar partido
-PUT http://localhost:3000/partidos/1
+PUT http://localhost:3000/partidos/2
 Content-Type: application/json
 
 {
   "estado": "FT",
-  "estado_detalle": "Full Time"
+  "estado_detalle": "Full Time",
+  "jornadaId": 9999999
 }
 
 ### Eliminar partido
