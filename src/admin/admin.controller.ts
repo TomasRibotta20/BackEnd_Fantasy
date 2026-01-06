@@ -68,7 +68,7 @@ class AdminController {
         if (!jornada) {
           return next(ErrorFactory.notFound('Jornada no encontrada'))
         }
-        config.jornadaActiva = jornada
+        config.jornada_activa = jornada
       }
 
       // Actualizar estado de modificaciones
@@ -76,7 +76,7 @@ class AdminController {
         if (typeof modificacionesHabilitadas !== 'boolean') {
           return next(ErrorFactory.badRequest('modificacionesHabilitadas debe ser un booleano'))
         }
-        config.modificacionesHabilitadas = modificacionesHabilitadas
+        config.modificaciones_habilitadas = modificacionesHabilitadas
       }
 
       // Actualizar cupo máximo de torneos
@@ -87,7 +87,7 @@ class AdminController {
         if (cupoMaximoTorneos > 10) {
           return next(ErrorFactory.badRequest('El cupo máximo no puede exceder 10 participantes'))
         }
-        config.cupoMaximoTorneos = cupoMaximoTorneos
+        config.cupo_maximo_torneos = cupoMaximoTorneos
       }
 
       // Actualizar días de protección de cláusula
@@ -119,7 +119,7 @@ class AdminController {
         config.max_jugadores_por_equipo = max_jugadores_por_equipo
       }
       console.log('Actualizando updatedAt...')
-      config.updatedAt = new Date()
+      config.updated_at = new Date()
       console.log('Persistiendo cambios...')
       await em.persistAndFlush(config)
       console.log('Cambios persistidos exitosamente')
@@ -129,16 +129,16 @@ class AdminController {
         message: 'Configuración actualizada exitosamente',
         data: {
           id: config.id,
-          jornadaActiva: config.jornadaActiva ? {
-            id: config.jornadaActiva.id,
-            nombre: config.jornadaActiva.nombre
+          jornada_activa: config.jornada_activa ? {
+            id: config.jornada_activa.id,
+            nombre: config.jornada_activa.nombre
           } : null,
-          modificacionesHabilitadas: config.modificacionesHabilitadas,
-          cupoMaximoTorneos: config.cupoMaximoTorneos,
+          modificaciones_habilitadas: config.modificaciones_habilitadas,
+          cupo_maximo_torneos: config.cupo_maximo_torneos,
           dias_proteccion_clausula: config.dias_proteccion_clausula,
           ratio_blindaje_clausula: config.ratio_blindaje_clausula,
           max_jugadores_por_equipo: config.max_jugadores_por_equipo,
-          updatedAt: config.updatedAt
+          updatedAt: config.updated_at
         }
       })
     } catch (error: any) {
@@ -157,7 +157,7 @@ class AdminController {
   async getConfig(req: Request, res: Response, next: NextFunction) {
     try {
       const em = orm.em.fork()
-      const config = await em.findOne(GameConfig, 1, { populate: ['jornadaActiva'] })
+      const config = await em.findOne(GameConfig, 1, { populate: ['jornada_activa'] })
 
       if (!config) {
         return next(ErrorFactory.notFound('No hay configuración establecida'))
@@ -179,7 +179,7 @@ class AdminController {
     try {     
       // 1. Verificar que las modificaciones estén deshabilitadas
       const config = await em.findOne(GameConfig, 1)
-      if (!config || config.modificacionesHabilitadas) {
+      if (!config || config.modificaciones_habilitadas) {
         return next(ErrorFactory.validationAppError('Debes deshabilitar las modificaciones antes de procesar la jornada'))
       }
 
@@ -236,8 +236,8 @@ class AdminController {
           })
         }
 
-        config.jornadaActiva = jornadaSiguiente
-        config.updatedAt = new Date()
+        config.jornada_activa = jornadaSiguiente
+        config.updated_at = new Date()
         await em.flush()
         console.log(`✓ Jornada "${jornadaSiguiente.nombre}" establecida como activa`)
       }

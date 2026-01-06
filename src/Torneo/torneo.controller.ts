@@ -195,7 +195,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
     const currentUserId = req.authUser.user?.userId;
 
     const config = await em.findOne(GameConfig, 1);
-    const cupoMaximoGlobal = config?.cupoMaximoTorneos || 8;
+    const cupoMaximoGlobal = config?.cupo_maximo_torneos || 8;
 
     if (cupoMaximo > cupoMaximoGlobal) {
       throw ErrorFactory.badRequest(
@@ -297,7 +297,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
         }
          
         const config = await em.findOne(GameConfig, 1);
-        const cupoMaximoGlobal = config?.cupoMaximoTorneos || 5;
+        const cupoMaximoGlobal = config?.cupo_maximo_torneos || 5;
         
         if (cupoMaximo > cupoMaximoGlobal) {
             throw ErrorFactory.badRequest(

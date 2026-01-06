@@ -8,17 +8,17 @@ class GameConfigController {
   async getJornadaActiva(req: Request, res: Response,next: NextFunction) {
     try {
       const em = orm.em.fork()
-      const config = await em.findOne(GameConfig, 1, { populate: ['jornadaActiva'] })
+      const config = await em.findOne(GameConfig, 1, { populate: ['jornada_activa'] })
 
-      if (!config || !config.jornadaActiva) {
+      if (!config || !config.jornada_activa) {
         return next(ErrorFactory.notFound('No hay jornada activa configurada'))
       }
 
       res.json({
         success: true,
         data: {
-          jornada: config.jornadaActiva,
-          modificacionesHabilitadas: config.modificacionesHabilitadas
+          jornada: config.jornada_activa,
+          modificaciones_habilitadas: config.modificaciones_habilitadas
         }
       })
     } catch (error: any) {
@@ -45,8 +45,8 @@ class GameConfigController {
       res.json({
         success: true,
         data: {
-          modificacionesHabilitadas: config.modificacionesHabilitadas,
-          mensaje: config.modificacionesHabilitadas 
+          modificaciones_habilitadas: config.modificaciones_habilitadas,
+          mensaje: config.modificaciones_habilitadas 
             ? 'Puedes modificar tu equipo' 
             : 'Las modificaciones están deshabilitadas'
         }
@@ -89,12 +89,12 @@ class GameConfigController {
         success: true,
         data: {
           id: config.id,
-          jornadaActiva: config.jornadaActiva,
-          modificacionesHabilitadas: config.modificacionesHabilitadas,
-          cupoMaximoTorneos: config.cupoMaximoTorneos,
+          jornada_activa: config.jornada_activa,
+          modificaciones_habilitadas: config.modificaciones_habilitadas,
+          cupo_maximo_torneos: config.cupo_maximo_torneos,
           dias_proteccion_clausula: config.dias_proteccion_clausula,
           ratio_blindaje_clausula: config.ratio_blindaje_clausula,
-          updatedAt: config.updatedAt
+          updated_at: config.updated_at
         }
       })
     } catch (error: any) {

@@ -5,13 +5,13 @@ import { Jornada } from '../Fixture/Jornada.entity.js'
 @Entity()
 export class GameConfig extends BaseEntity {
   @ManyToOne(() => Jornada, { nullable: true })
-  jornadaActiva?: Jornada
+  jornada_activa?: Jornada
 
   @Property({ default: true })
-  modificacionesHabilitadas: boolean = true
+  modificaciones_habilitadas: boolean = true
 
   @Property({ default: 5 })
-  cupoMaximoTorneos: number = 5
+  cupo_maximo_torneos: number = 5
 
   @Property({ default: 2 })
   dias_proteccion_clausula: number = 2
@@ -23,5 +23,5 @@ export class GameConfig extends BaseEntity {
   max_jugadores_por_equipo: number = 15
   
   @Property()
-  updatedAt: Date = new Date()
+  updated_at: Date = new Date()
 }

@@ -17,7 +17,7 @@ export async function verificarModificacionesHabilitadas(
     }
 
     // Si están deshabilitadas, bloquear
-    if (!config.modificacionesHabilitadas) {
+    if (!config.modificaciones_habilitadas) {
       return res.status(403).json({
         success: false,
         message: 'Las modificaciones están deshabilitadas. La jornada está en curso.',
