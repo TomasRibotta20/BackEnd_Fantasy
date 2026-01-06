@@ -58,7 +58,7 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
        }
     }
 
-    const [torneos, total] = await em.findAndCount(Torneo, filtros, { 
+    const [torneos, total] = await em.findAndCount(Torneo, filtros, {//Si hay muchos torneos es mejor usar queryBuilder y no de pepender de la @Formula de la cantidad de participantes.
       orderBy: { fecha_creacion: 'DESC' },
       limit: Number(limit) || 20,
       offset: Number(offset) || 0
@@ -94,7 +94,10 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
 
     const ordenamiento: any = torneo.estado === EstadoTorneo.ESPERA
         ? { id: 'ASC' } 
-        : { equipo: { puntos: 'DESC' } };
+        : [
+            { expulsado: 'ASC' },
+            { equipo: { puntos: 'DESC' } }
+          ];
 
     const itemsInscripciones = await em.find(TorneoUsuario, {
         torneo: torneoId
@@ -115,6 +118,9 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
     };
 
     const listaParticipantes = itemsInscripciones.map(ins => {
+      let estadoLabel = 'ACTIVO';
+      if (ins.expulsado) estadoLabel = 'EXPULSADO';
+      else if (ins.rol === 'creador') estadoLabel = 'CREADOR';
       return {
         inscripcion_id: ins.id,
         usuario: {
@@ -125,12 +131,19 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
         },
         equipo: {
           id: ins.equipo?.id || null,
-          nombre: ins.equipo?.nombre || 'Sin Equipo',
+          nombre: ins.equipo?.nombre || (ins.expulsado ? 'Equipo Eliminado' : 'Sin Equipo'),
           puntos: ins.equipo?.puntos || 0,
           presupuesto: ins.equipo?.presupuesto || 0,
-        }
+        },
+        estado: estadoLabel,
+        es_expulsado: ins.expulsado,
+        fecha_inscripcion: ins.fecha_inscripcion
       };
     });
+
+    const totalInscritos = itemsInscripciones.length;
+    const activos = itemsInscripciones.filter(i => !i.expulsado).length;
+    const expulsados = itemsInscripciones.filter(i => i.expulsado).length;
 
     res.status(200).json({
       message: 'Detalle de torneo para Administración',
@@ -141,7 +154,11 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
           codigo_acceso: torneo.codigo_acceso,
           estado: torneo.estado,
           cupo_maximo: torneo.cupoMaximo,
-          ocupacion_actual: torneo.cantidadParticipantes || itemsInscripciones.length
+          resumen_ocupacion: {
+              total_registros: totalInscritos,
+              activos: activos,
+              expulsados: expulsados
+          }
         },
         fechas: {
           inicio: torneo.fecha_inicio,
@@ -190,7 +207,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
     nuevoTorneo.nombre = nombre;
     nuevoTorneo.descripcion = descripcion;
     if (fecha_inicio) nuevoTorneo.fecha_inicio = new Date(fecha_inicio);
-    nuevoTorneo.cupoMaximo = cupoMaximo || 10;
+    nuevoTorneo.cupoMaximo = cupoMaximo || 5;
     nuevoTorneo.estado = EstadoTorneo.ESPERA;
     nuevoTorneo.codigo_acceso = generateRandomCode();
 
@@ -280,7 +297,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
         }
          
         const config = await em.findOne(GameConfig, 1);
-        const cupoMaximoGlobal = config?.cupoMaximoTorneos || 8;
+        const cupoMaximoGlobal = config?.cupoMaximoTorneos || 5;
         
         if (cupoMaximo > cupoMaximoGlobal) {
             throw ErrorFactory.badRequest(
@@ -346,7 +363,6 @@ async function remove(req: Request, res: Response, next: NextFunction) {
 
       if (idsEquipos.length > 0) {  
         await transactionalEm.nativeDelete(Equipo, { id: { $in: idsEquipos } });
-        //Verificar si se borra el equipo_jornada, el equipo_jugador, y si se borran las transacciones asociadas
       }   
       await transactionalEm.nativeDelete(Torneo, { id: torneoId });
     });
