@@ -8,6 +8,6 @@ import { validateParams, validate } from '../shared/zod/validate.js';
 export const clausulasRouter = Router();
 
 // Blindar jugador (subir cláusula)
-clausulasRouter.post('/:equipoId/jugadores/:jugadorId/blindar', requireAuth, verificarModi, validateParams(equipoJugadorParamsSchema), blindarJugadorController);
+clausulasRouter.post('/:equipoId/jugadores/:jugadorId/blindar', requireAuth, validateParams(equipoJugadorParamsSchema), validate(blindajeSchema), blindarJugadorController);
 // Ejecutar cláusula de jugador rival
-clausulasRouter.post('/:equipoId/jugadores/:jugadorId/ejecutar-clausula', requireAuth, verificarModi, validateParams(equipoJugadorParamsSchema), validate(blindajeSchema), ejecutarClausulaController);
+clausulasRouter.post('/:equipoId/jugadores/:jugadorId/ejecutar-clausula', requireAuth, verificarModi, validateParams(equipoJugadorParamsSchema), ejecutarClausulaController);

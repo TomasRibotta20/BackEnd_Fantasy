@@ -3,7 +3,7 @@ import { orm } from '../shared/db/orm.js';
 import { EstadisticaJugadorService } from './estadistica-jugador.service.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 
-export async function actualizarEstadisticasJornada(req: Request, res: Response, next: Function) {
+export async function actualizarEstadisticasJornada(req: Request, res: Response, next: Function) {  
   try {
     const jornadaId = Number(req.params.jornadaId);
     const em = orm.em.fork();

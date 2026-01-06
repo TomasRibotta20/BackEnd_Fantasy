@@ -22,7 +22,7 @@ export class Torneo extends BaseEntity {
   @OneToMany(() => 'TorneoUsuario', (u: TorneoUsuario) => u.torneo)
   inscripciones = new Collection<TorneoUsuario>(this);
 
-  @Formula(alias => `(SELECT COUNT(*) FROM torneo_usuario tu WHERE tu.torneo_id = ${alias}.id)`)
+  @Formula(alias => `(SELECT COUNT(*) FROM torneo_usuario tu WHERE tu.torneo_id = ${alias}.id and tu.expulsado = false)`)
   cantidadParticipantes?: number;
 
   @Property({ nullable: true })

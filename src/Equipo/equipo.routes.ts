@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { requireAuth, requireAdmin } from '../Auth/auth.requires.js';
-import { actualizarAlineacion,getMiEquipo, realizarIntercambio, obtenerEquipos, venderJugador, cambiarEstadoJugador}  from './equipo.controller.js';
+import { actualizarAlineacion,getMiEquipo, obtenerEquipos, venderJugador, cambiarEstadoJugador}  from './equipo.controller.js';
 import { verificarModificacionesHabilitadas as verificarModi} from '../shared/middleware/verificarModificaciones.middleware.js';
-import { getEquipoEnJornada, getHistorial, getRankingTorneoJornada } from './equipoHistorial.controller.js';
-import { equipoIdParamsSchema, equipoJornadaParamsSchema, cambiarAlineacionSchema, intercambioJugadorSchema, cambiarEstadoSchema, venderJugadorSchema } from './equipo.schema.js';
+import { getEquipoEnJornada, getHistorial } from './equipoHistorial.controller.js';
+import { equipoIdParamsSchema, equipoJornadaParamsSchema, cambiarAlineacionSchema, cambiarEstadoSchema, venderJugadorSchema } from './equipo.schema.js';
 import { validateParams, validate } from '../shared/zod/validate.js';
 
 
@@ -11,7 +11,6 @@ const equipoRouter = Router();
 
 equipoRouter.get('/mi-equipo/:equipoId', requireAuth, validateParams(equipoIdParamsSchema), getMiEquipo);
 equipoRouter.get('/todos', requireAdmin, obtenerEquipos);
-equipoRouter.patch('/mi-equipo/:equipoId/intercambio', requireAuth, verificarModi, validateParams(equipoIdParamsSchema), validate(intercambioJugadorSchema), realizarIntercambio);
 equipoRouter.patch('/mi-equipo/:equipoId/alineacion', requireAuth, verificarModi, validateParams(equipoIdParamsSchema), validate(cambiarAlineacionSchema), actualizarAlineacion);
 equipoRouter.patch('/mi-equipo/:equipoId/cambiar-estado', requireAuth, verificarModi, validateParams(equipoIdParamsSchema), validate(cambiarEstadoSchema), cambiarEstadoJugador);
 //Ruta para obtener todos las jornadas de un equipo

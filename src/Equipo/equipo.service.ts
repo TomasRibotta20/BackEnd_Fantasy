@@ -89,7 +89,6 @@ async function seleccionarJugadoresPorPrecio(
 export function crearEquipo(nombre: string, inscripcion: TorneoUsuario): Equipo {
   const equipo = new Equipo();
   equipo.nombre = nombre;
-  equipo.puntos = 0;
   equipo.presupuesto = 90000000; 
   equipo.torneoUsuario = inscripcion;
   inscripcion.equipo = equipo; 
@@ -359,7 +358,6 @@ export async function getEquipoById(equipoId: number) {
     throw ErrorFactory.notFound('El equipo no existe');
   }
 
-  // Calcular y asignar los campos virtuales para cada jugador
   equipo.jugadores.getItems().forEach((equipoJugador) => {
     equipoJugador.valor_clausula_efectiva = equipoJugador.getValorClausulaEfectiva();
     equipoJugador.dias_proteccion_restantes = equipoJugador.getDiasProteccionRestantes(diasProteccion);
@@ -368,75 +366,7 @@ export async function getEquipoById(equipoId: number) {
 
   return equipo;
 }
-/**
- * Realiza un intercambio atómico de un jugador del equipo por uno Cualquiera de los existentes.
- * Valida que ambos jugadores existan y sean de la misma posición.
- * @param userId - El ID del usuario que realiza el intercambio.
- * @param jugadorSaleId - El ID del jugador que sale del equipo.
- * @param jugadorEntraId - El ID del jugador que entra al equipo.
- * @returns Una promesa que se resuelve con un mensaje de éxito.
- * @throws {ErrorFactory.notFound} Si el equipo o uno de los jugadores no se encuentra.
- * @throws {ErrorFactory.badRequest} Si las validaciones de negocio fallan (posiciones, pertenencia).
- * @throws {ErrorFactory.duplicate} Si el jugador que entra ya está en el equipo.
- */
-export async function intercambiarJugador(
-  equipoId: number,
-  jugadorSaleId: number,
-  jugadorEntraId: number
-) {
-  return await orm.em.transactional(async (em) => {
-    const equipo = await em.findOne(Equipo, { id: equipoId });
-    if (!equipo) {
-      throw ErrorFactory.notFound('El equipo no existe');
-    }
 
-    const relacionSale = await em.findOne(EquipoJugador, {
-      equipo: equipo,
-      jugador: jugadorSaleId,
-    });
-    if (!relacionSale) {
-      throw ErrorFactory.badRequest('El jugador que intentas dar de baja no está en tu equipo');
-    }
-
-    const relacionEntraExistente = await em.findOne(EquipoJugador, {
-      equipo: equipo,
-      jugador: jugadorEntraId,
-    });
-    if (relacionEntraExistente) {
-      throw ErrorFactory.duplicate('El jugador que intentas fichar ya está en tu equipo');
-    }
-
-    const jugadorSale = await em.findOne(Player, { id: jugadorSaleId }, { populate: ['position'] });
-    const jugadorEntra = await em.findOne(Player, { id: jugadorEntraId }, { populate: ['position'] });
-    if (!jugadorSale || !jugadorEntra) {
-      throw ErrorFactory.notFound('Uno de los jugadores involucrados en el intercambio no fue encontrado.');
-    }
-    const posicionSale = jugadorSale.position;
-    const posicionEntra = jugadorEntra.position;
-    if (!posicionSale || !posicionEntra) {
-      throw ErrorFactory.badRequest('Ambos jugadores deben tener una posición definida para ser intercambiados.');
-    }
-    if (posicionSale.id !== posicionEntra.id) {
-      throw ErrorFactory.badRequest(
-        `No se puede intercambiar. El jugador que sale es ${posicionSale.description} y el que entra es ${posicionEntra.description}.`
-      );
-    }
-
-    const eraTitular = relacionSale.es_titular;
-    em.remove(relacionSale);
-
-    const nuevaRelacion = em.create(EquipoJugador, {
-      equipo: equipo,
-      jugador: jugadorEntra,
-      es_titular: eraTitular,
-       fecha_incorporacion: new Date(), 
-      valor_clausula: 0
-    });
-    em.persist(nuevaRelacion);
-
-    return { message: 'Intercambio realizado con éxito' };
-  });
-}
 /**
  * Intercambia el estado de titularidad entre dos jugadores del mismo equipo.
  * Valida que ambos jugadores pertenezcan al equipo, tengan los roles correctos (titular/suplente)
@@ -513,7 +443,7 @@ export async function cambiarAlineacion(
 export async function cambiarEstadoTitularidad(equipoId: number, jugadorId: number) {
   return await orm.em.transactional(async (em) => {
     const equipo = await em.findOne(
-      Equipo, 
+      Equipo,
       { id: equipoId },
       { populate: ['jugadores', 'jugadores.jugador', 'jugadores.jugador.position'] }
     );

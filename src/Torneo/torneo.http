@@ -1,8 +1,8 @@
 ### Variables
 @baseUrl = http://localhost:3000/api
-@torneoId = 28
-@userId = 8
-@codigoAcceso = R055O6
+@torneoId = 30
+@userId = 9
+@codigoAcceso = EAA6HT
 ### 5K79XN
 ### 
 
@@ -119,8 +119,8 @@ POST {{baseUrl}}/torneos/unirse
 Content-Type: application/json
 
 {
-  "codigo_acceso": "INVALIDO",
-  "nombre_equipo": "Test"
+  "codigo_acceso": "EAA6HT",
+  "nombre_equipo": "Test 3"
 }
 
 ### 21. PATCH - Actualizar sin permisos

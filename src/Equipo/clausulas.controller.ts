@@ -7,8 +7,8 @@ import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
  */
 export async function blindarJugadorController(req: Request, res: Response, next: NextFunction) {
   try {
-    const equipoId = parseInt(req.params.equipoId);
-    const jugadorId = parseInt(req.params.jugadorId);
+    const equipoId = Number(req.params.equipoId);
+    const jugadorId = Number(req.params.jugadorId);
     const { monto_incremento } = req.body;
     const userId = req.authUser.user?.userId!;
     const resultado = await blindarJugador(equipoId, jugadorId, monto_incremento, userId);
@@ -17,7 +17,7 @@ export async function blindarJugadorController(req: Request, res: Response, next
       message: 'Jugador blindado exitosamente',
       data: resultado
     });
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof AppError) {
       next(error);
     } else {
@@ -31,8 +31,8 @@ export async function blindarJugadorController(req: Request, res: Response, next
  */
 export async function ejecutarClausulaController(req: Request, res: Response, next: NextFunction) {
   try {
-    const equipoId = parseInt(req.params.equipoId);
-    const jugadorId = parseInt(req.params.jugadorId);
+    const equipoId = Number(req.params.equipoId);
+    const jugadorId = Number(req.params.jugadorId);
     const userId = req.authUser.user?.userId!;
 
     const resultado = await ejecutarClausula(equipoId, jugadorId, userId);

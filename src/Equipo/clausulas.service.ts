@@ -31,7 +31,6 @@ export async function blindarJugador(
 ): Promise<BlindajeResultante> {
   
   return await orm.em.transactional(async (em) => {
-    
     const gameConfig = await em.findOne(GameConfig, 1);
     if (!gameConfig) {
       throw ErrorFactory.internal('Configuración del juego no encontrada');

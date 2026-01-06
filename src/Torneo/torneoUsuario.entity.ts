@@ -26,4 +26,7 @@ export class TorneoUsuario extends BaseEntity {
     deleteRule: 'cascade'
   })
   equipo?: Equipo;
+
+  @Property({ default: false })
+  expulsado: boolean = false;
 }

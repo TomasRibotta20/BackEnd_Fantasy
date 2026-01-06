@@ -70,7 +70,8 @@ const resultados = await qb
     .leftJoin('est.partido', 'p', { 'p.jornada': jornada.id }) 
     .where({
       'ej.jornada': jornada.id,
-      'tu.torneo': torneo.id
+      'tu.torneo': torneo.id,
+      'tu.expulsado': false
     })
     .groupBy(['ej.id', 'e.nombre', 'ej.puntajeTotal', 'tu.id'])
     .orderBy({

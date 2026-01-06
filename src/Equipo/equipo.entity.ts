@@ -14,7 +14,8 @@ export class Equipo extends BaseEntity {
 
   @OneToOne({ 
     entity: 'TorneoUsuario',
-    mappedBy: 'equipo'
+    mappedBy: 'equipo',
+    deleteRule: 'cascade'
   })
   torneoUsuario!: TorneoUsuario;
 

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { cambiarAlineacion,getEquipoById,intercambiarJugador, venderJugador as venderJugadorService, cambiarEstadoTitularidad} from './equipo.service.js';
+import { cambiarAlineacion, getEquipoById, venderJugador as venderJugadorService, cambiarEstadoTitularidad } from './equipo.service.js';
 import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
 import { Equipo } from './equipo.entity.js';
 import { orm } from '../shared/db/orm.js';
@@ -51,39 +51,6 @@ export async function getMiEquipo(req: Request, res: Response, next: NextFunctio
 }
 
 /**
- * Maneja la petición para intercambiar un jugador del equipo por otro del mercado.
- * @param {Request} req - El objeto de solicitud de Express. Espera jugadorSaleId y jugadorEntraId en req.body.
- * @param {Response} res - El objeto de respuesta de Express.
- * @param {NextFunction} next - La función para pasar el control al siguiente middleware.
- * @returns {Promise<Response|void>} Una promesa que se resuelve en una respuesta JSON de éxito o pasa un error a next.
- */
-export async function realizarIntercambio(req: Request, res: Response, next: NextFunction) {
-  try {
-    const userId = req.authUser.user?.userId;
-    const equipoId = Number(req.params.equipoId);
-    const { jugadorSaleId, jugadorEntraId } = req.body;
-
-    const equipo = await em.findOne(Equipo, { id: equipoId }, { 
-        populate: ['torneoUsuario.usuario'] 
-    });
-    if (!equipo) {
-        throw ErrorFactory.notFound('Equipo no encontrado');
-    }
-    if (equipo.torneoUsuario.usuario.id !== userId) {
-        throw ErrorFactory.forbidden('No puedes modificar un equipo que no es tuyo.');
-    }
-    const resultado = await intercambiarJugador(equipoId, Number(jugadorSaleId), Number(jugadorEntraId));
-    res.status(200).json(resultado);
-  } catch (error: any) {
-    if (error instanceof AppError) {
-      next(error);
-    } else {
-      next(ErrorFactory.internal('Error al realizar el intercambio de jugadores'));
-    }
-  }
-}
-
-/**
  * Cambia el estado de titularidad de un jugador (titular ↔ suplente)
  * @param {Request} req - El objeto de solicitud de Express. Espera jugadorId en req.body.
  * @param {Response} res - El objeto de respuesta de Express.
@@ -110,7 +77,6 @@ export async function cambiarEstadoJugador(req: Request, res: Response, next: Ne
       message: resultado.message,
       data: resultado
     });
-
   } catch (error: any) {
     if (error instanceof AppError) {
       next(error);

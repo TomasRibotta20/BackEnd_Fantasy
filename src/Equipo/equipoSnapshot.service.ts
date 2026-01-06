@@ -1,10 +1,9 @@
-import { EntityManager, wrap} from '@mikro-orm/core'
+import { EntityManager } from '@mikro-orm/core'
 import { Equipo } from './equipo.entity.js'
 import { EquipoJornada } from './equipoJornada.entity.js'
 import { Jornada } from '../Fixture/Jornada.entity.js'
 import { EstadisticaJugador } from '../EstadisticaJugador/estadistica-jugador.entity.js'
 import { Player } from '../Player/player.entity.js'
-import { ErrorFactory } from '../shared/errors/errors.factory.js'
 import { EstadoTorneo } from '../Torneo/torneo.entity.js'
 
 export class EquipoSnapshotService {

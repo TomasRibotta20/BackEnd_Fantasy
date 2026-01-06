@@ -8,6 +8,7 @@ import { FilterQuery } from '@mikro-orm/core';
 import { TorneoService } from './torneo.service.js';
 import { crearEquipo } from '../Equipo/equipo.service.js';
 import { GameConfig } from '../Config/gameConfig.entity.js';
+import { Equipo } from '../Equipo/equipo.entity.js';
 
 const em = orm.em;
 
@@ -344,8 +345,7 @@ async function remove(req: Request, res: Response, next: NextFunction) {
         .filter((id): id is number => id !== undefined);
 
       if (idsEquipos.length > 0) {  
-        const idsString = idsEquipos.join(',');
-        await transactionalEm.execute(`DELETE FROM equipos WHERE id IN (${idsString})`);
+        await transactionalEm.nativeDelete(Equipo, { id: { $in: idsEquipos } });
         //Verificar si se borra el equipo_jornada, el equipo_jugador, y si se borran las transacciones asociadas
       }   
       await transactionalEm.nativeDelete(Torneo, { id: torneoId });
