@@ -153,7 +153,7 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
           nombre: torneo.nombre,
           codigo_acceso: torneo.codigo_acceso,
           estado: torneo.estado,
-          cupo_maximo: torneo.cupoMaximo,
+          cupo_maximo: torneo.cupo_maximo,
           resumen_ocupacion: {
               total_registros: totalInscritos,
               activos: activos,
@@ -207,7 +207,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
     nuevoTorneo.nombre = nombre;
     nuevoTorneo.descripcion = descripcion;
     if (fecha_inicio) nuevoTorneo.fecha_inicio = new Date(fecha_inicio);
-    nuevoTorneo.cupoMaximo = cupoMaximo || 5;
+    nuevoTorneo.cupo_maximo = cupoMaximo || 5;
     nuevoTorneo.estado = EstadoTorneo.ESPERA;
     nuevoTorneo.codigo_acceso = generateRandomCode();
 
@@ -217,7 +217,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
     inscripcionAdmin.rol = 'creador';
     const equipoAdmin = crearEquipo(nombre_equipo, inscripcionAdmin)
     inscripcionAdmin.equipo = equipoAdmin;
-    equipoAdmin.torneoUsuario = inscripcionAdmin;
+    equipoAdmin.torneo_usuario = inscripcionAdmin;
 
     em.persist([nuevoTorneo, inscripcionAdmin, equipoAdmin]);
 
@@ -305,11 +305,11 @@ async function update(req: Request, res: Response, next: NextFunction) {
             );
         }
 
-        const inscritosActuales = torneo.cantidadParticipantes || 0; 
+        const inscritosActuales = torneo.cantidad_participantes || 0; 
         if (cupoMaximo < inscritosActuales) {
             throw ErrorFactory.badRequest(`El cupo máximo no puede ser menor a los participantes actuales (${inscritosActuales}).`);
         }
-        torneo.cupoMaximo = cupoMaximo;
+        torneo.cupo_maximo = cupoMaximo;
     }
     if (fecha_inicio) {
         if (torneo.estado !== EstadoTorneo.ESPERA) {
@@ -387,8 +387,8 @@ async function validateAccessCode(req: Request, res: Response, next: NextFunctio
     if (torneo.estado !== EstadoTorneo.ESPERA) {
         throw ErrorFactory.conflict('El torneo ya ha comenzado, no se permiten nuevas inscripciones.');
     }
-    const inscritos = torneo.cantidadParticipantes || 0;
-    if (inscritos >= torneo.cupoMaximo) {
+    const inscritos = torneo.cantidad_participantes || 0;
+    if (inscritos >= torneo.cupo_maximo) {
         throw ErrorFactory.conflict('El torneo ya está lleno, no se permiten nuevas inscripciones.');
     }
     if (currentUserId) {
@@ -405,7 +405,7 @@ async function validateAccessCode(req: Request, res: Response, next: NextFunctio
             nombre: torneo.nombre,
             cupos: {
                 ocupados: inscritos,
-                maximo: torneo.cupoMaximo
+                maximo: torneo.cupo_maximo
             }
         }
     });
@@ -454,8 +454,8 @@ async function getMisTorneos(req: Request, res: Response, next: NextFunction) {
                 presupuesto: ins.equipo.presupuesto 
             } : null,
             
-            cant_participantes: ins.torneo.cantidadParticipantes,
-            cupo_maximo: ins.torneo.cupoMaximo,
+            cant_participantes: ins.torneo.cantidad_participantes,
+            cupo_maximo: ins.torneo.cupo_maximo,
         };
     });
 
@@ -475,7 +475,7 @@ async function getTorneoUsuario(req: Request, res: Response, next: NextFunction)
     const currentUserId = req.authUser.user?.userId;
 
     const torneo = await em.findOneOrFail(Torneo, { id: torneoId }, {
-        fields: ['nombre', 'estado', 'codigo_acceso', 'cupoMaximo', 'cantidadParticipantes']
+        fields: ['nombre', 'estado', 'codigo_acceso', 'cupo_maximo', 'cantidad_participantes']
     });
 
     const miInscripcion = await em.findOne(TorneoUsuario, {

@@ -94,7 +94,7 @@ class GameConfigController {
           cupo_maximo_torneos: config.cupo_maximo_torneos,
           dias_proteccion_clausula: config.dias_proteccion_clausula,
           ratio_blindaje_clausula: config.ratio_blindaje_clausula,
-          updated_at: config.updated_at
+          ultima_modificacion: config.ultima_modificacion
         }
       })
     } catch (error: any) {

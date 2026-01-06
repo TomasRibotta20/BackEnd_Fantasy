@@ -38,7 +38,7 @@ export async function blindarJugador(
     const equipoJugador = await em.findOne(
       EquipoJugador,
       { equipo: equipoId, jugador: jugadorId },
-      { populate: ['equipo.torneoUsuario.usuario', 'jugador'] }
+      { populate: ['equipo.torneo_usuario.usuario', 'jugador'] }
     );
     
     if (!equipoJugador) {
@@ -127,33 +127,33 @@ export async function ejecutarClausula(
     const equipoComprador = await em.findOne(
       Equipo,
       { id: compradorEquipoId },
-      { populate: ['torneoUsuario.usuario', 'torneoUsuario.torneo', 'jugadores'] }
+      { populate: ['torneo_usuario.usuario', 'torneo_usuario.torneo', 'jugadores'] }
     );
     
     if (!equipoComprador) {
       throw ErrorFactory.notFound('Tu equipo no existe');
     }
     
-    if (equipoComprador.torneoUsuario.usuario.id !== compradorUserId) {
+    if (equipoComprador.torneo_usuario.usuario.id !== compradorUserId) {
       throw ErrorFactory.forbidden('No tienes permisos para ejecutar cláusulas con este equipo');
     }
     
-    const torneoId = equipoComprador.torneoUsuario.torneo.id;
+    const torneoId = equipoComprador.torneo_usuario.torneo.id;
     const equipoJugadorVendedor = await em.findOne(
       EquipoJugador,
       { 
         jugador: jugadorId,
         equipo: {
-          torneoUsuario: {
+          torneo_usuario: {
             torneo: torneoId
           }
         }
       },
       { 
         populate: [
-          'equipo.torneoUsuario.usuario',
-          'equipo.torneoUsuario.torneo',
-          'jugador.position'
+          'equipo.torneo_usuario.usuario',
+          'equipo.torneo_usuario.torneo',
+          'jugador.posicion'
         ] 
       }
     );
@@ -228,9 +228,9 @@ export async function ejecutarClausula(
     
     const vendedorEmail = equipoVendedor.torneoUsuario.usuario.email;
     const vendedorNombre = equipoVendedor.torneoUsuario.usuario.username;
-    const compradorEmail = equipoComprador.torneoUsuario.usuario.email;
-    const compradorNombre = equipoComprador.torneoUsuario.usuario.username;
-    const torneoNombre = equipoComprador.torneoUsuario.torneo.nombre;
+    const compradorEmail = equipoComprador.torneo_usuario.usuario.email;
+    const compradorNombre = equipoComprador.torneo_usuario.usuario.username;
+    const torneoNombre = equipoComprador.torneo_usuario.torneo.nombre;
     
     const fechaProteccionHasta = new Date(
       Date.now() + gameConfig.dias_proteccion_clausula * 86400000

@@ -32,14 +32,14 @@ async function getPendientes(req: Request, res: Response, next: NextFunction) {
     const usuarioId = req.authUser.user?.userId!;
     await procesarPicksExpiradosDelUsuario(em, usuarioId);
     const pendientes = await em.find(Recompensa, {
-      torneoUsuario: { usuario: usuarioId },
+      torneo_usuario: { usuario: usuarioId },
       fecha_reclamo: null,
       $or: [
-        { fechaExpiracionPick: null },
-        { fechaExpiracionPick: { $gte: new Date() } }
+        { fecha_expiracion_pick: null },
+        { fecha_expiracion_pick: { $gte: new Date() } }
       ]
     }, {
-      populate: ['jornada', 'torneoUsuario.torneo'],
+      populate: ['jornada', 'torneo_usuario.torneo'],
       orderBy: { jornada: { id: 'DESC' } }
     });
 
@@ -48,10 +48,10 @@ async function getPendientes(req: Request, res: Response, next: NextFunction) {
       cantidad: pendientes.length,
       data: pendientes.map(p => ({
         id_recompensa: p.id,
-        id_torneo: p.torneoUsuario.torneo.id,
-        torneo: p.torneoUsuario.torneo.nombre,
+        id_torneo: p.torneo_usuario.torneo.id,
+        torneo: p.torneo_usuario.torneo.nombre,
         jornada: `Fecha ${p.jornada.nombre}`,
-        posicion: p.posicionJornada
+        posicion: p.posicion_jornada
       }))
     });
   } catch (error: any) {
@@ -68,25 +68,25 @@ async function getOpcionesRecompensa(req: Request, res: Response, next: NextFunc
     const id = Number(req.params.id);
       
     const recompensa = await em.findOne(Recompensa, id, {
-      populate: ['torneoUsuario.usuario']
+      populate: ['torneo_usuario.usuario']
     });
     if (!recompensa) {
       throw ErrorFactory.notFound("Recompensa no encontrada");
     }
-    if (recompensa.torneoUsuario.usuario.id !== req.authUser.user?.userId) {
+    if (recompensa.torneo_usuario.usuario.id !== req.authUser.user?.userId) {
       throw ErrorFactory.forbidden("Esta recompensa no es tuya");
     }
     if (recompensa.fecha_reclamo) {
       throw ErrorFactory.conflict("Esta recompensa ya fue reclamada y finalizada.");
     }
-    if (recompensa.fechaExpiracionPick) {
-      if (new Date() > recompensa.fechaExpiracionPick) {
+    if (recompensa.fecha_expiracion_pick) {
+      if (new Date() > recompensa.fecha_expiracion_pick) {
         throw ErrorFactory.conflict("El tiempo para elegir ha expirado. Se asignó una compensación automáticamente.");
       }
     }
-    if (recompensa.premioConfiguracion && recompensa.opcionesPickDisponibles) {
+    if (recompensa.premio_configuracion && recompensa.opciones_pick_disponibles) {
       const jugadoresDisponibles = await em.find(Player, {
-        id: { $in: recompensa.opcionesPickDisponibles }
+        id: { $in: recompensa.opciones_pick_disponibles }
       });
       return res.status(200).json({
         tipo: 'pick_pendiente',
@@ -94,25 +94,25 @@ async function getOpcionesRecompensa(req: Request, res: Response, next: NextFunc
         mensaje: 'Tienes un pick pendiente. Elige tu jugador.',
         opciones: jugadoresDisponibles.map(j => ({
           id: j.id!,
-          name: j.name,
-          position: j.position?.description || 'N/A',
+          name: j.nombre,
+          position: j.posicion?.descripcion || 'N/A',
           team: j.club.nombre,
           precio_actual: j.precio_actual,
-          foto_perfil: j.photo
+          foto_perfil: j.foto
         })),
-        opcionesIds: recompensa.opcionesPickDisponibles,
-        expira: recompensa.fechaExpiracionPick
+        opcionesIds: recompensa.opciones_pick_disponibles,
+        expira: recompensa.fecha_expiracion_pick
       });
     }
-    if (recompensa.premioConfiguracion) {
+    if (recompensa.premio_configuracion) {
       throw ErrorFactory.conflict("Ya elegiste una opción para esta recompensa. Está procesándose.");
     }
-    const tierCalculado = calcularTierPorPosicion(recompensa.posicionJornada);
+    const tierCalculado = calcularTierPorPosicion(recompensa.posicion_jornada);
     const premiosDisponibles = await em.find(Premio, { tier: tierCalculado });
 
     return res.status(200).json({
       recompensaId: recompensa.id,
-      posicion: recompensa.posicionJornada,
+      posicion: recompensa.posicion_jornada,
       tier: tierCalculado,
       opciones: premiosDisponibles
     });
@@ -132,20 +132,20 @@ async function elegirPremio(req: Request, res: Response, next: NextFunction) {
     const usuarioId = req.authUser.user?.userId!;
 
     const recompensa = await em.findOne(Recompensa, recompensaId, {
-      populate: ['torneoUsuario.torneo', 'torneoUsuario.usuario']
+      populate: ['torneo_usuario.torneo', 'torneo_usuario.usuario']
     });
     if (!recompensa) {
       throw ErrorFactory.notFound("Recompensa no encontrada");
     }
-    if (recompensa.torneoUsuario.usuario.id !== usuarioId) throw ErrorFactory.forbidden("No es tu recompensa");
+    if (recompensa.torneo_usuario.usuario.id !== usuarioId) throw ErrorFactory.forbidden("No es tu recompensa");
     if (recompensa.fecha_reclamo) throw ErrorFactory.conflict("Ya reclamada");
-    if (recompensa.premioConfiguracion) throw ErrorFactory.conflict("Ya elegiste opción. Resuelve la actual.");
+    if (recompensa.premio_configuracion) throw ErrorFactory.conflict("Ya elegiste opción. Resuelve la actual.");
 
     const premioConfig = await em.findOne(Premio, premioId);
     if (!premioConfig) {
       throw ErrorFactory.notFound("Premio no encontrado");
     }
-    const tierRealUsuario = calcularTierPorPosicion(recompensa.posicionJornada);
+    const tierRealUsuario = calcularTierPorPosicion(recompensa.posicion_jornada);
     if (premioConfig.tier !== tierRealUsuario) {
         throw ErrorFactory.forbidden(`Error de integridad: Este premio es ${premioConfig.tier} y tú eres ${tierRealUsuario}.`);
     }
@@ -179,27 +179,27 @@ async function confirmarPick(req: Request, res: Response, next: NextFunction) {
     const usuarioId = req.authUser.user?.userId!;
 
     const recompensa = await em.findOne(Recompensa, recompensaId, {
-      populate: ['torneoUsuario.torneo', 'torneoUsuario.usuario']
+      populate: ['torneo_usuario.torneo', 'torneo_usuario.usuario']
     });
 
     if (!recompensa) {
       throw ErrorFactory.notFound("Recompensa no encontrada");
     }
 
-    if (recompensa.torneoUsuario.usuario.id !== usuarioId) {
+    if (recompensa.torneo_usuario.usuario.id !== usuarioId) {
         throw ErrorFactory.forbidden("No es tu recompensa");
     }
     if (recompensa.fecha_reclamo) {
         throw ErrorFactory.conflict("Esta recompensa ya fue reclamada.");
     }
-    if (!recompensa.opcionesPickDisponibles || recompensa.opcionesPickDisponibles.length === 0) {
+    if (!recompensa.opciones_pick_disponibles || recompensa.opciones_pick_disponibles.length === 0) {
         throw ErrorFactory.badRequest("Esta recompensa no tiene un proceso de selección activo.");
     }
     const idElegido = Number(jugadorId);
-    if (!recompensa.opcionesPickDisponibles.includes(idElegido)) {
+    if (!recompensa.opciones_pick_disponibles.includes(idElegido)) {
         throw ErrorFactory.badRequest("El jugador seleccionado no estaba entre tus opciones válidas.");
     }
-    if (recompensa.fechaExpiracionPick && new Date() > recompensa.fechaExpiracionPick) {
+    if (recompensa.fecha_expiracion_pick && new Date() > recompensa.fecha_expiracion_pick) {
         await procesarPicksExpiradosDelUsuario(em, usuarioId);
         throw ErrorFactory.conflict("El tiempo para elegir ha expirado. Se asignó una compensación automáticamente.");
     }
@@ -212,36 +212,36 @@ async function confirmarPick(req: Request, res: Response, next: NextFunction) {
       if (!jugador) {
         throw ErrorFactory.notFound("Jugador no encontrado durante la transacción.");
       }
-      const torneoId = recompensaTx.torneoUsuario.torneo.id!;
+      const torneoId = recompensaTx.torneo_usuario.torneo.id!;
       const ocupado = await txEm.count(EquipoJugador, { 
           jugador: jugador, 
-          equipo: { torneoUsuario: { torneo: torneoId } } 
+          equipo: { torneo_usuario: { torneo: torneoId } } 
       });
 
       if (ocupado > 0) {
           const montoCompensacion = Number(jugador.precio_actual);
           recompensaTx.jugador = undefined;
-          recompensaTx.opcionesPickDisponibles = undefined;
-          recompensaTx.montoCompensacion = montoCompensacion;
+          recompensaTx.opciones_pick_disponibles = undefined;
+          recompensaTx.monto_compensacion = montoCompensacion;
           recompensaTx.fecha_reclamo = new Date();
           await addSaldoLocal(txEm, usuarioId, torneoId, montoCompensacion); 
-          return { status: 'COMPENSACION', monto: montoCompensacion, nombre: jugador.name };
+          return { status: 'COMPENSACION', monto: montoCompensacion, nombre: jugador.nombre };
       }
 
       const cantidadFinal = await txEm.count(EquipoJugador, { 
-          equipo: { torneoUsuario: { usuario: usuarioId, torneo: torneoId } } 
+          equipo: { torneo_usuario: { usuario: usuarioId, torneo: torneoId } } 
       });
         
       if (cantidadFinal >= 15) {
           throw ErrorFactory.conflict("Tu plantilla se llenó mientras pensabas.");
       }
-      const equipo = await txEm.findOne(Equipo, { torneoUsuario: { usuario: usuarioId, torneo: torneoId } });
+      const equipo = await txEm.findOne(Equipo, { torneo_usuario: { usuario: usuarioId, torneo: torneoId } });
       if (!equipo) throw ErrorFactory.notFound("No tienes equipo");
 
       await ficharJugadorLocal(txEm, equipo, jugador);
       recompensaTx.jugador = jugador;
       recompensaTx.fecha_reclamo = new Date();
-      recompensaTx.opcionesPickDisponibles = undefined;
+      recompensaTx.opciones_pick_disponibles = undefined;
       return { status: 'EXITO', jugador: jugador };
   });
 
@@ -258,7 +258,7 @@ async function confirmarPick(req: Request, res: Response, next: NextFunction) {
       success: true,
       tipo: 'pick_confirmado', 
       jugador: resultadoTransaccion.jugador, 
-      mensaje: `¡Has fichado a ${resultadoTransaccion.jugador!.name}!`
+      mensaje: `¡Has fichado a ${resultadoTransaccion.jugador!.nombre}!`
   });
   } catch (error) {
     if (error instanceof AppError) {

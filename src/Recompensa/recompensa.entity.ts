@@ -6,36 +6,36 @@ import { Premio } from '../Premio/premio.entity.js';
 import { Player } from '../Player/player.entity.js';
 
 @Entity()
-@Unique({ properties: ['torneoUsuario', 'jornada'] }) 
+@Unique({ properties: ['torneo_usuario', 'jornada'] }) 
 export class Recompensa extends BaseEntity {
 
   @Property()
-  posicionJornada!: number;
+  posicion_jornada!: number;
 
   @Property({ nullable: true })
   fecha_reclamo?: Date;
 
   @ManyToOne(() => TorneoUsuario, { deleteRule: 'cascade' })
-  torneoUsuario!: TorneoUsuario;
+  torneo_usuario!: TorneoUsuario;
 
   @ManyToOne(() => Jornada, { deleteRule: 'cascade' })
   jornada!: Jornada;
 
   @ManyToOne(() => Premio, { nullable: true })
-  premioConfiguracion?: Premio;
+  premio_configuracion?: Premio;
 
   @Property({ type: 'decimal', precision: 12, scale: 2, nullable: true })
   monto?: number;
 
   @Property({ nullable: true })
-  montoCompensacion?: number;
+  monto_compensacion?: number;
 
   @ManyToOne(() => Player, { nullable: true })
   jugador?: Player;
 
   @Property({ type: 'json', nullable: true })
-  opcionesPickDisponibles?: number[];
+  opciones_pick_disponibles?: number[];
 
   @Property({ nullable: true })
-  fechaExpiracionPick?: Date;
+  fecha_expiracion_pick?: Date;
 }

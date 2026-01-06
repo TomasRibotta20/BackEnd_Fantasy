@@ -4,38 +4,38 @@ import { clubes } from '../Club/club.entity.js';
 import { Position } from '../Position/position.entity.js';
 import { EquipoJugador } from '../Equipo/equipoJugador.entity.js'; // Importar Equipo
 import type { EstadisticaJugador } from '../EstadisticaJugador/estadistica-jugador.entity.js';
-@Entity({ tableName: 'player' })
+@Entity({ tableName: 'Jugadores' })
 export class Player extends BaseEntity {
   @Property({ type: 'number' })
   @Unique()
-  apiId!: number;
+  id_api!: number;
 
   @Property({ nullable: true })
-  name?: string | null;
+  nombre?: string | null;
 
   @Property({ nullable: true })
-  firstname?: string | null;
+  primer_nombre?: string | null;
 
   @Property({ nullable: true })
-  lastname?: string | null;
+  apellido?: string | null;
 
   @Property({ type: 'number', nullable: true })
-  age?: number | null;
+  edad?: number | null;
 
   @Property({ nullable: true })
-  nationality?: string | null;
+  nacionalidad?: string | null;
 
   @Property({ nullable: true })
-  height?: string | null;
+  altura?: string | null;
 
   @Property({ nullable: true })
-  weight?: string | null;
+  peso?: string | null;
 
   @Property({ nullable: true })
-  photo?: string | null;
+  foto?: string | null;
 
   @Property({ type: 'number', nullable: true })
-  jerseyNumber?: number | null;
+  numero_camiseta?: number | null;
   
   @Property({ nullable: true })
   precio_actual?: number;
@@ -47,7 +47,7 @@ export class Player extends BaseEntity {
   club!: clubes;
 
   @ManyToOne(() => Position, { nullable: true })
-  position?: Position | null;
+  posicion?: Position | null;
 
   @OneToMany(() => EquipoJugador, (equipoJugador) => equipoJugador.jugador, { nullable: true })
   equipos = new Collection<EquipoJugador>(this);

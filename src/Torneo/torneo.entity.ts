@@ -23,7 +23,7 @@ export class Torneo extends BaseEntity {
   inscripciones = new Collection<TorneoUsuario>(this);
 
   @Formula(alias => `(SELECT COUNT(*) FROM torneo_usuario tu WHERE tu.torneo_id = ${alias}.id and tu.expulsado = false)`)
-  cantidadParticipantes?: number;
+  cantidad_participantes?: number;
 
   @Property({ nullable: true })
   fecha_inicio!: Date
@@ -32,7 +32,7 @@ export class Torneo extends BaseEntity {
   fecha_creacion = new Date();
 
   @Property({ nullable: false })
-  cupoMaximo!: number;
+  cupo_maximo!: number;
 
   @Enum({ items: () => EstadoTorneo, default: EstadoTorneo.ESPERA })
   estado = EstadoTorneo.ESPERA;

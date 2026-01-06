@@ -27,11 +27,11 @@ export async function crearOferta(
     { 
       populate: [
         'equipo',
-        'equipo.torneoUsuario',
-        'equipo.torneoUsuario.usuario',
-        'equipo.torneoUsuario.torneo',
+        'equipo.torneo_usuario',
+        'equipo.torneo_usuario.usuario',
+        'equipo.torneo_usuario.torneo',
         'jugador',
-        'jugador.position'
+        'jugador.posicion'
       ] 
     }
   );
@@ -45,12 +45,12 @@ export async function crearOferta(
   const equipoOferente = await entityManager.findOne(
     Equipo,
     {
-      torneoUsuario: {
+      torneo_usuario: {
         usuario: userId,
         torneo: equipoVendedor.torneoUsuario.torneo.id
       }
     },
-    { populate: ['torneoUsuario', 'torneoUsuario.usuario', 'jugadores', 'jugadores.jugador', 'jugadores.jugador.position'] }
+    { populate: ['torneo_usuario', 'torneo_usuario.usuario', 'jugadores', 'jugadores.jugador', 'jugadores.jugador.posicion'] }
   );
 
   if (!equipoOferente) {
@@ -74,7 +74,7 @@ export async function crearOferta(
 
   const ofertaExistente = await entityManager.findOne(OfertaVenta, {
     oferente: equipoOferente.id,
-    equipoJugador: equipoJugadorId,
+    equipo_jugador: equipoJugadorId,
     estado: EstadoOferta.PENDIENTE
   });
 
@@ -106,8 +106,8 @@ export async function crearOferta(
       jugador.name || 'Jugador',
       montoOfertado,
       equipoOferente.nombre,
-      equipoOferente.torneoUsuario.usuario.username,
-      equipoVendedor.torneoUsuario.torneo.nombre,
+      equipoOferente.torneo_usuario.usuario.username,
+      equipoVendedor.torneo_usuario.torneo.nombre,
       mensajeOferente,
       true // es actualización
     );
@@ -127,7 +127,7 @@ export async function crearOferta(
   const nuevaOferta = entityManager.create(OfertaVenta, {
     oferente: equipoOferente,
     vendedor: equipoVendedor,
-    equipoJugador,
+    equipo_jugador: equipoJugador,
     monto_ofertado: montoOfertado,
     mensaje_oferente: mensajeOferente,
     estado: EstadoOferta.PENDIENTE,
@@ -144,7 +144,7 @@ export async function crearOferta(
     jugador.name || 'Jugador',
     montoOfertado,
     equipoOferente.nombre,
-    equipoOferente.torneoUsuario.usuario.username,
+    equipoOferente.torneo_usuario.usuario.username,
     equipoVendedor.torneoUsuario.torneo.nombre,
     mensajeOferente
   );
@@ -176,18 +176,18 @@ export async function aceptarOferta(
     {
       populate: [
         'oferente',
-        'oferente.torneoUsuario',
-        'oferente.torneoUsuario.usuario',
+        'oferente.torneo_usuario',
+        'oferente.torneo_usuario.usuario',
         'oferente.jugadores',
         'oferente.jugadores.jugador',
-        'oferente.jugadores.jugador.position',
+        'oferente.jugadores.jugador.posicion',
         'vendedor',
-        'vendedor.torneoUsuario',
-        'vendedor.torneoUsuario.usuario',
-        'equipoJugador',
-        'equipoJugador.equipo',
-        'equipoJugador.jugador',
-        'equipoJugador.jugador.position'
+        'vendedor.torneo_usuario',
+        'vendedor.torneo_usuario.usuario',
+        'equipo_jugador',
+        'equipo_jugador.equipo',
+        'equipo_jugador.jugador',
+        'equipo_jugador.jugador.posicion'
       ]
     }
   );
@@ -195,7 +195,7 @@ export async function aceptarOferta(
   if (!oferta) {
     throw ErrorFactory.notFound('Oferta no encontrada');
   }
-  if (oferta.vendedor.torneoUsuario.usuario.id !== userId) {
+  if (oferta.vendedor.torneo_usuario.usuario.id !== userId) {
     throw ErrorFactory.forbidden('No tienes permiso para aceptar esta oferta');
   }
   if (oferta.estado !== EstadoOferta.PENDIENTE) {
@@ -205,7 +205,7 @@ export async function aceptarOferta(
     throw ErrorFactory.validationAppError('Esta oferta ya venció');
   }
 
-  const jugador = oferta.equipoJugador.jugador as any;
+  const jugador = oferta.equipo_jugador.jugador as any;
   const posicionJugador = jugador.position?.description;
 
   if (!posicionJugador) {
@@ -228,8 +228,8 @@ export async function aceptarOferta(
   oferta.oferente.presupuesto_bloqueado -= oferta.monto_ofertado;
   oferta.oferente.presupuesto -= oferta.monto_ofertado;
   oferta.vendedor.presupuesto += oferta.monto_ofertado;
-  oferta.equipoJugador.equipo = oferta.oferente as any;
-  oferta.equipoJugador.es_titular = false;
+  oferta.equipo_jugador.equipo = oferta.oferente as any;
+  oferta.equipo_jugador.es_titular = false;
 
   const transaccionCompra = entityManager.create(Transaccion, {
     equipo: oferta.oferente,
@@ -256,16 +256,16 @@ export async function aceptarOferta(
 
   await entityManager.flush();
 
-  await rechazarOfertasAutomaticas(oferta.equipoJugador.id!, ofertaId, entityManager);
+  await rechazarOfertasAutomaticas(oferta.equipo_jugador.id!, ofertaId, entityManager);
 
   await sendOfertaAceptadaEmail(
-    oferta.oferente.torneoUsuario.usuario.email,
-    oferta.oferente.torneoUsuario.usuario.username,
+    oferta.oferente.torneo_usuario.usuario.email,
+    oferta.oferente.torneo_usuario.usuario.username,
     jugador.name || 'Jugador',
     oferta.monto_ofertado,
     oferta.vendedor.nombre,
-    oferta.vendedor.torneoUsuario.usuario.username,
-    oferta.vendedor.torneoUsuario.torneo.nombre
+    oferta.vendedor.torneo_usuario.usuario.username,
+    oferta.vendedor.torneo_usuario.torneo.nombre
   );
 
   return {
@@ -301,13 +301,13 @@ export async function rechazarOferta(
     {
       populate: [
         'oferente',
-        'oferente.torneoUsuario',
-        'oferente.torneoUsuario.usuario',
+        'oferente.torneo_usuario',
+        'oferente.torneo_usuario.usuario',
         'vendedor',
-        'vendedor.torneoUsuario',
-        'vendedor.torneoUsuario.usuario',
-        'equipoJugador',
-        'equipoJugador.jugador'
+        'vendedor.torneo_usuario',
+        'vendedor.torneo_usuario.usuario',
+        'equipo_jugador',
+        'equipo_jugador.jugador'
       ]
     }
   );
@@ -315,7 +315,7 @@ export async function rechazarOferta(
   if (!oferta) {
     throw ErrorFactory.notFound('Oferta no encontrada');
   }
-  if (oferta.vendedor.torneoUsuario.usuario.id !== userId) {
+  if (oferta.vendedor.torneo_usuario.usuario.id !== userId) {
     throw ErrorFactory.forbidden('No tienes permiso para rechazar esta oferta');
   }
   if (oferta.estado !== EstadoOferta.PENDIENTE) {
@@ -329,15 +329,15 @@ export async function rechazarOferta(
     oferta.mensaje_respuesta = mensajeRespuesta;
   }
   await entityManager.flush();
-  const jugador = oferta.equipoJugador.jugador as any;
+  const jugador = oferta.equipo_jugador.jugador as any;
   await sendOfertaRechazadaEmail(
-    oferta.oferente.torneoUsuario.usuario.email,
-    oferta.oferente.torneoUsuario.usuario.username,
+    oferta.oferente.torneo_usuario.usuario.email,
+    oferta.oferente.torneo_usuario.usuario.username,
     jugador.name || 'Jugador',
     oferta.monto_ofertado,
     oferta.vendedor.nombre,
-    oferta.vendedor.torneoUsuario.usuario.username,
-    oferta.vendedor.torneoUsuario.torneo.nombre,
+    oferta.vendedor.torneo_usuario.usuario.username,
+    oferta.vendedor.torneo_usuario.torneo.nombre,
     mensajeRespuesta
   );
 
@@ -367,8 +367,8 @@ export async function cancelarOferta(
     {
       populate: [
         'oferente',
-        'oferente.torneoUsuario',
-        'oferente.torneoUsuario.usuario'
+        'oferente.torneo_usuario',
+        'oferente.torneo_usuario.usuario'
       ]
     }
   );
@@ -376,7 +376,7 @@ export async function cancelarOferta(
   if (!oferta) {
     throw ErrorFactory.notFound('Oferta no encontrada');
   }
-  if (oferta.oferente.torneoUsuario.usuario.id !== userId) {
+  if (oferta.oferente.torneo_usuario.usuario.id !== userId) {
     throw ErrorFactory.forbidden('No tienes permiso para cancelar esta oferta');
   }
   if (oferta.estado !== EstadoOferta.PENDIENTE) {
@@ -426,13 +426,13 @@ export async function obtenerOfertasEnviadas(
     {
       populate: [
         'vendedor',
-        'vendedor.torneoUsuario',
-        'vendedor.torneoUsuario.usuario',
-        'vendedor.torneoUsuario.torneo', 
-        'equipoJugador',
-        'equipoJugador.jugador',
-        'equipoJugador.jugador.position',
-        'equipoJugador.jugador.club'
+        'vendedor.torneo_usuario',
+        'vendedor.torneo_usuario.usuario',
+        'vendedor.torneo_usuario.torneo', 
+        'equipo_jugador',
+        'equipo_jugador.jugador',
+        'equipo_jugador.jugador.posicion',
+        'equipo_jugador.jugador.club'
       ],
       limit: filtros.limit || 20,
       offset: filtros.offset || 0,
@@ -476,13 +476,13 @@ export async function obtenerOfertasRecibidas(
     {
       populate: [
         'oferente',
-        'oferente.torneoUsuario',
-        'oferente.torneoUsuario.usuario',
-        'oferente.torneoUsuario.torneo',
-        'equipoJugador',
-        'equipoJugador.jugador',
-        'equipoJugador.jugador.position',
-        'equipoJugador.jugador.club'
+        'oferente.torneo_usuario',
+        'oferente.torneo_usuario.usuario',
+        'oferente.torneo_usuario.torneo',
+        'equipo_jugador',
+        'equipo_jugador.jugador',
+        'equipo_jugador.jugador.posicion',
+        'equipo_jugador.jugador.club'
       ],
       limit: filtros.limit || 20,
       offset: filtros.offset || 0,
@@ -514,17 +514,17 @@ export async function obtenerDetalleOferta(
     {
       populate: [
         'oferente',
-        'oferente.torneoUsuario',
-        'oferente.torneoUsuario.usuario',
-        'oferente.torneoUsuario.torneo', 
+        'oferente.torneo_usuario',
+        'oferente.torneo_usuario.usuario',
+        'oferente.torneo_usuario.torneo', 
         'vendedor',
-        'vendedor.torneoUsuario',
-        'vendedor.torneoUsuario.usuario',
-        'vendedor.torneoUsuario.torneo',
-        'equipoJugador',
-        'equipoJugador.jugador',
-        'equipoJugador.jugador.position',
-        'equipoJugador.jugador.club'
+        'vendedor.torneo_usuario',
+        'vendedor.torneo_usuario.usuario',
+        'vendedor.torneo_usuario.torneo',
+        'equipo_jugador',
+        'equipo_jugador.jugador',
+        'equipo_jugador.jugador.posicion',
+        'equipo_jugador.jugador.club'
       ]
     }
   );
@@ -533,8 +533,8 @@ export async function obtenerDetalleOferta(
     throw ErrorFactory.notFound('Oferta no encontrada');
   }
 
-  const esOferente = oferta.oferente.torneoUsuario.usuario.id === userId;
-  const esVendedor = oferta.vendedor.torneoUsuario.usuario.id === userId;
+  const esOferente = oferta.oferente.torneo_usuario.usuario.id === userId;
+  const esVendedor = oferta.vendedor.torneo_usuario.usuario.id === userId;
 
   if (!esOferente && !esVendedor) {
     throw ErrorFactory.forbidden('No tienes permiso para ver esta oferta');
@@ -555,21 +555,21 @@ async function rechazarOfertasAutomaticas(
   const ofertasPendientes = await em.find(
     OfertaVenta,
     {
-      equipoJugador: equipoJugadorId,
+      equipo_jugador: equipoJugadorId,
       estado: EstadoOferta.PENDIENTE,
       id: { $ne: ofertaAceptadaId }
     },
     {
       populate: [
         'oferente',
-        'oferente.torneoUsuario',
-        'oferente.torneoUsuario.usuario',
-        'oferente.torneoUsuario.torneo',
-        'equipoJugador',
-        'equipoJugador.jugador',
-        'equipoJugador.equipo', 
-        'equipoJugador.equipo.torneoUsuario', 
-        'equipoJugador.equipo.torneoUsuario.torneo' 
+        'oferente.torneo_usuario',
+        'oferente.torneo_usuario.usuario',
+        'oferente.torneo_usuario.torneo',
+        'equipo_jugador',
+        'equipo_jugador.jugador',
+        'equipo_jugador.equipo', 
+        'equipo_jugador.equipo.torneo_usuario', 
+        'equipo_jugador.equipo.torneo_usuario.torneo' 
       ]
     }
   );
@@ -580,15 +580,15 @@ async function rechazarOfertasAutomaticas(
     oferta.estado = EstadoOferta.RECHAZADA;
     oferta.mensaje_respuesta = 'El jugador fue vendido a otro equipo';
 
-    const jugador = oferta.equipoJugador.jugador as any;
+    const jugador = oferta.equipo_jugador.jugador as any;
     await sendOfertaRechazadaEmail(
-      oferta.oferente.torneoUsuario.usuario.email,
-      oferta.oferente.torneoUsuario.usuario.username,
+      oferta.oferente.torneo_usuario.usuario.email,
+      oferta.oferente.torneo_usuario.usuario.username,
       jugador.name || 'Jugador',
       oferta.monto_ofertado,
       'Sistema',
       'Sistema',
-      oferta.oferente.torneoUsuario.torneo.nombre,
+      oferta.oferente.torneo_usuario.torneo.nombre,
       'El jugador fue vendido a otro equipo'
     );
   }
@@ -611,10 +611,10 @@ export async function procesarOfertasVencidas(em?: EntityManager) {
     {
       populate: [
         'oferente',
-        'oferente.torneoUsuario',
-        'oferente.torneoUsuario.usuario',
-        'equipoJugador',
-        'equipoJugador.jugador'
+        'oferente.torneo_usuario',
+        'oferente.torneo_usuario.usuario',
+        'equipo_jugador',
+        'equipo_jugador.jugador'
       ]
     }
   );
@@ -626,13 +626,13 @@ export async function procesarOfertasVencidas(em?: EntityManager) {
     oferta.oferente.presupuesto_bloqueado -= oferta.monto_ofertado;
     oferta.estado = EstadoOferta.VENCIDA;
 
-    const jugador = oferta.equipoJugador.jugador as any;
+    const jugador = oferta.equipo_jugador.jugador as any;
     await sendOfertaVencidaEmail(
-      oferta.oferente.torneoUsuario.usuario.email,
-      oferta.oferente.torneoUsuario.usuario.username,
+      oferta.oferente.torneo_usuario.usuario.email,
+      oferta.oferente.torneo_usuario.usuario.username,
       jugador.name || 'Jugador',
       oferta.monto_ofertado, 
-      oferta.oferente.torneoUsuario.torneo.nombre
+      oferta.oferente.torneo_usuario.torneo.nombre
     );
 
     contadorVencidas++;
@@ -647,14 +647,14 @@ export async function procesarOfertasVencidas(em?: EntityManager) {
 }
 
 function formatearOferta(oferta: OfertaVenta, tipo: 'enviada' | 'recibida') {
-  const jugador = oferta.equipoJugador.jugador as any;
+  const jugador = oferta.equipo_jugador.jugador as any;
   const ahora = new Date();
   const tiempoRestante = oferta.fecha_vencimiento.getTime() - ahora.getTime();
   const horasRestantes = Math.max(0, Math.floor(tiempoRestante / (1000 * 60 * 60)));
 
   const torneo = tipo === 'enviada' 
-    ? oferta.vendedor.torneoUsuario.torneo
-    : oferta.oferente.torneoUsuario.torneo;
+    ? oferta.vendedor.torneo_usuario.torneo
+    : oferta.oferente.torneo_usuario.torneo;
 
   return {
     id: oferta.id,
@@ -681,8 +681,8 @@ function formatearOferta(oferta: OfertaVenta, tipo: 'enviada' | 'recibida') {
       id: tipo === 'enviada' ? oferta.vendedor.id : oferta.oferente.id,
       nombre: tipo === 'enviada' ? oferta.vendedor.nombre : oferta.oferente.nombre,
       usuario: tipo === 'enviada' 
-        ? oferta.vendedor.torneoUsuario.usuario.username
-        : oferta.oferente.torneoUsuario.usuario.username
+        ? oferta.vendedor.torneo_usuario.usuario.username
+        : oferta.oferente.torneo_usuario.usuario.username
     }
   };
 }

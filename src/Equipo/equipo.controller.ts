@@ -33,7 +33,7 @@ export async function getMiEquipo(req: Request, res: Response, next: NextFunctio
     const equipoId = Number(req.params.equipoId);
     const userId = req.authUser.user?.userId!;
     const equipo = await getEquipoById(equipoId);
-    const ownerId = equipo.torneoUsuario.usuario.id;
+    const ownerId = equipo.torneo_usuario.usuario.id;
     const esMio = ownerId === userId;
     res.status(200).json({
         data: {
@@ -63,12 +63,12 @@ export async function cambiarEstadoJugador(req: Request, res: Response, next: Ne
     const userId = req.authUser.user?.userId!;
 
     const equipo = await em.findOne(Equipo, { id: equipoId }, { 
-      populate: ['torneoUsuario.usuario'] 
+      populate: ['torneo_usuario.usuario'] 
     });
     if (!equipo) {
       throw ErrorFactory.notFound('Equipo no encontrado');
     }
-    if (equipo.torneoUsuario.usuario.id !== userId) {
+    if (equipo.torneo_usuario.usuario.id !== userId) {
       throw ErrorFactory.forbidden('No puedes modificar un equipo que no es tuyo');
     }
 
@@ -98,12 +98,12 @@ export async function actualizarAlineacion(req: Request, res: Response, next: Ne
     const equipoId = Number(req.params.equipoId);
     const { jugadorTitularId, jugadorSuplenteId } = req.body;
     const equipo = await em.findOne(Equipo, { id: equipoId }, { 
-        populate: ['torneoUsuario.usuario'] 
+        populate: ['torneo_usuario.usuario'] 
     });
     if (!equipo) {
         throw ErrorFactory.notFound('Equipo no encontrado');
     }
-    if (equipo.torneoUsuario.usuario.id !== userId) {
+    if (equipo.torneo_usuario.usuario.id !== userId) {
         throw ErrorFactory.forbidden('No puedes modificar la alineación de un equipo que no es tuyo.');
     }
     const resultado = await cambiarAlineacion(equipoId, Number(jugadorTitularId), Number(jugadorSuplenteId));

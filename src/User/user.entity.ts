@@ -3,7 +3,7 @@ import { BaseEntity } from '../shared/db/baseEntity.entity.js';
 import type { TorneoUsuario } from '../Torneo/torneoUsuario.entity.js';
 
 
-@Entity()
+@Entity({ tableName: 'usuarios' })
 export class Users extends BaseEntity {
   @Property({ nullable: false, unique: true })
   username!: string;
@@ -15,7 +15,7 @@ export class Users extends BaseEntity {
   password!: string;
 
   @Property({ default: 'user' })
-  role!: string; // 'user' | 'admin'
+  rol!: string; // 'user' | 'admin'
 
   @Property({ nullable: true })
   refreshToken?: string;

@@ -35,13 +35,13 @@ export async function ofertar(equipoId: number, itemMercadoId: number, monto: nu
     const equipo = await em.findOne(
       Equipo,
       equipoId,
-      { populate: ['torneoUsuario', 'torneoUsuario.usuario'] }
+      { populate: ['torneo_usuario', 'torneo_usuario.usuario'] }
     );
 
     if (!equipo) {
       throw ErrorFactory.notFound('Equipo no encontrado');
     }
-    const ownerId = equipo.torneoUsuario.usuario.id;
+    const ownerId = equipo.torneo_usuario.usuario.id;
     if (ownerId !== userId) {
       throw ErrorFactory.forbidden('No tienes permisos para ofertar con este equipo');
     }
@@ -69,7 +69,7 @@ export async function ofertar(equipoId: number, itemMercadoId: number, monto: nu
         puja: {
           id: pujaExistente.id,
           monto: pujaExistente.monto,
-          jugador: item.jugador.name,
+          jugador: item.jugador.nombre,
           precio_referencia: precioActual
         },
         presupuesto: {
@@ -103,7 +103,7 @@ export async function ofertar(equipoId: number, itemMercadoId: number, monto: nu
         puja: {
           id: puja.id,
           monto: puja.monto,
-          jugador: item.jugador.name,
+          jugador: item.jugador.nombre,
           precio_referencia: precioActual
         },
         presupuesto: {
@@ -123,14 +123,14 @@ export async function cancelarOferta(pujaId: number, userId: number) {
     const puja = await em.findOne(
       MercadoPuja,
       pujaId,
-      { populate: ['item.mercado', 'equipo', 'equipo.torneoUsuario', 'equipo.torneoUsuario.usuario', 'item.jugador'] }
+      { populate: ['item.mercado', 'equipo', 'equipo.torneo_usuario', 'equipo.torneo_usuario.usuario', 'item.jugador'] }
     );
 
     if (!puja) {
       throw ErrorFactory.notFound('Oferta no encontrada');
     }
 
-    const ownerId = puja.equipo.torneoUsuario.usuario.id;
+    const ownerId = puja.equipo.torneo_usuario.usuario.id;
     if (ownerId !== userId) {
       throw ErrorFactory.forbidden('No tienes permisos para cancelar esta oferta');
     }
@@ -173,14 +173,14 @@ export async function obtenerMisOfertas(equipoId: number, userId: number) {
   const equipo = await em.findOne(
     Equipo,
     equipoId,
-    { populate: ['torneoUsuario', 'torneoUsuario.usuario'] }
+    { populate: ['torneo_usuario', 'torneo_usuario.usuario'] }
   );
 
   if (!equipo) {
     throw ErrorFactory.notFound('Equipo no encontrado');
   }
 
-  const ownerId = equipo.torneoUsuario.usuario.id;
+  const ownerId = equipo.torneo_usuario.usuario.id;
   if (ownerId !== userId) {
     throw ErrorFactory.forbidden('No tienes permisos para ver las ofertas de este equipo');
   }

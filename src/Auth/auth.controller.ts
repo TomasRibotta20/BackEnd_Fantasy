@@ -50,12 +50,12 @@ async function login(req: Request, res: Response, next: NextFunction) {
     if (!isPasswordValid) throw ErrorFactory.validationAppError('Invalid password');
 
     const accessToken = jwt.sign(
-      { userId: existingUser.id, username: existingUser.username, email: existingUser.email, role: existingUser.role, type: 'access' },
+      { userId: existingUser.id, username: existingUser.username, email: existingUser.email, role: existingUser.rol, type: 'access' },
       SECRET_JWT_KEY,
       { expiresIn: '10m' }
     );
     const refreshToken = jwt.sign(
-      { userId: existingUser.id, username: existingUser.username, email: existingUser.email, role: existingUser.role, type: 'refresh' },
+      { userId: existingUser.id, username: existingUser.username, email: existingUser.email, role: existingUser.rol, type: 'refresh' },
       SECRET_REFRESHJWT_KEY,
       { expiresIn: '7d' }
     );

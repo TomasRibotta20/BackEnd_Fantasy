@@ -70,7 +70,7 @@ export class EstadisticaJugadorService {
         const estadisticas = [];
         
         for (const datos of datosEstadisticas) {
-          const jugador = await em.findOne(Player, { apiId: datos.player_id });
+          const jugador = await em.findOne(Player, { id_api: datos.player_id });
           if (!jugador) {
             console.log(`No se encontró el jugador con ID API ${datos.player_id}`);
             continue;

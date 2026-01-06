@@ -12,7 +12,7 @@ export class EquipoSnapshotService {
   // Crear snapshots de todos los equipos para una jornada
   async crearSnapshotsJornada(jornadaId: number): Promise<number> {
     const jornada = await this.em.findOneOrFail(Jornada, jornadaId)
-    const equipos = await this.em.find(Equipo, { torneoUsuario: { torneo: { estado: EstadoTorneo.ACTIVO } } }, { populate: ['jugadores.jugador'] })
+    const equipos = await this.em.find(Equipo, { torneo_usuario: { torneo: { estado: EstadoTorneo.ACTIVO } } }, { populate: ['jugadores.jugador'] })
     //const equipos = await this.em.find(Equipo, {}, { populate: ['jugadores.jugador'] })
     let snapshotsCreados = 0
     for (const equipo of equipos) {
@@ -35,8 +35,8 @@ export class EquipoSnapshotService {
         equipo,
         jornada,
         jugadores,
-        fechaSnapshot: new Date(),
-        puntajeTotal: 0,
+        fecha_snapshot: new Date(),
+        puntaje_total: 0,
       })
 
       this.em.persist(snapshot)
@@ -88,7 +88,7 @@ export class EquipoSnapshotService {
             puntajeTotal += puntajeJugador
         }
 
-      equipoJornada.puntajeTotal = puntajeTotal
+      equipoJornada.puntaje_total = puntajeTotal
     }
 
     await this.em.flush()
@@ -103,12 +103,12 @@ async obtenerEquipoEnJornada(equipoId: number, jornadaId: number) {
     { 
       populate: [
         'equipo',
-        'equipo.torneoUsuario',
-        'equipo.torneoUsuario.usuario',        
+        'equipo.torneo_usuario',
+        'equipo.torneo_usuario.usuario',        
         'jornada', 
         'jugadores', 
         'jugadores.club', 
-        'jugadores.position'
+        'jugadores.posicion'
       ] 
     }
   )
@@ -141,12 +141,12 @@ async obtenerEquipoEnJornada(equipoId: number, jornadaId: number) {
       const puntaje = estadisticas.reduce((sum, stat) => sum + stat.puntaje_total, 0)
       return {
         id: jugador.id,
-        nombre: jugador.name,
-        nombreCompleto: `${jugador.firstname} ${jugador.lastname}`,
-        posicion: jugador.position?.description || 'Sin posición',
+        nombre: jugador.nombre,
+        nombreCompleto: `${jugador.primer_nombre} ${jugador.apellido}`,
+        posicion: jugador.posicion?.descripcion || 'Sin posición',
         club: jugador.club.nombre,
         clubLogo: jugador.club.logo,
-        foto: jugador.photo,
+        foto: jugador.foto,
         esTitular: jugador.id ? (titularidadMap.get(jugador.id) || false) : false,
         puntaje,
         estadisticas: stats ? {
@@ -180,7 +180,7 @@ async obtenerEquipoEnJornada(equipoId: number, jornadaId: number) {
     equipo: {
       id: equipoJornada.equipo.id,
       nombre: equipoJornada.equipo.nombre,
-      usuarioId: equipoJornada.equipo.torneoUsuario.usuario.id, 
+      usuarioId: equipoJornada.equipo.torneo_usuario.usuario.id, 
     },
     jornada: {
       id: equipoJornada.jornada.id,
@@ -189,8 +189,8 @@ async obtenerEquipoEnJornada(equipoId: number, jornadaId: number) {
       fecha_inicio: equipoJornada.jornada.fecha_inicio,
       fecha_fin: equipoJornada.jornada.fecha_fin,
     },
-    puntajeTotal: equipoJornada.puntajeTotal,
-    fechaSnapshot: equipoJornada.fechaSnapshot,
+    puntajeTotal: equipoJornada.puntaje_total,
+    fechaSnapshot: equipoJornada.fecha_snapshot,
     jugadores: jugadoresData,
   }
 }
@@ -211,11 +211,11 @@ async obtenerEquipoEnJornada(equipoId: number, jornadaId: number) {
       EquipoJornada,
       { 
         jornada: jornadaId,
-        equipo: { torneoUsuario: { torneo: torneoId } }
+        equipo: { torneo_usuario: { torneo: torneoId } }
       },
       { 
-        populate: ['equipo.torneoUsuario.usuario', 'jornada'],
-        orderBy: { puntajeTotal: 'DESC' }
+        populate: ['equipo.torneo_usuario.usuario', 'jornada'],
+        orderBy: { puntaje_total: 'DESC' }
       }
     );
   }

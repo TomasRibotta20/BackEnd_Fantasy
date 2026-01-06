@@ -21,7 +21,7 @@ export class OfertaVenta extends BaseEntity {
   vendedor!: Equipo;
   
   @ManyToOne(() => EquipoJugador, { eager: true, deleteRule: 'cascade' })
-  equipoJugador!: EquipoJugador;
+  equipo_jugador!: EquipoJugador;
   
   @Property()
   monto_ofertado!: number;

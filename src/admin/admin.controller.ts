@@ -119,7 +119,7 @@ class AdminController {
         config.max_jugadores_por_equipo = max_jugadores_por_equipo
       }
       console.log('Actualizando updatedAt...')
-      config.updated_at = new Date()
+      config.ultima_modificacion = new Date()
       console.log('Persistiendo cambios...')
       await em.persistAndFlush(config)
       console.log('Cambios persistidos exitosamente')
@@ -138,7 +138,7 @@ class AdminController {
           dias_proteccion_clausula: config.dias_proteccion_clausula,
           ratio_blindaje_clausula: config.ratio_blindaje_clausula,
           max_jugadores_por_equipo: config.max_jugadores_por_equipo,
-          updatedAt: config.updated_at
+          updatedAt: config.ultima_modificacion
         }
       })
     } catch (error: any) {
@@ -237,7 +237,7 @@ class AdminController {
         }
 
         config.jornada_activa = jornadaSiguiente
-        config.updated_at = new Date()
+        config.ultima_modificacion = new Date()
         await em.flush()
         console.log(`✓ Jornada "${jornadaSiguiente.nombre}" establecida como activa`)
       }

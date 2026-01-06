@@ -23,5 +23,5 @@ export class GameConfig extends BaseEntity {
   max_jugadores_por_equipo: number = 15
   
   @Property()
-  updated_at: Date = new Date()
+  ultima_modificacion: Date = new Date()
 }

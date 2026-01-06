@@ -48,7 +48,7 @@ export async function inicializarJugadoresTorneo(torneoId: number, em?: EntityMa
 
   const equiposDelTorneo = await entityManager.find(
     Equipo,
-    { torneoUsuario: { torneo: torneoId } },
+    { torneo_usuario: { torneo: torneoId } },
     { populate: ['jugadores'] }
   );
 
@@ -96,7 +96,7 @@ async function obtenerJugadoresLibresTorneo(torneoId: number, em: EntityManager)
       torneo: torneoId,
       equipo_jugador: null
     },
-    { populate: ['jugador', 'jugador.position', 'jugador.club'] }
+    { populate: ['jugador', 'jugador.posicion', 'jugador.club'] }
   );
 }
 
@@ -213,8 +213,8 @@ export async function abrirMercado(torneoId: number) {
       },
       jugadores: jugadoresSeleccionados.map(jt => ({
         id: jt.jugador.id,
-        nombre: jt.jugador.name,
-        posicion: jt.jugador.position?.description,
+        nombre: jt.jugador.nombre,
+        posicion: jt.jugador.posicion?.descripcion,
         club: jt.jugador.club.nombre,
         precio_actual: jt.jugador.precio_actual
       }))
@@ -233,13 +233,13 @@ export async function validarCupoParaCompra(
 ): Promise<{ valido: boolean; razon?: string }> {
   
   const equipo = await em.findOne(Equipo, equipoId, {
-    populate: ['jugadores.jugador', 'jugadores.jugador.position']
+    populate: ['jugadores.jugador', 'jugadores.jugador.posicion']
   });
   if (!equipo) {
     return { valido: false, razon: 'Equipo no encontrado' };
   }
   const jugadorNuevo = await em.findOne(Player, jugadorId, {
-    populate: ['position']
+    populate: ['posicion']
   });
   if (!jugadorNuevo) {
     return { valido: false, razon: 'Jugador no encontrado' };
@@ -267,7 +267,7 @@ export async function cerrarMercado(mercadoId: number) {
       {
         populate: [
           'items.jugador',
-          'items.jugador.position',
+          'items.jugador.posicion',
           'items.pujas.equipo',
           'torneo'
         ]
@@ -331,7 +331,7 @@ export async function cerrarMercado(mercadoId: number) {
         }
 
         const equipo = await em.findOne(Equipo, { id: ganador.equipo.id }, {
-          populate: ['torneoUsuario', 'torneoUsuario.torneo']
+          populate: ['torneo_usuario', 'torneo_usuario.torneo']
         });
 
         if (!equipo) continue;
@@ -363,7 +363,7 @@ export async function cerrarMercado(mercadoId: number) {
           monto: -ganador.monto,
           jugador: item.jugador,
           fecha: new Date(),
-          descripcion: `Compra en mercado #${mercado.numero_mercado}: ${item.jugador.name}`
+          descripcion: `Compra en mercado #${mercado.numero_mercado}: ${item.jugador.nombre}`
         });
         em.persist(transaccion);
 
@@ -424,7 +424,7 @@ export async function obtenerMercadoActivo(torneoId: number) {
     {
       populate: [
         'items.jugador',
-        'items.jugador.position',
+        'items.jugador.posicion',
         'items.jugador.club',
         'items'
       ]
@@ -439,12 +439,12 @@ export async function obtenerMercadoActivo(torneoId: number) {
     id: item.id,
     jugador: {
       id: item.jugador.id,
-      nombre: item.jugador.name,
-      nombreCompleto: `${item.jugador.firstname} ${item.jugador.lastname}`,
-      posicion: item.jugador.position?.description,
+      nombre: item.jugador.nombre,
+      nombreCompleto: `${item.jugador.primer_nombre} ${item.jugador.apellido}`,
+      posicion: item.jugador.posicion?.descripcion,
       club: item.jugador.club.nombre,
       clubLogo: item.jugador.club.logo,
-      foto: item.jugador.photo,
+      foto: item.jugador.foto,
       precio_actual: item.jugador.precio_actual
     },
     cantidad_pujas: item.cantidad_pujas

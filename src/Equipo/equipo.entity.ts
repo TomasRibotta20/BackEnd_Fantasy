@@ -17,7 +17,7 @@ export class Equipo extends BaseEntity {
     mappedBy: 'equipo',
     deleteRule: 'cascade'
   })
-  torneoUsuario!: TorneoUsuario;
+  torneo_usuario!: TorneoUsuario;
 
   @Property({ default: 90000000 })
   presupuesto: number = 90000000;

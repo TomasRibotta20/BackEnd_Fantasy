@@ -46,7 +46,7 @@ async function seleccionarJugadoresPorPrecio(
 
   if (torneoId) {
     const equiposDelTorneo = await em.find(Equipo, {
-      torneoUsuario: { torneo: torneoId }
+      torneo_usuario: { torneo: torneoId }
     }, { populate: ['jugadores'] });
 
     const idsAsignados: number[] = [];
@@ -68,7 +68,7 @@ async function seleccionarJugadoresPorPrecio(
     Player,
     whereConditions,
     {
-      populate: ['position'],
+      populate: ['posicion'],
       orderBy: { [raw('RAND()')]: 'ASC' },
       limit: cantidad * 3
     }
@@ -90,7 +90,7 @@ export function crearEquipo(nombre: string, inscripcion: TorneoUsuario): Equipo 
   const equipo = new Equipo();
   equipo.nombre = nombre;
   equipo.presupuesto = 90000000; 
-  equipo.torneoUsuario = inscripcion;
+  equipo.torneo_usuario = inscripcion;
   inscripcion.equipo = equipo; 
   return equipo;
 }
@@ -103,13 +103,13 @@ export async function poblarEquipoAleatoriamente(
   transactionalEm: EntityManager
 ) {
   const equipo = await transactionalEm.findOne(Equipo, { id: equipoId }, { 
-    populate: ['torneoUsuario', 'torneoUsuario.torneo'] 
+    populate: ['torneo_usuario', 'torneo_usuario.torneo'] 
   });
   if (!equipo) {
     throw ErrorFactory.notFound(`Equipo ${equipoId} no encontrado al intentar poblarlo.`);
   }
 
-  const torneoId = equipo.torneoUsuario?.torneo?.id;
+  const torneoId = equipo.torneo_usuario?.torneo?.id;
   const idsExcluir: number[] = [];
   let costoTotal = 0;
   console.log(`Iniciando poblado de equipo ${equipo.nombre} (Torneo ID: ${torneoId})`);
@@ -144,7 +144,7 @@ export async function poblarEquipoAleatoriamente(
   costoTotal += estrella.precio_actual || 0;
   idsExcluir.push(estrella.id!);
 
-  console.log(`Estrella seleccionada: ${estrella.name} (${posicionEstrella}) - $${estrella.precio_actual?.toLocaleString()}`);
+  console.log(`Estrella seleccionada: ${estrella.nombre} (${posicionEstrella}) - $${estrella.precio_actual?.toLocaleString()}`);
   console.log('Paso 2: Completando posicion de la estrella...');
   
   const cantidadPorPosicion: Record<string, number> = {
@@ -244,7 +244,7 @@ export async function poblarEquipoAleatoriamente(
       if (jugadoresTitulares.length === 0) break;
 
       const aReemplazar = jugadoresTitulares[0];
-      const posicion = aReemplazar.jugador.position?.description;
+      const posicion = aReemplazar.jugador.posicion?.descripcion;
       
       if (!posicion) continue;
 
@@ -286,7 +286,7 @@ export async function poblarEquipoAleatoriamente(
       if (jugadoresSuplentes.length === 0) break;
 
       const aReemplazar = jugadoresSuplentes[0];
-      const posicion = aReemplazar.jugador.position?.description;
+      const posicion = aReemplazar.jugador.posicion?.descripcion;
       
       if (!posicion) continue;
 
@@ -352,7 +352,7 @@ export async function getEquipoById(equipoId: number) {
   const equipo = await em.findOne(
     Equipo,
     { id: equipoId },
-    { populate: ['torneoUsuario', 'torneoUsuario.usuario','jugadores.jugador.position', 'jugadores.jugador.club'] }
+    { populate: ['torneo_usuario', 'torneo_usuario.usuario','jugadores.jugador.posicion', 'jugadores.jugador.club'] }
   );
   if (!equipo) {
     throw ErrorFactory.notFound('El equipo no existe');
@@ -406,14 +406,14 @@ export async function cambiarAlineacion(
       throw ErrorFactory.badRequest(`El jugador con ID ${jugadorSuplenteId} no es suplente.`);
     }
 
-    const jugadorTitular = await em.findOne(Player, { id: jugadorTitularId }, { populate: ['position'] });
-    const jugadorSuplente = await em.findOne(Player, { id: jugadorSuplenteId }, { populate: ['position'] });
+    const jugadorTitular = await em.findOne(Player, { id: jugadorTitularId }, { populate: ['posicion'] });
+    const jugadorSuplente = await em.findOne(Player, { id: jugadorSuplenteId }, { populate: ['posicion'] });
 
     if (!jugadorTitular || !jugadorSuplente) {
       throw ErrorFactory.notFound('Uno de los jugadores no fue encontrado.');
     }
-    const posicionTitular = jugadorTitular.position;
-    const posicionSuplente = jugadorSuplente.position;
+    const posicionTitular = jugadorTitular.posicion;
+    const posicionSuplente = jugadorSuplente.posicion;
 
     if (!posicionTitular || !posicionSuplente) {
       throw ErrorFactory.badRequest('Ambos jugadores deben tener una posición definida.');
@@ -421,7 +421,7 @@ export async function cambiarAlineacion(
 
     if (posicionTitular.id !== posicionSuplente.id) {
       throw ErrorFactory.badRequest(
-        `No se puede cambiar la alineación. El jugador titular es ${posicionTitular.description} y el suplente es ${posicionSuplente.description}.`
+        `No se puede cambiar la alineación. El jugador titular es ${posicionTitular.descripcion} y el suplente es ${posicionSuplente.descripcion}.`
       );
     }
     relacionTitular.es_titular = false;
@@ -445,7 +445,7 @@ export async function cambiarEstadoTitularidad(equipoId: number, jugadorId: numb
     const equipo = await em.findOne(
       Equipo,
       { id: equipoId },
-      { populate: ['jugadores', 'jugadores.jugador', 'jugadores.jugador.position'] }
+      { populate: ['jugadores', 'jugadores.jugador', 'jugadores.jugador.posicion'] }
     );
 
     if (!equipo) {
@@ -455,7 +455,7 @@ export async function cambiarEstadoTitularidad(equipoId: number, jugadorId: numb
     const relacionJugador = await em.findOne(
       EquipoJugador,
       { equipo: equipo, jugador: jugadorId },
-      { populate: ['jugador', 'jugador.position'] }
+      { populate: ['jugador', 'jugador.posicion'] }
     );
 
     if (!relacionJugador) {
@@ -463,13 +463,13 @@ export async function cambiarEstadoTitularidad(equipoId: number, jugadorId: numb
     }
 
     const jugador = relacionJugador.jugador as any as Player;
-    const posicion = jugador.position;
+    const posicion = jugador.posicion;
 
     if (!posicion) {
       throw ErrorFactory.badRequest('El jugador no tiene una posición definida');
     }
 
-    const posicionDescripcion = posicion.description;
+    const posicionDescripcion = posicion.descripcion;
 
     if (!(posicionDescripcion in LIMITES_FORMACION)) {
       throw ErrorFactory.badRequest(`Posición inválida: ${posicionDescripcion}`);
@@ -483,7 +483,7 @@ export async function cambiarEstadoTitularidad(equipoId: number, jugadorId: numb
         message: 'Jugador movido a suplente con éxito',
         jugador: {
           id: jugador.id,
-          nombre: jugador.name,
+          nombre: jugador.nombre,
           posicion: posicionDescripcion
         },
         estado_anterior: 'titular',
@@ -495,7 +495,7 @@ export async function cambiarEstadoTitularidad(equipoId: number, jugadorId: numb
     const titularesEnPosicion = jugadoresEquipo.filter(ej => {
       if (!ej.es_titular) return false;
       const jugadorItem = ej.jugador as any as Player;
-      return jugadorItem.position?.description === posicionDescripcion;
+      return jugadorItem.posicion?.descripcion === posicionDescripcion;
     });
 
     const cantidadTitularesActual = titularesEnPosicion.length;
@@ -516,7 +516,7 @@ export async function cambiarEstadoTitularidad(equipoId: number, jugadorId: numb
       message: 'Jugador promovido a titular con éxito',
       jugador: {
         id: jugador.id,
-        nombre: jugador.name,
+        nombre: jugador.nombre,
         posicion: posicionDescripcion
       },
       estado_anterior: 'suplente',
@@ -540,7 +540,7 @@ export async function venderJugador(equipoId: number, jugadorId: number, userId:
     const equipoJugador = await em.findOne(
       EquipoJugador,
       { equipo: equipoId, jugador: jugadorId },
-      { populate: ['equipo', 'equipo.torneoUsuario', 'equipo.torneoUsuario.usuario', 'jugador'] }
+      { populate: ['equipo', 'equipo.torneo_usuario', 'equipo.torneo_usuario.usuario', 'jugador'] }
     );
 
     if (!equipoJugador) {
@@ -550,7 +550,7 @@ export async function venderJugador(equipoId: number, jugadorId: number, userId:
     const equipo = equipoJugador.equipo as any as Equipo;
     const jugador = equipoJugador.jugador as any as Player;
 
-    const ownerId = equipo.torneoUsuario.usuario.id;
+    const ownerId = equipo.torneo_usuario.usuario.id;
     if (ownerId !== userId) {
       throw ErrorFactory.forbidden('No tienes permisos para vender jugadores de este equipo');
     }
@@ -569,14 +569,14 @@ export async function venderJugador(equipoId: number, jugadorId: number, userId:
       monto: devolucion,
       jugador,
       fecha: new Date(),
-      descripcion: `Venta instantánea de ${jugador.name} (${PORCENTAJE_VENTA_INSTANTANEA * 100}% de $${precioActual.toLocaleString()})`
+      descripcion: `Venta instantánea de ${jugador.nombre} (${PORCENTAJE_VENTA_INSTANTANEA * 100}% de $${precioActual.toLocaleString()})`
     });
     em.persist(transaccion);
     em.remove(equipoJugador);
     return {
       jugador: {
         id: jugador.id,
-        nombre: jugador.name,
+        nombre: jugador.nombre,
         precio_actual: precioActual
       },
       devolucion,

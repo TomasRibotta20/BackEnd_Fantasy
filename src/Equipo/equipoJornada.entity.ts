@@ -16,8 +16,8 @@ export class EquipoJornada extends BaseEntity {
   jugadores = new Collection<Player>(this)
 
   @Property({ type: 'float', default: 0 })
-  puntajeTotal: number = 0
+  puntaje_total: number = 0
 
   @Property({ type: 'datetime' })
-  fechaSnapshot!: Date
+  fecha_snapshot!: Date
 }

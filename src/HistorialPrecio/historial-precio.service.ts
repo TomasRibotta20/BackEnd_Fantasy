@@ -40,9 +40,9 @@ export class HistorialPrecioService {
       .filter(j => j.id !== undefined)
       .map(j => ({
         id: j.id!,
-        nombre: j.name || 'Sin nombre',
-        posicion: j.position?.description || 'Desconocida',
-        edad: j.age || undefined
+        nombre: j.nombre || 'Sin nombre',
+        posicion: j.posicion?.descripcion || 'Desconocida',
+        edad: j.edad || undefined
       }));
 
 
@@ -53,9 +53,9 @@ export class HistorialPrecioService {
       
       return {
         id: jugador.id,
-        nombre: jugador.name,
-        posicion: jugador.position?.description,
-        edad: jugador.age,
+        nombre: jugador.nombre,
+        posicion: jugador.posicion?.descripcion,
+        edad: jugador.edad,
         precio_sugerido: precioIA?.precio || null,
         precio_actual: jugador.precio_actual || null
       };
@@ -240,12 +240,12 @@ export class HistorialPrecioService {
         const puntaje = estadistica.puntaje_total;
 
         if (!jugador.precio_actual || jugador.precio_actual <= 0) {
-          console.warn(`Jugador ${jugador.name} (ID: ${jugador.id}) no tiene precio actual valido, omitiendo...`);
+          console.warn(`Jugador ${jugador.nombre} (ID: ${jugador.id}) no tiene precio actual valido, omitiendo...`);
           errores++;
           continue;
         }
         if (!jugador.id) {
-          console.warn(`Jugador ${jugador.name} no tiene ID valido, omitiendo...`);
+          console.warn(`Jugador ${jugador.nombre} no tiene ID valido, omitiendo...`);
           errores++;
           continue;
         }
@@ -277,7 +277,7 @@ export class HistorialPrecioService {
         em.persist(historial);
         preciosActualizados++;
 
-        console.log(`${jugador.name}: ${precioAnterior.toLocaleString()} -> ${precioNuevo.toLocaleString()} (${ajusteTotal > 0 ? '+' : ''}${ajusteTotal}%)`);
+        console.log(`${jugador.nombre}: ${precioAnterior.toLocaleString()} -> ${precioNuevo.toLocaleString()} (${ajusteTotal > 0 ? '+' : ''}${ajusteTotal}%)`);
 
       } catch (error: any) {
         console.error(`Error procesando jugador:`, error.message);

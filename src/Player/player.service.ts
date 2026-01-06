@@ -25,9 +25,9 @@ export async function findAndPaginate({
   const where: FilterQuery<Player> = {};
   if (name) {
     where.$or = [
-      { name: { $re: `(?i).*${name}.*` } },
-      { firstname: { $re: `(?i).*${name}.*` } },
-      { lastname: { $re: `(?i).*${name}.*` } },
+      { nombre: { $re: `(?i).*${name}.*` } },
+      { primer_nombre: { $re: `(?i).*${name}.*` } },
+      { apellido: { $re: `(?i).*${name}.*` } },
     ];
   }
 
@@ -36,7 +36,7 @@ export async function findAndPaginate({
       ? { id: Number(position) } 
       : { description: { $re: `(?i).*${position}.*` } };
     
-    where.position = positionFilter;
+    where.posicion = positionFilter;
   }
 
   if (club) {
@@ -49,8 +49,8 @@ export async function findAndPaginate({
 
   const offset = (page - 1) * limit;
   const options: FindOptions<Player, 'position' | 'club'> = {
-    populate: ['position', 'club'],
-    orderBy: { name: QueryOrder.ASC },
+    populate: ['posicion', 'club'],
+    orderBy: { nombre: QueryOrder.ASC },
     limit,
     offset,
   };

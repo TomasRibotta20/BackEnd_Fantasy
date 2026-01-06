@@ -18,8 +18,8 @@ static async join(em: EntityManager, codigo_acceso: string, nombre_equipo: strin
     if (torneo.estado !== EstadoTorneo.ESPERA) {
       throw ErrorFactory.conflict('El torneo ya inició. No puedes unirte.');
     }
-    const inscriptos = torneo.cantidadParticipantes || 0;
-    if (inscriptos >= torneo.cupoMaximo) {
+    const inscriptos = torneo.cantidad_participantes || 0;
+    if (inscriptos >= torneo.cupo_maximo) {
         throw ErrorFactory.conflict('El torneo ya está lleno.');
     }
 
@@ -36,7 +36,7 @@ static async join(em: EntityManager, codigo_acceso: string, nombre_equipo: strin
         { lockMode: LockMode.PESSIMISTIC_WRITE } 
       );
       if (!torneoLocked) { throw ErrorFactory.notFound('Torneo no encontrado.') }
-      if ((torneoLocked.cantidadParticipantes || 0) >= torneoLocked.cupoMaximo) {
+      if ((torneoLocked.cantidad_participantes || 0) >= torneoLocked.cupo_maximo) {
         throw ErrorFactory.conflict('El torneo ya está lleno.');
       }
       const nuevaInscripcion = new TorneoUsuario();
