@@ -65,7 +65,8 @@ const resultados = await qb
     .addSelect(raw('COALESCE(SUM(CASE WHEN p.id IS NOT NULL THEN est.asistencias ELSE 0 END), 0) as asistencias_total'))
     .join('ej.equipo', 'e')
     .join('e.torneo_usuario', 'tu')
-    .join('ej.jugadores', 'j')
+    .join('ej.jugadores', 'ejj')
+    .join('ejj.jugador', 'j') 
     .leftJoin('j.estadisticas', 'est') 
     .leftJoin('est.partido', 'p', { 'p.jornada': jornada.id }) 
     .where({

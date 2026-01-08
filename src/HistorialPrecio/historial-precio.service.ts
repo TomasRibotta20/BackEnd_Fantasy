@@ -210,6 +210,24 @@ export class HistorialPrecioService {
    * Actualiza los precios de todos los jugadores basándose en su rendimiento en la jornada
    */
   static async actualizarPreciosPorRendimiento(em: EntityManager, jornadaId: number): Promise<any> {
+
+    // Verificar si ya se procesaron precios para esta jornada
+    const preciosExistentes = await em.count(HistorialPrecio, {
+      jornada: jornadaId,
+      motivo: MotivoActualizacionPrecio.RENDIMIENTO
+    });
+
+    if (preciosExistentes > 0) {
+      console.log(`Ya se procesaron ${preciosExistentes} precios para la jornada ${jornadaId}. Omitiendo recálculo.`);
+      return {
+        total_jugadores_procesados: 0,
+        precios_actualizados: 0,
+        precios_sin_cambio: 0,
+        errores: 0,
+        mensaje: 'Los precios ya fueron procesados para esta jornada'
+      };
+    }
+    
     const estadisticas = await em.find(
       EstadisticaJugador, 
       { 
