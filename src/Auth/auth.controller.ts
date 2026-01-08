@@ -29,7 +29,13 @@ async function register(req: Request, res: Response, next: NextFunction) {
     req.body.password = hashedPassword;
     const user = em.create(Users, req.body);
     await em.flush();
-    const { password: _, ...userWithoutPassword } = user;
+    const userWithoutPassword = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      rol: user.rol,
+      resetToken: user.resetToken
+    };
     res.status(201).json({ message: 'User created successfully', data: userWithoutPassword });
   } catch (error: any) {
     if (error instanceof AppError) {
@@ -62,7 +68,13 @@ async function login(req: Request, res: Response, next: NextFunction) {
 
     existingUser.refreshToken = await bcrypt.hash(refreshToken, 10);
     await em.flush();
-    const { password: _, ...userWithoutPassword } = existingUser;
+    const userWithoutPassword = {
+      id: existingUser.id,
+      username: existingUser.username,
+      email: existingUser.email,
+      rol: existingUser.rol,
+      resetToken: existingUser.resetToken
+    };
     res
       .cookie('access_token', accessToken, {
         httpOnly: true,

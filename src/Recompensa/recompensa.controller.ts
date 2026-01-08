@@ -12,6 +12,8 @@ import { PlayerPick } from '../Premio/playerpick.entity.js';
 import { Player } from '../Player/player.entity.js';
 import { Equipo } from '../Equipo/equipo.entity.js';
 import { procesarPicksExpiradosDelUsuario, addSaldoLocal, ficharJugadorLocal } from './recompensa.service.js';
+import { TorneoUsuario } from '../Torneo/torneoUsuario.entity.js';
+import { EstadoTorneo } from '../Torneo/torneo.entity.js';
 
 const em = orm.em;
 
@@ -63,10 +65,127 @@ async function getPendientes(req: Request, res: Response, next: NextFunction) {
   }
 }
 
+async function getPendientesPorTorneo(req: Request, res: Response, next: NextFunction) {
+  try {
+    const usuarioId = req.authUser.user?.userId!;
+    const torneoId = Number(req.params.torneoId);
+    const torneoUsuario = await em.findOne(TorneoUsuario, {
+      usuario: usuarioId,
+      torneo: torneoId
+    }, {
+      populate: ['torneo']
+    });
+
+    if (!torneoUsuario) {
+      throw ErrorFactory.notFound("No participas en este torneo o el torneo no existe");
+    }
+    if (torneoUsuario.torneo.estado !== EstadoTorneo.ACTIVO) {
+      throw ErrorFactory.conflict("El torneo no está activo");
+    }
+    if (torneoUsuario.expulsado) {
+      throw ErrorFactory.conflict("Has sido expulsado de este torneo");
+    }
+
+    await procesarPicksExpiradosDelUsuario(em, usuarioId);
+    
+    const pendientes = await em.find(Recompensa, {
+      torneo_usuario: torneoUsuario.id,
+      fecha_reclamo: null,
+      $or: [
+        { fecha_expiracion_pick: null },
+        { fecha_expiracion_pick: { $gte: new Date() } }
+      ]
+    }, {
+      populate: ['jornada', 'torneo_usuario.torneo'],
+      orderBy: { jornada: { id: 'DESC' } }
+    });
+
+    res.status(200).json({
+      hayPendientes: pendientes.length > 0,
+      cantidad: pendientes.length,
+      torneoId: torneoId,
+      data: pendientes.map(p => ({
+        id_recompensa: p.id,
+        jornada: `Fecha ${p.jornada.nombre}`,
+        posicion: p.posicion_jornada,
+        tier: calcularTierPorPosicion(p.posicion_jornada)
+      }))
+    });
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal("Error al obtener recompensas pendientes del torneo"));
+    }
+  }
+}
+
+async function getHistorialRecompensasPorTorneo(req: Request, res: Response, next: NextFunction) {
+  try {
+    const usuarioId = req.authUser.user?.userId!;
+    const torneoId = Number(req.params.torneoId);
+    const torneoUsuario = await em.findOne(TorneoUsuario, {
+      usuario: usuarioId,
+      torneo: torneoId
+    }, {
+      populate: ['torneo']
+    });
+    if (!torneoUsuario) {
+      throw ErrorFactory.notFound("No participas en este torneo o el torneo no existe");
+    }
+    if (torneoUsuario.expulsado) {
+      throw ErrorFactory.conflict("Has sido expulsado de este torneo");
+    }
+    if (torneoUsuario.torneo.estado !== EstadoTorneo.ACTIVO) {
+      throw ErrorFactory.conflict("El torneo no está activo");
+    }
+    const historial = await em.find(Recompensa, {
+      torneo_usuario: torneoUsuario.id
+    }, {
+      populate: ['jornada', 'torneo_usuario.torneo', 'premio_configuracion', 'jugador', 'jugador.club', 'jugador.posicion'],
+      orderBy: { jornada: { id: 'DESC' } }
+    });
+
+    res.status(200).json({
+      cantidad: historial.length,
+      torneoId: torneoId,
+      torneoNombre: torneoUsuario.torneo.nombre,
+      data: historial.map(r => ({
+        id_recompensa: r.id,
+        jornada: `Fecha ${r.jornada.nombre}`,
+        posicion: r.posicion_jornada,
+        tier: calcularTierPorPosicion(r.posicion_jornada),
+        estado: r.fecha_reclamo ? 'reclamada' : 'pendiente',
+        fecha_reclamo: r.fecha_reclamo,
+        premio: r.premio_configuracion ? {
+          tipo: r.premio_configuracion.constructor.name,
+          descripcion: r.premio_configuracion.descripcion
+        } : null,
+        resultado: {
+          monto: r.monto,
+          monto_compensacion: r.monto_compensacion,
+          jugador: r.jugador ? {
+            id: r.jugador.id,
+            nombre: r.jugador.nombre,
+            posicion: r.jugador.posicion?.descripcion || 'N/A',
+            club: r.jugador.club.nombre,
+            foto: r.jugador.foto
+          } : null
+        }
+      }))
+    });
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal("Error al obtener historial de recompensas del torneo"));
+    }
+  }
+}
+
 async function getOpcionesRecompensa(req: Request, res: Response, next: NextFunction) {
   try {
     const id = Number(req.params.id);
-      
     const recompensa = await em.findOne(Recompensa, id, {
       populate: ['torneo_usuario.usuario']
     });
@@ -110,7 +229,7 @@ async function getOpcionesRecompensa(req: Request, res: Response, next: NextFunc
     const tierCalculado = calcularTierPorPosicion(recompensa.posicion_jornada);
     const premiosDisponibles = await em.find(Premio, { tier: tierCalculado });
 
-    return res.status(200).json({
+    res.status(200).json({
       recompensaId: recompensa.id,
       posicion: recompensa.posicion_jornada,
       tier: tierCalculado,
@@ -162,7 +281,7 @@ async function elegirPremio(req: Request, res: Response, next: NextFunction) {
     else {
       throw ErrorFactory.badRequest("Tipo de premio no reconocido");
     }
-    return res.status(200).json(resultado);
+    res.status(200).json(resultado);
   } catch (error: any) {
     if (error instanceof AppError) {
       next(error);
@@ -254,7 +373,7 @@ async function confirmarPick(req: Request, res: Response, next: NextFunction) {
       });
   }
   
-  return res.status(200).json({ 
+  res.status(200).json({ 
       success: true,
       tipo: 'pick_confirmado', 
       jugador: resultadoTransaccion.jugador, 
@@ -269,4 +388,4 @@ async function confirmarPick(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-export { elegirPremio, getOpcionesRecompensa, getPendientes, confirmarPick };
+export { elegirPremio, getOpcionesRecompensa, getPendientes, confirmarPick, getPendientesPorTorneo, getHistorialRecompensasPorTorneo };

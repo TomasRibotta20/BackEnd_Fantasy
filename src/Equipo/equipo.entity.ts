@@ -9,7 +9,7 @@ export class Equipo extends BaseEntity {
   @Property({ nullable: false })
   nombre!: string;
 
-  @Formula(alias => `(SELECT COALESCE(SUM(ej.puntaje_total), 0) FROM equipo_jornada ej WHERE ej.equipo_id = ${alias}.id)`)
+  @Formula(alias => `(SELECT ROUND(COALESCE(SUM(ej.puntaje_total), 0), 2) FROM equipo_jornada ej WHERE ej.equipo_id = ${alias}.id)`)
   puntos?: number;
 
   @OneToOne({ 

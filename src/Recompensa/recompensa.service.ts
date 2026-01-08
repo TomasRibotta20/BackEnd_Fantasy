@@ -160,7 +160,7 @@ function seleccionarRangoPorPeso(distribucion: RangoPrecio[]): RangoPrecio {
   return distribucion[0];
 }
 
-export async function procesarSaldo(
+async function procesarSaldo(
   em: EntityManager,
   recompensa: Recompensa,
   premioConfig: Saldo,
@@ -184,7 +184,7 @@ export async function procesarSaldo(
   };
 }
 
-export async function procesarRuleta(
+async function procesarRuleta(
   em: EntityManager,
   recompensa: Recompensa,
   premioConfig: Ruleta,
@@ -445,4 +445,4 @@ async function ficharJugadorLocal(em: EntityManager, equipo: Equipo, jugador: Pl
   em.persist(transaccion);
 }
 
-export { generarRecompensasFinJornada, sortearJugador, procesarPlayerPick, procesarPicksExpiradosDelUsuario, ficharJugadorLocal, addSaldoLocal };
+export { procesarSaldo, procesarRuleta, generarRecompensasFinJornada, sortearJugador, procesarPlayerPick, procesarPicksExpiradosDelUsuario, ficharJugadorLocal, addSaldoLocal };
