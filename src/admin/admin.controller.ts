@@ -172,29 +172,37 @@ class AdminController {
     }
   }
 
-  async procesarJornada(req: Request, res: Response, next: NextFunction) {
-    const jornadaId = Number(req.params.jornadaId)
-    const { activarJornada = true } = req.body
-    const em = orm.em.fork()
-    try {     
+async procesarJornada(req: Request, res: Response, next: NextFunction) {
+  const jornadaId = Number(req.params.jornadaId)
+  const { activarJornada = true } = req.body
+  
+  try {
+    // Ejecutar todo dentro de una transacción
+    await orm.em.transactional(async (em) => {
       // 1. Verificar que las modificaciones estén deshabilitadas
       const config = await em.findOne(GameConfig, 1)
       if (!config || config.modificaciones_habilitadas) {
-        return next(ErrorFactory.validationAppError('Debes deshabilitar las modificaciones antes de procesar la jornada'))
+        throw ErrorFactory.validationAppError('Debes deshabilitar las modificaciones antes de procesar la jornada')
       }
 
       // 2. Verificar que la jornada exista
       const jornada = await em.findOne(Jornada, jornadaId)
       if (!jornada) {
-        return next(ErrorFactory.notFound('Jornada no encontrada'))
+        throw ErrorFactory.notFound('Jornada no encontrada')
       }
 
+      console.log(`\n=== PROCESANDO JORNADA ${jornada.nombre} ===\n`)
+
       // 3. Crear snapshots de todos los equipos
+      console.log('PASO 1: Creando snapshots de equipos...')
       const snapshotService = new EquipoSnapshotService(em)
       const snapshotsCreados = await snapshotService.crearSnapshotsJornada(jornadaId)
+      console.log(`Snapshots creados: ${snapshotsCreados}`)
 
       // 4. Obtener datos de la API externa
+      console.log('\nPASO 2: Obteniendo estadísticas de la API externa...')
       await EstadisticaJugadorService.actualizarEstadisticasJornada(em, jornadaId)
+      console.log('Estadísticas actualizadas')
 
       // 5. Calcular puntajes para todos los equipos
       console.log('\nPASO 3: Calculando puntajes de equipos...')
@@ -208,54 +216,73 @@ class AdminController {
       }
 
       // 6. Actualizar precios de jugadores según rendimiento
+      console.log('\nPASO 4: Actualizando precios de jugadores...')
       const resultadoPrecios = await HistorialPrecioService.actualizarPreciosPorRendimiento(em, jornadaId)
+      console.log(`Precios actualizados: ${resultadoPrecios.precios_actualizados}`)
 
-      //6.5 Generar recompensas de la jornada
-      await generarRecompensasFinJornada(em, jornadaId);
+      // 7. Generar recompensas de la jornada
+      console.log('\nPASO 5: Generando recompensas...')
+      await generarRecompensasFinJornada(em, jornadaId)
+      console.log('Recompensas generadas')
 
-      // 7. Activar jornada siguiente (si se solicitó)
+      // 8. Activar jornada siguiente (si se solicitó)
+      let jornadaActivada = false
+      let mensajeActivacion = ''
+      
       if (activarJornada) {
-        console.log('\nPASO 4: Activando jornada...')
-        // Buscar la jornada siguiente
-        const jornadaSiguiente = await em.findOne(Jornada, { id: jornadaId + 1 }) 
-        //Si no existe jornada siguiente, entendemos que es la última jornada
+        console.log('\nPASO 6: Activando jornada siguiente...')
+        const jornadaSiguiente = await em.findOne(Jornada, { id: jornadaId + 1 })
+        
         if (!jornadaSiguiente) {
-          console.log('No existe una jornada siguiente. No se activó ninguna jornada.')
-          await em.flush()
-          
-          return res.json({
-            success: true,
-            message: `Jornada ${jornada.nombre} procesada exitosamente. No hay jornada siguiente para activar.`,
-            data: {
-              jornadaNombre: jornada.nombre,
-              snapshotsCreados: true,
-              puntajesCalculados: true,
-              jornadaActivada: false,
-              advertencia: 'No existe jornada siguiente'
-            },
-          })
+          console.log('No existe una jornada siguiente')
+          mensajeActivacion = 'No existe jornada siguiente'
+        } else {
+          config.jornada_activa = jornadaSiguiente
+          config.ultima_modificacion = new Date()
+          jornadaActivada = true
+          mensajeActivacion = `Jornada "${jornadaSiguiente.nombre}" activada`
+          console.log(` ${mensajeActivacion}`)
         }
-
-        config.jornada_activa = jornadaSiguiente
-        config.ultima_modificacion = new Date()
-        await em.flush()
-        console.log(`✓ Jornada "${jornadaSiguiente.nombre}" establecida como activa`)
       }
 
+      console.log('\n=== JORNADA PROCESADA EXITOSAMENTE ===\n')
+
+      // Si llegamos aquí, todo fue exitoso y la transacción se commitea automáticamente
+      return {
+        jornada,
+        snapshotsCreados,
+        puntajesCalculados,
+        resultadoPrecios,
+        jornadaActivada,
+        mensajeActivacion
+      }
+    })
+    .then((resultado) => {
+      // Respuesta exitosa fuera de la transacción
       res.json({
         success: true,
-        message: `Jornada ${jornada.nombre} procesada exitosamente`,
+        message: `Jornada ${resultado.jornada.nombre} procesada exitosamente`,
         data: {
-          jornadaNombre: jornada.nombre,
-          snapshotsCreados: true,
-          puntajesCalculados: true,
-          jornadaActivada: activarJornada,
+          jornadaNombre: resultado.jornada.nombre,
+          snapshotsCreados: resultado.snapshotsCreados > 0,
+          puntajesCalculados: resultado.puntajesCalculados,
+          preciosActualizados: resultado.resultadoPrecios.precios_actualizados,
+          jornadaActivada: resultado.jornadaActivada,
+          mensaje: resultado.mensajeActivacion || undefined
         },
       })
-    } catch (error: any) {
-        return next(ErrorFactory.internal("Error desconocido al procesar jornada"))
+    })
+    
+  } catch (error: any) {
+    console.error('\nERROR AL PROCESAR JORNADA:', error.message)
+    
+    // Manejar errores específicos
+    if (error.statusCode) {
+      return next(error)
     }
+    return next(ErrorFactory.internal("Error al procesar jornada"))
   }
+}
   async recalcularPuntajesJornada(req: Request, res: Response,next : NextFunction) {
   const jornadaId = Number(req.params.jornadaId)
   const em = orm.em.fork()
