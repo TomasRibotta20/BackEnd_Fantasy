@@ -1,14 +1,14 @@
 ### Listar jornadas
-GET http://localhost:3000/jornadas
+GET http://localhost:3000/api/jornadas
 
 ### Filtro por temporada
-GET http://localhost:3000/jornadas?temporada=2021
+GET http://localhost:3000/api/jornadas?temporada=2021
 
 ### Obtener una jornada
-GET http://localhost:3000/jornadas/2
+GET http://localhost:3000/api/jornadas/2
 
 ### Crear jornada
-POST http://localhost:3000/jornadas
+POST http://localhost:3000/api/jornadas
 Content-Type: application/json
 
 {
@@ -21,7 +21,7 @@ Content-Type: application/json
 }
 
 ### Actualizar jornada
-PUT http://localhost:3000/jornadas/1
+PUT http://localhost:3000/api/jornadas/1
 Content-Type: application/json
 
 {
@@ -29,4 +29,7 @@ Content-Type: application/json
 }
 
 ### Eliminar jornada
-DELETE http://localhost:3000/jornadas/1
+DELETE http://localhost:3000/api/jornadas/1
+
+### Obtener el ranking de un torneo en una jornada (requiere autenticación previa)
+GET http://localhost:3000/api/jornadas/1/torneo/33/ranking

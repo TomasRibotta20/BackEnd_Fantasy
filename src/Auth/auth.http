@@ -1,4 +1,4 @@
-  ### POST /api/auth/login    //Puede pasar que el usuario siga con la cookie a pesar de haberlo borrado de la base de datos
+  ### POST /api/auth/login
 POST http://localhost:3000/api/auth/login
 Content-Type: application/json
 
@@ -7,7 +7,7 @@ Content-Type: application/json
   "password": "TeAmoMazalan69"
 }
 
-### POST /api/auth/login    //Puede pasar que el usuario siga con la cookie a pesar de haberlo borrado de la base de datos
+### POST /api/auth/login
 POST http://localhost:3000/api/auth/login
 Content-Type: application/json
 
@@ -65,48 +65,149 @@ Content-Type: application/json
   "password": "ariel123"
 }
 
+#################################################################
 
-### LOGIN Usuario 1 - Test
+
+### Login Admin
 POST http://localhost:3000/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "test@test.com",
-  "password": "Password123"
+  "email": "admin@admin.com",
+  "password": "admin123"
 }
 
-### LOGIN Usuario 2 - Jugador 1
+### Login Test User 1
 POST http://localhost:3000/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "jugador1@fantasy.com",
-  "password": "Password123"
+  "email": "testuser1@test.com",
+  "password": "TestPass123"
 }
 
-### LOGIN Usuario 3 - Jugador 2
+### Login Test User 2
 POST http://localhost:3000/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "jugador2@fantasy.com",
-  "password": "Password123"
+  "email": "testuser2@test.com",
+  "password": "TestPass123"
 }
 
-### LOGIN Usuario 4 - Futbolero
+### Login Test User 3
 POST http://localhost:3000/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "futbolero@liga.com",
-  "password": "Password123"
+  "email": "testuser3@test.com",
+  "password": "TestPass123"
 }
 
-### LOGIN Usuario 5 - Manager Pro
+### Login Test User 4
 POST http://localhost:3000/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "manager@champions.com",
-  "password": "Password123"
+  "email": "testuser4@test.com",
+  "password": "TestPass123"
+}
+
+### Login Test User 5
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser5@test.com",
+  "password": "TestPass123"
+}
+
+### Login Test User 6
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser6@test.com",
+  "password": "TestPass123"
+}
+
+### Login Test User 7
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser7@test.com",
+  "password": "TestPass123"
+}
+
+### Login Test User 8
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser8@test.com",
+  "password": "TestPass123"
+}
+
+### Login Test User 9
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser9@test.com",
+  "password": "TestPass123"
+}
+
+### Login Test User 10
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser10@test.com",
+  "password": "TestPass123"
+}
+
+### Login Test User 11
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser11@test.com",
+  "password": "TestPass123"
+}
+
+### Login Test User 12
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser12@test.com",
+  "password": "TestPass123"
+}
+
+### Login Test User 13
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser13@test.com",
+  "password": "TestPass123"
+}
+
+### Login Test User 14
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser14@test.com",
+  "password": "TestPass123"
+}
+
+### Login Test User 15
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser15@test.com",
+  "password": "TestPass123"
 }

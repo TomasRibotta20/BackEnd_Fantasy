@@ -32,6 +32,7 @@ export async function getMiEquipo(req: Request, res: Response, next: NextFunctio
   try {
     const equipoId = Number(req.params.equipoId);
     const userId = req.authUser.user?.userId!;
+    await verificarExpulsion(equipoId, userId);
     const equipo = await getEquipoById(equipoId);
     const ownerId = equipo.torneo_usuario.usuario.id;
     const esMio = ownerId === userId;
@@ -61,6 +62,8 @@ export async function cambiarEstadoJugador(req: Request, res: Response, next: Ne
     const equipoId = Number(req.params.equipoId);
     const { jugadorId } = req.body;
     const userId = req.authUser.user?.userId!;
+
+    await verificarExpulsion(equipoId, userId);
 
     const equipo = await em.findOne(Equipo, { id: equipoId }, { 
       populate: ['torneo_usuario.usuario'] 
@@ -97,6 +100,9 @@ export async function actualizarAlineacion(req: Request, res: Response, next: Ne
     const userId = req.authUser.user?.userId;
     const equipoId = Number(req.params.equipoId);
     const { jugadorTitularId, jugadorSuplenteId } = req.body;
+    
+    await verificarExpulsion(equipoId, userId!);
+
     const equipo = await em.findOne(Equipo, { id: equipoId }, { 
         populate: ['torneo_usuario.usuario'] 
     });
@@ -132,6 +138,9 @@ export async function venderJugador(req: Request, res: Response, next: NextFunct
     if (!jugadorId) {
       throw ErrorFactory.badRequest('El jugadorId es requerido');
     }
+
+    await verificarExpulsion(equipoId, userId);
+
     const resultado = await venderJugadorService(equipoId, jugadorId, userId);
     res.status(200).json({
       message: 'Jugador vendido exitosamente',
@@ -143,5 +152,30 @@ export async function venderJugador(req: Request, res: Response, next: NextFunct
     } else {
       next(ErrorFactory.internal('Error al vender el jugador'));
     }
+  }
+}
+
+/**
+ * Verifica si un usuario está expulsado de un torneo
+ * @param equipoId - El ID del equipo
+ * @param userId - El ID del usuario
+ * @throws {ErrorFactory.forbidden} Si el usuario está expulsado del torneo
+ */
+export async function verificarExpulsion(equipoId: number, userId: number) { 
+  const equipo = await em.findOne(
+    Equipo,
+    { id: equipoId },
+    { populate: ['torneo_usuario', 'torneo_usuario.usuario'] }
+  );
+
+  if (!equipo) {
+    throw ErrorFactory.notFound('Equipo no encontrado');
+  }
+  const torneoUsuario = equipo.torneo_usuario;
+  if (torneoUsuario.usuario.id !== userId) {
+    throw ErrorFactory.forbidden('No tienes permisos para realizar esta acción');
+  }
+  if (torneoUsuario.expulsado) {
+    throw ErrorFactory.forbidden('Has sido expulsado de este torneo y no puedes realizar modificaciones');
   }
 }

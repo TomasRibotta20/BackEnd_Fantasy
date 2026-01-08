@@ -57,14 +57,14 @@ order by equipj.puntaje_total desc, goles_total desc, asistencias_total desc;
 const resultados = await qb
     .select([
       'ej.id',
-      'ej.puntajeTotal',
+      'ej.puntaje_total',
       'e.nombre as nombre_equipo',
       'tu.id as torneo_usuario_id',
     ])
     .addSelect(raw('COALESCE(SUM(CASE WHEN p.id IS NOT NULL THEN est.goles ELSE 0 END), 0) as goles_total'))
     .addSelect(raw('COALESCE(SUM(CASE WHEN p.id IS NOT NULL THEN est.asistencias ELSE 0 END), 0) as asistencias_total'))
     .join('ej.equipo', 'e')
-    .join('e.torneoUsuario', 'tu')
+    .join('e.torneo_usuario', 'tu')
     .join('ej.jugadores', 'j')
     .leftJoin('j.estadisticas', 'est') 
     .leftJoin('est.partido', 'p', { 'p.jornada': jornada.id }) 
@@ -73,9 +73,9 @@ const resultados = await qb
       'tu.torneo': torneo.id,
       'tu.expulsado': false
     })
-    .groupBy(['ej.id', 'e.nombre', 'ej.puntajeTotal', 'tu.id'])
+    .groupBy(['ej.id', 'e.nombre', 'ej.puntaje_total', 'tu.id'])
     .orderBy({
-      'ej.puntajeTotal': 'DESC',
+      'ej.puntaje_total': 'DESC',
       [raw('goles_total')]: 'DESC',
       [raw('asistencias_total')]: 'DESC'
     })
@@ -121,7 +121,7 @@ async function sortearJugador(em: EntityManager, config: ConfigJuegoAzar, torneo
   const subQueryOcupados = em.createQueryBuilder(EquipoJugador, 'ej')
     .select('ej.jugador')
     .join('ej.equipo', 'e')
-    .join('e.torneoUsuario', 'tu')
+    .join('e.torneo_usuario', 'tu')
     .where({ 'tu.torneo': torneoId })
     .getKnexQuery();
   const subQueryMercado = em.createQueryBuilder(ItemMercado, 'mi')
@@ -280,6 +280,7 @@ export async function procesarRuleta(
     mensaje: '¡Jugador fichado exitosamente!'
   };
 }
+
 async function procesarPlayerPick(
   em: EntityManager,
   recompensa: Recompensa,

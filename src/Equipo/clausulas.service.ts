@@ -164,7 +164,7 @@ export async function ejecutarClausula(
     
     const equipoVendedor = equipoJugadorVendedor.equipo as any;
     const jugador = equipoJugadorVendedor.jugador as any;
-    const posicion = jugador.position;
+    const posicion = jugador.posicion;
     
     if (!posicion) {
       throw ErrorFactory.badRequest('El jugador no tiene posición definida');
@@ -211,7 +211,7 @@ export async function ejecutarClausula(
       monto: -precioFinal,
       jugador,
       fecha: new Date(),
-      descripcion: `Ejecución de cláusula: ${jugador.name} (Precio: $${precioFinal.toLocaleString()})`
+      descripcion: `Ejecución de cláusula: ${jugador.nombre} (Precio: $${precioFinal.toLocaleString()})`
     });
     
     const transaccionVenta = em.create(Transaccion, {
@@ -220,14 +220,14 @@ export async function ejecutarClausula(
       monto: precioFinal,
       jugador,
       fecha: new Date(),
-      descripcion: `Cláusula ejecutada: ${jugador.name} vendido a ${equipoComprador.nombre}`
+      descripcion: `Cláusula ejecutada: ${jugador.nombre} vendido a ${equipoComprador.nombre}`
     });
     
     em.persist(transaccionCompra);
     em.persist(transaccionVenta);
     
-    const vendedorEmail = equipoVendedor.torneoUsuario.usuario.email;
-    const vendedorNombre = equipoVendedor.torneoUsuario.usuario.username;
+    const vendedorEmail = equipoVendedor.torneo_usuario.usuario.email;
+    const vendedorNombre = equipoVendedor.torneo_usuario.usuario.username;
     const compradorEmail = equipoComprador.torneo_usuario.usuario.email;
     const compradorNombre = equipoComprador.torneo_usuario.usuario.username;
     const torneoNombre = equipoComprador.torneo_usuario.torneo.nombre;
@@ -239,8 +239,8 @@ export async function ejecutarClausula(
     await sendClausulaEjecutadaEmail(
       vendedorEmail,
       vendedorNombre,
-      jugador.name || 'Desconocido',
-      posicion.description,
+      jugador.nombre || 'Desconocido',
+      posicion.descripcion,
       precioFinal,
       equipoComprador.nombre,
       compradorNombre,
@@ -251,8 +251,8 @@ export async function ejecutarClausula(
     await sendClausulaExitosaEmail(
       compradorEmail,
       compradorNombre,
-      jugador.name || 'Desconocido',
-      posicion.description,
+      jugador.nombre || 'Desconocido',
+      posicion.descripcion,
       precioFinal,
       equipoVendedor.nombre,
       vendedorNombre,
@@ -261,11 +261,11 @@ export async function ejecutarClausula(
       fechaProteccionHasta
     );
     return {
-      mensaje: `¡Clausulazo exitoso! ${jugador.name} ahora es parte de tu equipo`,
+      mensaje: `¡Clausulazo exitoso! ${jugador.nombre} ahora es parte de tu equipo`,
       jugador: {
         id: jugador.id!,
-        nombre: jugador.name || 'Desconocido',
-        posicion: posicion.description,
+        nombre: jugador.nombre || 'Desconocido',
+        posicion: posicion.descripcion,
         precio_mercado: precioMercado,
         clausula_pagada: precioFinal
       },

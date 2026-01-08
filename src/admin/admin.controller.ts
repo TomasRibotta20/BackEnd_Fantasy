@@ -13,16 +13,16 @@ class AdminController {
    * Método auxiliar para obtener o crear la configuración
    */
   private async getOrCreateConfig(em: any): Promise<GameConfig> {
-    let config = await em.findOne(GameConfig, 1, { populate: ['jornadaActiva'] })
+    let config = await em.findOne(GameConfig, 1, { populate: ['jornada_activa'] })
     
     if (!config) {
       config = em.create(GameConfig, {
-        modificacionesHabilitadas: true,
-        cupoMaximoTorneos: 5,
+        modificaciones_habilitadas: true,
+        cupo_maximo_torneos: 5,
         dias_proteccion_clausula: 2,
         ratio_blindaje_clausula: 2,
         max_jugadores_por_equipo: 15,
-        updatedAt: new Date()
+        ultima_modificacion: new Date()
       })
       await em.persistAndFlush(config);
     }

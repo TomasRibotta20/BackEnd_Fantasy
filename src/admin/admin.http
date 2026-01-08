@@ -17,7 +17,7 @@ Content-Type: application/json
 }
 
 ### Recalcular puntajes de una jornada (sin llamar a la API)
-POST {{baseUrl}}/api/admin/jornadas/2/recalcular
+POST {{baseUrl}}/api/admin/jornadas/1/recalcular
 
 ### Actualizar configuración del juego
 PATCH {{baseUrl}}/api/admin/config

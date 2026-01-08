@@ -10,7 +10,7 @@ GET {{baseUrl}}/recompensas/pendientes
 ### 2. GET Opciones de Premio (ID válido)
 ### ========================================
 # @name getOpcionesRecompensa
-GET {{baseUrl}}/recompensas/13/opciones
+GET {{baseUrl}}/recompensas/26/opciones
 
 ### ========================================
 ### 3. GET Opciones de Premio (ID inválido - para probar validación)
@@ -32,7 +32,7 @@ POST {{baseUrl}}/recompensas/elegir
 Content-Type: application/json
 
 {
-  "recompensaId": 4,
+  "recompensaId": 26,
   "premioId": 25
 }
 
