@@ -172,10 +172,7 @@ export async function verificarExpulsion(equipoId: number, userId: number) {
     throw ErrorFactory.notFound('Equipo no encontrado');
   }
   const torneoUsuario = equipo.torneo_usuario;
-  if (torneoUsuario.usuario.id !== userId) {
-    throw ErrorFactory.forbidden('No tienes permisos para realizar esta acción');
-  }
   if (torneoUsuario.expulsado) {
-    throw ErrorFactory.forbidden('Has sido expulsado de este torneo y no puedes realizar modificaciones');
+    throw ErrorFactory.forbidden('Equipo expulsado del torneo. No puedes realizar esta acción.');
   }
 }

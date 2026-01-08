@@ -7,10 +7,22 @@
 GET {{baseUrl}}/recompensas/pendientes
 
 ### ========================================
+### 1.5. GET Recompensas Pendientes Por Torneo
+### ========================================
+# @name getPendientesPorTorneo
+GET {{baseUrl}}/recompensas/pendientes/torneo/33
+
+### =========================== =============
+### 1.9. GET Historial de Recompensas Por Torneo
+### ========================================
+# @name getHistorialPorTorneo
+GET {{baseUrl}}/recompensas/historial/torneo/33
+
+### ========================================
 ### 2. GET Opciones de Premio (ID válido)
 ### ========================================
 # @name getOpcionesRecompensa
-GET {{baseUrl}}/recompensas/26/opciones
+GET {{baseUrl}}/recompensas/28/opciones
 
 ### ========================================
 ### 3. GET Opciones de Premio (ID inválido - para probar validación)
@@ -56,8 +68,8 @@ POST {{baseUrl}}/recompensas/elegir
 Content-Type: application/json
 
 {
-  "recompensaId": 3,
-  "premioId": 7
+  "recompensaId": 28,
+  "premioId": 24
 }
 
 ### ========================================
@@ -127,8 +139,8 @@ POST {{baseUrl}}/recompensas/confirmar-pick
 Content-Type: application/json
 
 {
-  "recompensaId": 6,
-  "jugadorId": 123
+  "recompensaId": 27,
+  "jugadorId": 1187
 }
 
 ### ========================================
@@ -139,8 +151,8 @@ POST {{baseUrl}}/recompensas/confirmar-pick
 Content-Type: application/json
 
 {
-  "recompensaId": 6,
-  "jugadorId": 860
+  "recompensaId": 28,
+  "jugadorId": 93
 }
 
 ### ========================================

@@ -580,7 +580,7 @@ export async function venderJugador(equipoId: number, jugadorId: number, userId:
       devolucion,
       porcentaje: PORCENTAJE_VENTA_INSTANTANEA * 100,
       presupuesto_nuevo: equipo.presupuesto,
-      cantidad_jugadores_restantes: equipo.jugadores.length - 1
+      cantidad_jugadores_restantes: equipo.jugadores.length
     };
   });
 }

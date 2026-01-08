@@ -19,6 +19,11 @@ export const confirmarPickSchema = z.object({
   jugadorId: idSchema
 });
 
+export const idTorneoParamsSchema = z.object({
+  torneoId: z.string().regex(/^[1-9][0-9]*$/, 'El ID de torneo debe ser un número válido')
+});
+
 export type IdRecompensaParams = z.infer<typeof idRecompensaParamsSchema>;
 export type ElegirPremioInput = z.infer<typeof elegirPremioSchema>;
 export type ConfirmarPickInput = z.infer<typeof confirmarPickSchema>;
+export type IdTorneoParams = z.infer<typeof idTorneoParamsSchema>;

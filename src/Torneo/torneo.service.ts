@@ -8,6 +8,7 @@ import { inicializarJugadoresTorneo } from '../Mercado/mercado.service.js';
 import { EntityManager } from '@mikro-orm/mysql';
 import { EquipoJugador } from '../Equipo/equipoJugador.entity.js';
 import { LockMode } from '@mikro-orm/core';
+import { Recompensa } from '../Recompensa/recompensa.entity.js';
 
 
 export class TorneoService {
@@ -221,6 +222,7 @@ static async kickUser(em: EntityManager, torneoId: number, creadorId: number, ta
             if (inscripcion.equipo) {
                 const equipoId = inscripcion.equipo.id;
                 await transactionalEm.nativeDelete(EquipoJugador, { equipo: equipoId });
+                await transactionalEm.nativeDelete(Recompensa, { torneo_usuario: inscripcion.id });
             }
             inscripcion.expulsado = true;
         }
