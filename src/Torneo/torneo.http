@@ -1,6 +1,6 @@
 ### Variables
 @baseUrl = http://localhost:3000/api
-@torneoId = 33
+@torneoId = 36
 @userId = 8
 @codigoAcceso = 4QGB8M
 ### 5K79XN
@@ -37,8 +37,8 @@ POST {{baseUrl}}/torneos
 Content-Type: application/json
 
 {
-  "nombre": "Liga de Prueba 2",
-  "nombre_equipo": "Mi Equipo Test 2",
+  "nombre": "Liga de Prueba N",
+  "nombre_equipo": "Mi Equipo Test 1",
   "descripcion": "Torneo de prueba para testing",
   "cupoMaximo": 4,
   "fecha_inicio": "2025-01-15T10:00:00.000Z"
