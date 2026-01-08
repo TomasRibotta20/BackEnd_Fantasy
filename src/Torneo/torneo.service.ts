@@ -156,8 +156,6 @@ static async start(em: EntityManager, torneoId: number, userId: number) {
         for (const inscripcion of inscripcionesActivas) {
             const equipoId = inscripcion.equipo?.id;
             if (equipoId) {
-                const equipoRef = transactionalEm.getReference(Equipo, equipoId);
-                equipoRef.presupuesto = 90000000; 
                 await poblarEquipoAleatoriamente(equipoId, transactionalEm);
             }
         }

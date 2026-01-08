@@ -7,4 +7,4 @@ Content-Type: application/json
 }
 
 ### Ejecutar cláusula
-POST http://localhost:3000/api/clausulas/13/jugadores/828/ejecutar-clausula
+POST http://localhost:3000/api/clausulas/66/jugadores/16/ejecutar-clausula

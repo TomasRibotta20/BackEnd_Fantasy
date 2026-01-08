@@ -9,7 +9,7 @@ Content-Type: application/json
 }
 
 ### Obtener el equipo del usuario autenticado (requiere autenticación previa)
-GET http://localhost:3000/api/equipos/mi-equipo/29
+GET http://localhost:3000/api/equipos/mi-equipo/66
 Content-Type: application/json
 
 ### Realizar un intercambio de jugadores en el equipo (requiere autenticación previa)
@@ -31,10 +31,10 @@ Content-Type: application/json
 }
 
 ### Obtener las jornadas de un equipo donde puntuó (requiere autenticación previa)
-GET http://localhost:3000/api/equipos/1/historial
+GET http://localhost:3000/api/equipos/73/historial
 
 ### Obtener Las puntuaciones de un equipo para una jornada.
-GET http://localhost:3000/api/equipos/3/jornadas/1
+GET http://localhost:3000/api/equipos/73/jornadas/1
 Content-Type: application/json
 
 ### Obtener Las puntuaciones de un equipo para una jornada.
@@ -43,13 +43,9 @@ GET http://localhost:3000/api/equipos/todos
 Content-Type: application/json
 
 ### Vender un jugador del equipo (requiere autenticación previa)
-POST http://localhost:3000/api/equipos/mi-equipo/13/vender-jugador
+POST http://localhost:3000/api/equipos/mi-equipo/66/vender-jugador
 Content-Type: application/json
 
 {
-  "jugadorId": 617
+  "jugadorId": 107
 }
-
-### Obtener el ranking de un torneo en una jornada (requiere autenticación previa)
-GET http://localhost:3000/api/equipos/ranking/torneo/2/jornada/1
-Content-Type: application/json

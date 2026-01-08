@@ -1,8 +1,8 @@
 ### Variables
 @baseUrl = http://localhost:3000/api
-@torneoId = 30
-@userId = 9
-@codigoAcceso = EAA6HT
+@torneoId = 31
+@userId = 3
+@codigoAcceso = 4QGB8M
 ### 5K79XN
 ### 
 
@@ -76,7 +76,7 @@ Content-Type: application/json
 
 {
   "codigo_acceso": "{{codigoAcceso}}",
-  "nombre_equipo": "Los Invencibles 7"
+  "nombre_equipo": "Test10"
 }
 
 ### 12. POST - Obtener mis torneos - Sin filtros
@@ -129,4 +129,67 @@ Content-Type: application/json
 
 {
   "codigo_acceso": "NUEVO123"
+}
+
+
+########################################################
+
+### Crear Torneo 1
+POST {{baseUrl}}/torneos
+Content-Type: application/json
+
+{
+  "nombre": "Liga Fantasy Premier",
+  "nombre_equipo": "Real Winners",
+  "descripcion": "Torneo competitivo de la Premier League",
+  "cupoMaximo": 5,
+  "fecha_inicio": "2025-01-20T15:00:00.000Z"
+}
+
+### Crear Torneo 2
+POST {{baseUrl}}/torneos
+Content-Type: application/json
+
+{
+  "nombre": "Champions League Fantasy",
+  "nombre_equipo": "Euro Champions",
+  "descripcion": "El mejor torneo de Europa",
+  "cupoMaximo": 4,
+  "fecha_inicio": "2025-01-22T18:00:00.000Z"
+}
+
+### Crear Torneo 3
+POST {{baseUrl}}/torneos
+Content-Type: application/json
+
+{
+  "nombre": "Copa Libertadores Virtual",
+  "nombre_equipo": "Sudamericanos FC",
+  "descripcion": "Torneo sudamericano de élite",
+  "cupoMaximo": 5,
+  "fecha_inicio": "2025-01-25T20:00:00.000Z"
+}
+
+### Crear Torneo 4
+POST {{baseUrl}}/torneos
+Content-Type: application/json
+
+{
+  "nombre": "Liga Local Amigos",
+  "nombre_equipo": "Los Cracks",
+  "descripcion": "Torneo casual entre amigos",
+  "cupoMaximo": 3,
+  "fecha_inicio": "2025-01-28T16:00:00.000Z"
+}
+
+### Crear Torneo 5
+POST {{baseUrl}}/torneos
+Content-Type: application/json
+
+{
+  "nombre": "Mundial Fantasy 2025",
+  "nombre_equipo": "Dream Team United",
+  "descripcion": "Torneo especial estilo mundial",
+  "cupoMaximo": 5,
+  "fecha_inicio": "2025-02-01T19:00:00.000Z"
 }

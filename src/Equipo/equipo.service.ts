@@ -39,7 +39,7 @@ async function seleccionarJugadoresPorPrecio(
   torneoId?: number
 ): Promise<Player[]> {
   const whereConditions: any = {
-    position: { description: posicion },
+    posicion: { descripcion: posicion },
     precio_actual: { $gte: precioMin, $lte: precioMax },
     id: { $nin: excluirIds }
   };
@@ -48,7 +48,6 @@ async function seleccionarJugadoresPorPrecio(
     const equiposDelTorneo = await em.find(Equipo, {
       torneo_usuario: { torneo: torneoId }
     }, { populate: ['jugadores'] });
-
     const idsAsignados: number[] = [];
     for (const equipo of equiposDelTorneo) {
       const jugadoresEquipo = equipo.jugadores.getItems();
@@ -89,7 +88,7 @@ async function seleccionarJugadoresPorPrecio(
 export function crearEquipo(nombre: string, inscripcion: TorneoUsuario): Equipo {
   const equipo = new Equipo();
   equipo.nombre = nombre;
-  equipo.presupuesto = 90000000; 
+  equipo.presupuesto = PRESUPUESTO_INICIAL; 
   equipo.torneo_usuario = inscripcion;
   inscripcion.equipo = equipo; 
   return equipo;
@@ -108,7 +107,6 @@ export async function poblarEquipoAleatoriamente(
   if (!equipo) {
     throw ErrorFactory.notFound(`Equipo ${equipoId} no encontrado al intentar poblarlo.`);
   }
-
   const torneoId = equipo.torneo_usuario?.torneo?.id;
   const idsExcluir: number[] = [];
   let costoTotal = 0;

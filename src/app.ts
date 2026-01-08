@@ -108,9 +108,9 @@ app.use('/api/auth', authRouter); // Rutas de autenticación
 app.use('/api/users', userRouter); // Rutas de usuarios
 app.use('/api/clubs', clubRouter); // Rutas de clubes
 app.use('/api/players', playerRouter); // Rutas de jugadores
-app.use('/jornadas', jornadaRouter);
+app.use('/api/jornadas', jornadaRouter);
 app.use('/api/torneos', torneoRouter);
-app.use('/partidos', partidoRouter);
+app.use('/api/partidos', partidoRouter);
 app.use('/api/positions', positionRouter); // Rutas de posiciones
 app.use('/api/equipos', equipoRouter);
 app.use('/api/premios', premioRouter);

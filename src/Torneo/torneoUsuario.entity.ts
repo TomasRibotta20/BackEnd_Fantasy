@@ -5,7 +5,8 @@ import { BaseEntity } from '../shared/db/baseEntity.entity.js';
 import { Equipo } from '../Equipo/equipo.entity.js';
 
 @Entity({ tableName: 'torneo_usuario' })
-@Unique({ properties: ['usuario', 'torneo'] }) 
+@Unique({ properties: ['usuario', 'torneo'] })
+//@Unique({ properties: ['equipo.nombre', 'torneo'] }) //<----------------------------------------
 export class TorneoUsuario extends BaseEntity {
   
   @Property()
