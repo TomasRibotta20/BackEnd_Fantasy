@@ -206,6 +206,7 @@ async function getOpcionesRecompensa(req: Request, res: Response, next: NextFunc
     if (recompensa.premio_configuracion && recompensa.opciones_pick_disponibles) {
       const jugadoresDisponibles = await em.find(Player, {
         id: { $in: recompensa.opciones_pick_disponibles }
+      }, { populate: ['club', 'posicion'] 
       });
       return res.status(200).json({
         tipo: 'pick_pendiente',
@@ -213,9 +214,9 @@ async function getOpcionesRecompensa(req: Request, res: Response, next: NextFunc
         mensaje: 'Tienes un pick pendiente. Elige tu jugador.',
         opciones: jugadoresDisponibles.map(j => ({
           id: j.id!,
-          name: j.nombre,
-          position: j.posicion?.descripcion || 'N/A',
-          team: j.club.nombre,
+          nombre: j.nombre,
+          posicion: j.posicion?.descripcion || 'N/A',
+          club: j.club.nombre,
           precio_actual: j.precio_actual,
           foto_perfil: j.foto
         })),

@@ -141,7 +141,7 @@ async function sortearJugador(em: EntityManager, config: ConfigJuegoAzar, torneo
   qb.orderBy({ [raw('RAND()')]: 'ASC' }).limit(1);
 
   const jugadorEncontrado = await qb.getSingleResult();
-
+  
   return {
       jugador: jugadorEncontrado,
       rangoSorteado: rangoElegido

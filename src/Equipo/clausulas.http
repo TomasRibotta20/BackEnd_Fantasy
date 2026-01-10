@@ -1,10 +1,10 @@
 ### Blindar jugador
-POST http://localhost:3000/api/clausulas/29/jugadores/152/blindar
+POST http://localhost:3000/api/clausulas/102/jugadores/200/blindar
 Content-Type: application/json
 
 {
-  "monto_incremento": 3000000
+  "monto_incremento": 1000000
 }
 
 ### Ejecutar cláusula
-POST http://localhost:3000/api/clausulas/66/jugadores/16/ejecutar-clausula
+POST http://localhost:3000/api/clausulas/96/jugadores/200/ejecutar-clausula

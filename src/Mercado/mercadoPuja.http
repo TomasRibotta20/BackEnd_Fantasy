@@ -1,10 +1,10 @@
 ### Hacer una oferta por un jugador
-POST http://localhost:3000/api/mercado-puja/equipo/6/ofertar
+POST http://localhost:3000/api/mercado-puja/equipo/95/ofertar
 Content-Type: application/json
 
 {
-  "itemMercadoId": 1,
-  "monto": 6300000
+  "itemMercadoId": 33,
+  "monto": 4000000
 }
 
 ### Actualizar oferta (mismo endpoint)
@@ -17,7 +17,7 @@ Content-Type: application/json
 }
 
 ### Cancelar oferta
-DELETE http://localhost:3000/api/mercado-puja/puja/3/cancelar
+DELETE http://localhost:3000/api/mercado-puja/puja/4/cancelar
 
 ### Ver mis ofertas activas
-GET http://localhost:3000/api/mercado-puja/equipo/6/mis-ofertas
+GET http://localhost:3000/api/mercado-puja/equipo/95/mis-ofertas

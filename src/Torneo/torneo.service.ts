@@ -9,12 +9,22 @@ import { EntityManager } from '@mikro-orm/mysql';
 import { EquipoJugador } from '../Equipo/equipoJugador.entity.js';
 import { LockMode } from '@mikro-orm/core';
 import { Recompensa } from '../Recompensa/recompensa.entity.js';
+import { MercadoPuja } from '../Mercado/mercadoPuja.entity.js';
+import { OfertaVenta } from '../Ventas/ofertaVenta.entity.js';
 
 
 export class TorneoService {
 
 static async join(em: EntityManager, codigo_acceso: string, nombre_equipo: string, userId: number) {
     const torneo = await em.findOneOrFail(Torneo, { codigo_acceso: codigo_acceso });
+
+    const yaInscrito = await em.findOne(TorneoUsuario, { torneo: torneo.id, usuario: userId });
+    if (yaInscrito) {
+        if (yaInscrito.expulsado) {
+            throw ErrorFactory.forbidden('Has sido expulsado de este torneo y no puedes volver a unirte.');
+        }
+        throw ErrorFactory.duplicate('Ya estás inscrito en este torneo.');
+    }
 
     if (torneo.estado !== EstadoTorneo.ESPERA) {
       throw ErrorFactory.conflict('El torneo ya inició. No puedes unirte.');
@@ -24,13 +34,6 @@ static async join(em: EntityManager, codigo_acceso: string, nombre_equipo: strin
         throw ErrorFactory.conflict('El torneo ya está lleno.');
     }
 
-    const yaInscrito = await em.findOne(TorneoUsuario, { torneo: torneo.id, usuario: userId });
-    if (yaInscrito) {
-        if (yaInscrito.expulsado) {
-            throw ErrorFactory.forbidden('Has sido expulsado de este torneo y no puedes volver a unirte.');
-        }
-        throw ErrorFactory.duplicate('Ya estás inscrito en este torneo.');
-    }
     await em.transactional(async (transactionalEm) => {
       const torneoLocked = await transactionalEm.findOne(Torneo, 
         { codigo_acceso: codigo_acceso }, 
@@ -222,6 +225,9 @@ static async kickUser(em: EntityManager, torneoId: number, creadorId: number, ta
             if (inscripcion.equipo) {
                 const equipoId = inscripcion.equipo.id;
                 await transactionalEm.nativeDelete(EquipoJugador, { equipo: equipoId });
+                await transactionalEm.nativeDelete(MercadoPuja, { equipo: equipoId });
+                await transactionalEm.nativeDelete(OfertaVenta, { vendedor: equipoId });
+                await transactionalEm.nativeDelete(OfertaVenta, { oferente: equipoId });
                 await transactionalEm.nativeDelete(Recompensa, { torneo_usuario: inscripcion.id });
             }
             inscripcion.expulsado = true;

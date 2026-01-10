@@ -3,7 +3,7 @@ import { requireAuth } from '../Auth/auth.requires.js';
 import { getPendientes, getOpcionesRecompensa, elegirPremio, confirmarPick, getPendientesPorTorneo, getHistorialRecompensasPorTorneo } from './recompensa.controller.js';
 import { validate, validateParams } from '../shared/zod/validate.js';
 import { idRecompensaParamsSchema, elegirPremioSchema, confirmarPickSchema, idTorneoParamsSchema } from './recompensa.schema.js';
-
+import { sortearJugador } from './recompensa.service.js';
 export const recompensaRouter = Router();
 
 recompensaRouter.get('/pendientes', requireAuth, getPendientes);

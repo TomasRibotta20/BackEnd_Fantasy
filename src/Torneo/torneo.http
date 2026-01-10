@@ -1,8 +1,8 @@
 ### Variables
 @baseUrl = http://localhost:3000/api
-@torneoId = 36
-@userId = 8
-@codigoAcceso = 4QGB8M
+@torneoId = 38
+@userId = 13
+@codigoAcceso = U734YC
 ### 5K79XN
 ### 
 
@@ -76,7 +76,7 @@ Content-Type: application/json
 
 {
   "codigo_acceso": "{{codigoAcceso}}",
-  "nombre_equipo": "Test10"
+  "nombre_equipo": "Test3"
 }
 
 ### 12. POST - Obtener mis torneos - Sin filtros
@@ -140,7 +140,7 @@ Content-Type: application/json
 
 {
   "nombre": "Liga Fantasy Premier",
-  "nombre_equipo": "Real Winners",
+  "nombre_equipo": "Test1",
   "descripcion": "Torneo competitivo de la Premier League",
   "cupoMaximo": 5,
   "fecha_inicio": "2025-01-20T15:00:00.000Z"
@@ -152,7 +152,7 @@ Content-Type: application/json
 
 {
   "nombre": "Champions League Fantasy",
-  "nombre_equipo": "Euro Champions",
+  "nombre_equipo": "Test1",
   "descripcion": "El mejor torneo de Europa",
   "cupoMaximo": 4,
   "fecha_inicio": "2025-01-22T18:00:00.000Z"
@@ -164,7 +164,7 @@ Content-Type: application/json
 
 {
   "nombre": "Copa Libertadores Virtual",
-  "nombre_equipo": "Sudamericanos FC",
+  "nombre_equipo": "Test2",
   "descripcion": "Torneo sudamericano de élite",
   "cupoMaximo": 5,
   "fecha_inicio": "2025-01-25T20:00:00.000Z"
@@ -176,7 +176,7 @@ Content-Type: application/json
 
 {
   "nombre": "Liga Local Amigos",
-  "nombre_equipo": "Los Cracks",
+  "nombre_equipo": "Test1",
   "descripcion": "Torneo casual entre amigos",
   "cupoMaximo": 3,
   "fecha_inicio": "2025-01-28T16:00:00.000Z"

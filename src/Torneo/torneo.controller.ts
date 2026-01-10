@@ -9,6 +9,7 @@ import { TorneoService } from './torneo.service.js';
 import { crearEquipo } from '../Equipo/equipo.service.js';
 import { GameConfig } from '../Config/gameConfig.entity.js';
 import { Equipo } from '../Equipo/equipo.entity.js';
+import { es } from 'zod/locales';
 
 const em = orm.em;
 
@@ -118,7 +119,7 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
     };
 
     const listaParticipantes = itemsInscripciones.map(ins => {
-      let estadoLabel = 'ACTIVO';
+      let estadoLabel = 'PARTICIPANTE';
       if (ins.expulsado) estadoLabel = 'EXPULSADO';
       else if (ins.rol === 'creador') estadoLabel = 'CREADOR';
       return {
@@ -136,7 +137,6 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
           presupuesto: ins.equipo?.presupuesto || 0,
         },
         estado: estadoLabel,
-        es_expulsado: ins.expulsado,
         fecha_inscripcion: ins.fecha_inscripcion
       };
     });
@@ -427,7 +427,8 @@ async function getMisTorneos(req: Request, res: Response, next: NextFunction) {
     const { estado } = req.query;
 
     const where: FilterQuery<TorneoUsuario> = {
-        usuario: currentUserId
+        usuario: currentUserId,
+        expulsado: false
     };
     if (estado) {
         where.torneo = { estado: estado as EstadoTorneo };
@@ -483,11 +484,14 @@ async function getTorneoUsuario(req: Request, res: Response, next: NextFunction)
         usuario: currentUserId
     }, { 
         populate: ['equipo'],
-        fields: ['rol', 'equipo.id'] 
+        fields: ['rol', 'equipo.id', 'expulsado'] 
     });
 
     if (!miInscripcion) {
         throw ErrorFactory.forbidden('No tienes acceso a este torneo.');
+    }
+    if (miInscripcion.expulsado) {
+        throw ErrorFactory.forbidden('Has sido expulsado de este torneo.');
     }
     const miEquipoId = miInscripcion?.equipo?.id || null;
     const soyCreador = miInscripcion?.rol === 'creador';
@@ -504,7 +508,7 @@ async function getTorneoUsuario(req: Request, res: Response, next: NextFunction)
         fields: [
             'rol',
             'usuario.username', 'usuario.id',
-            'equipo.id', 'equipo.nombre', 'equipo.puntos'
+            'equipo.id', 'equipo.nombre', 'equipo.puntos', 'expulsado'
         ]
     });
 
@@ -516,7 +520,8 @@ async function getTorneoUsuario(req: Request, res: Response, next: NextFunction)
         nombre_equipo: ins.equipo?.nombre || 'Sin Equipo',
         puntos: ins.equipo?.puntos || 0,
         es_mi_equipo: ins.usuario.id === currentUserId,
-        es_admin: ins.rol === 'creador'
+        es_admin: ins.rol === 'creador',
+        expulsado: ins.expulsado
     }));
 
     res.status(200).json({

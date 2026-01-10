@@ -153,7 +153,7 @@ export async function cancelarOferta(pujaId: number, userId: number) {
       message: 'Oferta cancelada exitosamente',
       puja: {
         id: puja.id,
-        jugador: puja.item.jugador.name,
+        jugador: puja.item.jugador.nombre,
         monto: puja.monto
       },
       presupuesto: {
@@ -192,7 +192,7 @@ export async function obtenerMisOfertas(equipoId: number, userId: number) {
       estado: EstadoPuja.PENDIENTE
     },
     {
-      populate: ['item.jugador', 'item.jugador.position', 'item.jugador.club', 'item.mercado'],
+      populate: ['item.jugador', 'item.jugador.posicion', 'item.jugador.club', 'item.mercado'],
       orderBy: { fecha_oferta: 'DESC' }
     }
   );
@@ -204,11 +204,11 @@ export async function obtenerMisOfertas(equipoId: number, userId: number) {
     fecha_oferta: puja.fecha_oferta,
     jugador: {
       id: puja.item.jugador.id,
-      nombre: puja.item.jugador.name,
-      posicion: puja.item.jugador.position?.description,
+      nombre: puja.item.jugador.nombre,
+      posicion: puja.item.jugador.posicion?.descripcion,
       club: puja.item.jugador.club.nombre,
       precio_actual: puja.item.jugador.precio_actual,
-      foto: puja.item.jugador.photo
+      foto: puja.item.jugador.foto
     },
     mercado: {
       id: puja.item.mercado.id,

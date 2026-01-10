@@ -6,6 +6,7 @@ import { EquipoJugador } from '../Equipo/equipoJugador.entity.js';
 import { Transaccion, TipoTransaccion } from '../Equipo/transaccion.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 import { sendOfertaRecibidaEmail, sendOfertaAceptadaEmail, sendOfertaRechazadaEmail, sendOfertaVencidaEmail } from '../shared/mailer/emailTemplates.js';
+import { Player } from '../Player/player.entity.js';
 
 const MAXIMO_JUGADORES_EQUIPO = 15;
 
@@ -40,14 +41,14 @@ export async function crearOferta(
     throw ErrorFactory.notFound('Jugador no encontrado');
   }
 
-  const equipoVendedor = equipoJugador.equipo as any;
+  const equipoVendedor = equipoJugador.equipo as any as Equipo;
 
   const equipoOferente = await entityManager.findOne(
     Equipo,
     {
       torneo_usuario: {
         usuario: userId,
-        torneo: equipoVendedor.torneoUsuario.torneo.id
+        torneo: equipoVendedor.torneo_usuario.torneo.id
       }
     },
     { populate: ['torneo_usuario', 'torneo_usuario.usuario', 'jugadores', 'jugadores.jugador', 'jugadores.jugador.posicion'] }
@@ -65,7 +66,7 @@ export async function crearOferta(
     );
   }
 
-  const jugador = equipoJugador.jugador as any;
+  const jugador = equipoJugador.jugador as any as Player;
   if (montoOfertado < (jugador.precio_actual || 0)) {
     throw ErrorFactory.validationAppError(
       `El monto debe ser al menos el precio actual del jugador: $${jugador.precio_actual?.toLocaleString()}`
@@ -101,9 +102,9 @@ export async function crearOferta(
     await entityManager.flush();
 
     await sendOfertaRecibidaEmail(
-      equipoVendedor.torneoUsuario.usuario.email,
-      equipoVendedor.torneoUsuario.usuario.username,
-      jugador.name || 'Jugador',
+      equipoVendedor.torneo_usuario.usuario.email,
+      equipoVendedor.torneo_usuario.usuario.username,
+      jugador.nombre || 'Jugador',
       montoOfertado,
       equipoOferente.nombre,
       equipoOferente.torneo_usuario.usuario.username,
@@ -139,13 +140,13 @@ export async function crearOferta(
   await entityManager.flush();
 
   await sendOfertaRecibidaEmail(
-    equipoVendedor.torneoUsuario.usuario.email,
-    equipoVendedor.torneoUsuario.usuario.username,
-    jugador.name || 'Jugador',
+    equipoVendedor.torneo_usuario.usuario.email,
+    equipoVendedor.torneo_usuario.usuario.username,
+    jugador.nombre || 'Jugador',
     montoOfertado,
     equipoOferente.nombre,
     equipoOferente.torneo_usuario.usuario.username,
-    equipoVendedor.torneoUsuario.torneo.nombre,
+    equipoVendedor.torneo_usuario.torneo.nombre,
     mensajeOferente
   );
 
@@ -205,8 +206,8 @@ export async function aceptarOferta(
     throw ErrorFactory.validationAppError('Esta oferta ya venció');
   }
 
-  const jugador = oferta.equipo_jugador.jugador as any;
-  const posicionJugador = jugador.position?.description;
+  const jugador = oferta.equipo_jugador.jugador as any as Player;
+  const posicionJugador = jugador.posicion?.descripcion;
 
   if (!posicionJugador) {
     throw ErrorFactory.validationAppError('El jugador no tiene posición definida');
@@ -237,7 +238,7 @@ export async function aceptarOferta(
     monto: -oferta.monto_ofertado,
     jugador: jugador,
     fecha: new Date(),
-    descripcion: `Compra de ${jugador.name} a ${oferta.vendedor.nombre}`
+    descripcion: `Compra de ${jugador.nombre} a ${oferta.vendedor.nombre}`
   });
 
   const transaccionVenta = entityManager.create(Transaccion, {
@@ -246,7 +247,7 @@ export async function aceptarOferta(
     monto: oferta.monto_ofertado,
     jugador: jugador,
     fecha: new Date(),
-    descripcion: `Venta de ${jugador.name} a ${oferta.oferente.nombre}`
+    descripcion: `Venta de ${jugador.nombre} a ${oferta.oferente.nombre}`
   });
 
   entityManager.persist(transaccionCompra);
@@ -261,7 +262,7 @@ export async function aceptarOferta(
   await sendOfertaAceptadaEmail(
     oferta.oferente.torneo_usuario.usuario.email,
     oferta.oferente.torneo_usuario.usuario.username,
-    jugador.name || 'Jugador',
+    jugador.nombre || 'Jugador',
     oferta.monto_ofertado,
     oferta.vendedor.nombre,
     oferta.vendedor.torneo_usuario.usuario.username,
@@ -271,7 +272,7 @@ export async function aceptarOferta(
   return {
     mensaje: 'Oferta aceptada exitosamente',
     transferencia: {
-      jugador: jugador.name,
+      jugador: jugador.nombre,
       de: oferta.vendedor.nombre,
       a: oferta.oferente.nombre,
       monto: oferta.monto_ofertado
@@ -329,11 +330,11 @@ export async function rechazarOferta(
     oferta.mensaje_respuesta = mensajeRespuesta;
   }
   await entityManager.flush();
-  const jugador = oferta.equipo_jugador.jugador as any;
+  const jugador = oferta.equipo_jugador.jugador as any as Player;
   await sendOfertaRechazadaEmail(
     oferta.oferente.torneo_usuario.usuario.email,
     oferta.oferente.torneo_usuario.usuario.username,
-    jugador.name || 'Jugador',
+    jugador.nombre || 'Jugador',
     oferta.monto_ofertado,
     oferta.vendedor.nombre,
     oferta.vendedor.torneo_usuario.usuario.username,
@@ -410,7 +411,7 @@ export async function obtenerOfertasEnviadas(
 
   const where: any = {
     oferente: {
-      torneoUsuario: {
+      torneo_usuario: {
         usuario: userId
       }
     }
@@ -460,7 +461,7 @@ export async function obtenerOfertasRecibidas(
 
   const where: any = {
     vendedor: {
-      torneoUsuario: {
+      torneo_usuario: {
         usuario: userId
       }
     }
@@ -580,11 +581,11 @@ async function rechazarOfertasAutomaticas(
     oferta.estado = EstadoOferta.RECHAZADA;
     oferta.mensaje_respuesta = 'El jugador fue vendido a otro equipo';
 
-    const jugador = oferta.equipo_jugador.jugador as any;
+    const jugador = oferta.equipo_jugador.jugador as any as Player;
     await sendOfertaRechazadaEmail(
       oferta.oferente.torneo_usuario.usuario.email,
       oferta.oferente.torneo_usuario.usuario.username,
-      jugador.name || 'Jugador',
+      jugador.nombre || 'Jugador',
       oferta.monto_ofertado,
       'Sistema',
       'Sistema',
@@ -626,11 +627,11 @@ export async function procesarOfertasVencidas(em?: EntityManager) {
     oferta.oferente.presupuesto_bloqueado -= oferta.monto_ofertado;
     oferta.estado = EstadoOferta.VENCIDA;
 
-    const jugador = oferta.equipo_jugador.jugador as any;
+    const jugador = oferta.equipo_jugador.jugador as any as Player;
     await sendOfertaVencidaEmail(
       oferta.oferente.torneo_usuario.usuario.email,
       oferta.oferente.torneo_usuario.usuario.username,
-      jugador.name || 'Jugador',
+      jugador.nombre || 'Jugador',
       oferta.monto_ofertado, 
       oferta.oferente.torneo_usuario.torneo.nombre
     );
@@ -647,7 +648,7 @@ export async function procesarOfertasVencidas(em?: EntityManager) {
 }
 
 function formatearOferta(oferta: OfertaVenta, tipo: 'enviada' | 'recibida') {
-  const jugador = oferta.equipo_jugador.jugador as any;
+  const jugador = oferta.equipo_jugador.jugador as any as Player;
   const ahora = new Date();
   const tiempoRestante = oferta.fecha_vencimiento.getTime() - ahora.getTime();
   const horasRestantes = Math.max(0, Math.floor(tiempoRestante / (1000 * 60 * 60)));
@@ -671,9 +672,9 @@ function formatearOferta(oferta: OfertaVenta, tipo: 'enviada' | 'recibida') {
     },
     jugador: {
       id: jugador.id,
-      name: jugador.name,
-      photo: jugador.photo,
-      position: jugador.position?.description,
+      nombre: jugador.nombre,
+      foto: jugador.foto,
+      posicion: jugador.posicion?.descripcion,
       club: jugador.club?.nombre,
       precio_actual: jugador.precio_actual
     },

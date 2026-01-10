@@ -5,6 +5,7 @@ import { GameConfig } from '../Config/gameConfig.entity.js';
 import { Transaccion, TipoTransaccion } from './transaccion.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 import { sendClausulaEjecutadaEmail, sendClausulaExitosaEmail } from '../shared/mailer/emailTemplates.js';
+import { Player } from '../Player/player.entity.js';
 
 const JUGADORES_MAXIMOS_POR_EQUIPO = 15;
 export interface BlindajeResultante {
@@ -48,7 +49,7 @@ export async function blindarJugador(
     const equipo = equipoJugador.equipo as any;
     const jugador = equipoJugador.jugador as any;
     
-    if (equipo.torneoUsuario.usuario.id !== userId) {
+    if (equipo.torneo_usuario.usuario.id !== userId) {
       throw ErrorFactory.forbidden('No tienes permisos para blindar jugadores de este equipo');
     }
     const costoPresupuesto = Math.ceil(montoIncremento / gameConfig.ratio_blindaje_clausula);
@@ -72,14 +73,14 @@ export async function blindarJugador(
       monto: -costoPresupuesto,
       jugador,
       fecha: new Date(),
-      descripcion: `Blindaje de ${jugador.name}: +$${montoIncremento.toLocaleString()} a la cláusula (Costo: $${costoPresupuesto.toLocaleString()})`
+      descripcion: `Blindaje de ${jugador.nombre}: +$${montoIncremento.toLocaleString()} a la cláusula (Costo: $${costoPresupuesto.toLocaleString()})`
     });
     em.persist(transaccion);
     
     return {
       jugador: {
         id: jugador.id!,
-        nombre: jugador.name || 'Desconocido',
+        nombre: jugador.nombre || 'Desconocido',
         precio_actual: precioActual
       },
       costo_presupuesto: costoPresupuesto,
