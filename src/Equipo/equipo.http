@@ -9,7 +9,7 @@ Content-Type: application/json
 }
 
 ### Obtener el equipo del usuario autenticado (requiere autenticación previa)
-GET http://localhost:3000/api/equipos/detalle-equipo/2
+GET http://localhost:3000/api/equipos/detalle-equipo/11
 Content-Type: application/json
 
 ### Realizar un intercambio de jugadores en el equipo (requiere autenticación previa)
@@ -22,12 +22,12 @@ Content-Type: application/json
 }
 // EL 196 el veliz, gracias dios por tanto futbol
 ### Cambiar un titular por un suplente (requiere autenticación previa)
-PATCH http://localhost:3000/api/equipos/mi-equipo/alineacion
+PATCH http://localhost:3000/api/equipos/mi-equipo/11/alineacion
 Content-Type: application/json
 
 {
-  "jugadorTitularId": 1,
-  "jugadorSuplenteId": 196
+  "jugadorTitularId": 368,
+  "jugadorSuplenteId": 283
 }
 
 ### Obtener las jornadas de un equipo donde puntuó (requiere autenticación previa)
@@ -43,17 +43,17 @@ GET http://localhost:3000/api/equipos/todos
 Content-Type: application/json
 
 ### Vender un jugador del equipo (requiere autenticación previa)
-POST http://localhost:3000/api/equipos/mi-equipo/101/vender-jugador
+POST http://localhost:3000/api/equipos/mi-equipo/4/vender-jugador
 Content-Type: application/json
 
 {
-  "jugadorId": 37
+  "jugadorId": 283
 }
 
 ### Cambiar estado de un jugador
-PATCH http://localhost:3000/api/equipos/mi-equipo/96/cambiar-estado
+PATCH http://localhost:3000/api/equipos/mi-equipo/4/cambiar-estado
 Content-Type: application/json
 
 {
-  "jugadorId": 609
+  "jugadorId": 283
 }
