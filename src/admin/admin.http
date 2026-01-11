@@ -8,8 +8,8 @@
 ### Ver configuración actual
 GET {{baseUrl}}/api/admin/config
 
-### Procesar jornada (ejemplo: jornada ID 2)
-POST {{baseUrl}}/api/admin/jornadas/2/procesar
+### Procesar jornada (ejemplo: jornada ID 1)
+POST {{baseUrl}}/api/admin/jornadas/1/procesar
 Content-Type: application/json
 
 {
