@@ -1,5 +1,4 @@
 import { raw, EntityManager } from '@mikro-orm/core';
-import { orm } from '../shared/db/orm.js';
 import { Player } from '../Player/player.entity.js';
 import { Equipo } from './equipo.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
@@ -387,20 +386,21 @@ export async function getEquipoById(em: EntityManager, equipoId: number, userId:
  * @throws {ErrorFactory.badRequest} Si alguna de las validaciones de negocio falla.
  */
 export async function cambiarAlineacion(
+  em: EntityManager,
   equipoId: number,
   jugadorTitularId: number,
   jugadorSuplenteId: number
 ) {
-  return await orm.em.transactional(async (em) => {
-    const equipo = await em.findOne(Equipo, { id: equipoId });
+  return await em.transactional(async (txEm) => {
+    const equipo = await txEm.findOne(Equipo, { id: equipoId });
     if (!equipo) {
       throw ErrorFactory.notFound('El usuario no tiene un equipo');
     }
-    const relacionTitular = await em.findOne(EquipoJugador, {
+    const relacionTitular = await txEm.findOne(EquipoJugador, {
       equipo: equipo,
       jugador: jugadorTitularId,
     });
-    const relacionSuplente = await em.findOne(EquipoJugador, {
+    const relacionSuplente = await txEm.findOne(EquipoJugador, {
       equipo: equipo,
       jugador: jugadorSuplenteId,
     });
@@ -414,8 +414,8 @@ export async function cambiarAlineacion(
       throw ErrorFactory.badRequest(`El jugador con ID ${jugadorSuplenteId} no es suplente.`);
     }
 
-    const jugadorTitular = await em.findOne(Player, { id: jugadorTitularId }, { populate: ['posicion'] });
-    const jugadorSuplente = await em.findOne(Player, { id: jugadorSuplenteId }, { populate: ['posicion'] });
+    const jugadorTitular = await txEm.findOne(Player, { id: jugadorTitularId }, { populate: ['posicion'] });
+    const jugadorSuplente = await txEm.findOne(Player, { id: jugadorSuplenteId }, { populate: ['posicion'] });
 
     if (!jugadorTitular || !jugadorSuplente) {
       throw ErrorFactory.notFound('Uno de los jugadores no fue encontrado.');
@@ -448,9 +448,9 @@ export async function cambiarAlineacion(
  * @throws {ErrorFactory.notFound} Si el equipo o jugador no se encuentra.
  * @throws {ErrorFactory.badRequest} Si se supera el límite de la formación al hacer titular.
  */
-export async function cambiarEstadoTitularidad(equipoId: number, jugadorId: number) {
-  return await orm.em.transactional(async (em) => {
-    const equipo = await em.findOne(
+export async function cambiarEstadoTitularidad(em: EntityManager, equipoId: number, jugadorId: number) {
+  return await em.transactional(async (txEm) => {
+    const equipo = await txEm.findOne(
       Equipo,
       { id: equipoId },
       { populate: ['jugadores', 'jugadores.jugador', 'jugadores.jugador.posicion'] }
@@ -460,7 +460,7 @@ export async function cambiarEstadoTitularidad(equipoId: number, jugadorId: numb
       throw ErrorFactory.notFound('El equipo no existe');
     }
 
-    const relacionJugador = await em.findOne(
+    const relacionJugador = await txEm.findOne(
       EquipoJugador,
       { equipo: equipo, jugador: jugadorId },
       { populate: ['jugador', 'jugador.posicion'] }
@@ -543,25 +543,26 @@ export async function cambiarEstadoTitularidad(equipoId: number, jugadorId: numb
  * Vende un jugador del equipo al mercado instantáneamente
  * Devuelve el 70% del precio actual del jugador
  */
-export async function venderJugador(equipoId: number, jugadorId: number, userId: number) {
-  return await orm.em.transactional(async (em) => {
-    const equipoJugador = await em.findOne(
+export async function venderJugador(em: EntityManager, equipoId: number, jugadorId: number, userId: number) {
+  return await em.transactional(async (txEm) => {
+    const equipoJugador = await txEm.findOne(
       EquipoJugador,
       { equipo: equipoId, jugador: jugadorId },
       { populate: ['equipo', 'equipo.torneo_usuario', 'equipo.torneo_usuario.usuario', 'jugador'] }
     );
-
     if (!equipoJugador) {
       throw ErrorFactory.notFound('El jugador no pertenece a tu equipo');
     }
-
     const equipo = equipoJugador.equipo as any as Equipo;
     const jugador = equipoJugador.jugador as any as Player;
-
     const ownerId = equipo.torneo_usuario.usuario.id;
     if (ownerId !== userId) {
       throw ErrorFactory.forbidden('No tienes permisos para vender jugadores de este equipo');
     }
+    if (equipo.torneo_usuario.expulsado) {
+        throw ErrorFactory.forbidden('Estás expulsado del torneo. No puedes realizar transacciones.');
+    }
+    
     const precioActual = jugador.precio_actual || 0;
     
     if (precioActual <= 0) {
@@ -571,7 +572,7 @@ export async function venderJugador(equipoId: number, jugadorId: number, userId:
     const devolucion = Math.floor(precioActual * PORCENTAJE_VENTA_INSTANTANEA);
     equipo.presupuesto += devolucion;
 
-    const transaccion = em.create(Transaccion, {
+    const transaccion = txEm.create(Transaccion, {
       equipo,
       tipo: TipoTransaccion.VENTA_INSTANTANEA,
       monto: devolucion,
@@ -579,8 +580,8 @@ export async function venderJugador(equipoId: number, jugadorId: number, userId:
       fecha: new Date(),
       descripcion: `Venta instantánea de ${jugador.nombre} (${PORCENTAJE_VENTA_INSTANTANEA * 100}% de $${precioActual.toLocaleString()})`
     });
-    em.persist(transaccion);
-    em.remove(equipoJugador);
+    txEm.persist(transaccion);
+    txEm.remove(equipoJugador);
     return {
       jugador: {
         id: jugador.id,

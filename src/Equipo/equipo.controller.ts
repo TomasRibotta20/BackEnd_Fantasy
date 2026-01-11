@@ -62,10 +62,8 @@ export async function cambiarEstadoJugador(req: Request, res: Response, next: Ne
     const { jugadorId } = req.body;
     const userId = req.authUser.user?.userId!;
 
-    await verificarExpulsion(equipoId, userId);
-
     const equipo = await em.findOne(Equipo, { id: equipoId }, { 
-      populate: ['torneo_usuario.usuario'] 
+      populate: ['torneo_usuario.usuario', 'torneo_usuario'] 
     });
     if (!equipo) {
       throw ErrorFactory.notFound('Equipo no encontrado');
@@ -73,8 +71,12 @@ export async function cambiarEstadoJugador(req: Request, res: Response, next: Ne
     if (equipo.torneo_usuario.usuario.id !== userId) {
       throw ErrorFactory.forbidden('No puedes modificar un equipo que no es tuyo');
     }
+    const torneoUsuario = equipo.torneo_usuario;
+    if (torneoUsuario.expulsado) {
+      throw ErrorFactory.forbidden('Equipo expulsado del torneo. No puedes realizar esta acción.');
+    }
 
-    const resultado = await cambiarEstadoTitularidad(equipoId, jugadorId);
+    const resultado = await cambiarEstadoTitularidad(em, equipoId, jugadorId);
     res.status(200).json({
       message: resultado.message,
       data: resultado
@@ -99,19 +101,22 @@ export async function actualizarAlineacion(req: Request, res: Response, next: Ne
     const userId = req.authUser.user?.userId;
     const equipoId = Number(req.params.equipoId);
     const { jugadorTitularId, jugadorSuplenteId } = req.body;
-    
-    await verificarExpulsion(equipoId, userId!);
 
     const equipo = await em.findOne(Equipo, { id: equipoId }, { 
-        populate: ['torneo_usuario.usuario'] 
+       populate: ['torneo_usuario.usuario', 'torneo_usuario'] 
     });
     if (!equipo) {
-        throw ErrorFactory.notFound('Equipo no encontrado');
+      throw ErrorFactory.notFound('Equipo no encontrado');
     }
     if (equipo.torneo_usuario.usuario.id !== userId) {
-        throw ErrorFactory.forbidden('No puedes modificar la alineación de un equipo que no es tuyo.');
+      throw ErrorFactory.forbidden('No puedes modificar la alineación de un equipo que no es tuyo.');
     }
-    const resultado = await cambiarAlineacion(equipoId, Number(jugadorTitularId), Number(jugadorSuplenteId));
+    const torneoUsuario = equipo.torneo_usuario;
+    if (torneoUsuario.expulsado) {
+      throw ErrorFactory.forbidden('Equipo expulsado del torneo. No puedes realizar esta acción.');
+    }
+
+    const resultado = await cambiarAlineacion(em, equipoId, Number(jugadorTitularId), Number(jugadorSuplenteId));
     res.status(200).json(resultado);
   } catch (error: any) {
     if (error instanceof AppError) {
@@ -134,13 +139,7 @@ export async function venderJugador(req: Request, res: Response, next: NextFunct
     const equipoId = Number(req.params.equipoId);
     const { jugadorId } = req.body;
     const userId = req.authUser.user?.userId!;
-    if (!jugadorId) {
-      throw ErrorFactory.badRequest('El jugadorId es requerido');
-    }
-
-    await verificarExpulsion(equipoId, userId);
-
-    const resultado = await venderJugadorService(equipoId, jugadorId, userId);
+    const resultado = await venderJugadorService(em, equipoId, jugadorId, userId);
     res.status(200).json({
       message: 'Jugador vendido exitosamente',
       data: resultado
@@ -151,27 +150,5 @@ export async function venderJugador(req: Request, res: Response, next: NextFunct
     } else {
       next(ErrorFactory.internal('Error al vender el jugador'));
     }
-  }
-}
-
-/**
- * Verifica si un usuario está expulsado de un torneo
- * @param equipoId - El ID del equipo
- * @param userId - El ID del usuario
- * @throws {ErrorFactory.forbidden} Si el usuario está expulsado del torneo
- */
-export async function verificarExpulsion(equipoId: number, userId: number) { 
-  const equipo = await em.findOne(
-    Equipo,
-    { id: equipoId },
-    { populate: ['torneo_usuario', 'torneo_usuario.usuario'] }
-  );
-
-  if (!equipo) {
-    throw ErrorFactory.notFound('Equipo no encontrado');
-  }
-  const torneoUsuario = equipo.torneo_usuario;
-  if (torneoUsuario.expulsado) {
-    throw ErrorFactory.forbidden('Equipo expulsado del torneo. No puedes realizar esta acción.');
   }
 }

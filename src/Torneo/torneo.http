@@ -1,7 +1,7 @@
 ### Variables
 @baseUrl = http://localhost:3000/api
-@torneoId = 2
-@userId = 8
+@torneoId = 1
+@userId = 3
 @codigoAcceso = 4UUFXZ
 ### 5K79XN
 ### 

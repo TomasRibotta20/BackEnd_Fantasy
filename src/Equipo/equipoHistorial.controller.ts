@@ -8,7 +8,6 @@ const em = orm.em;
 export async function getHistorial(req: Request, res: Response, next: NextFunction) {
   try {
     const equipoId = Number(req.params.equipoId)
-    const em = orm.em.fork()
 
     const snapshotService = new EquipoSnapshotService(em)
     const historial = await snapshotService.obtenerHistorialEquipo(equipoId)
@@ -56,7 +55,6 @@ export async function getRankingTorneoJornada(req: Request, res: Response, next:
   try {
     const jornadaId = Number(req.params.jornadaId)
     const torneoId = Number(req.params.torneoId)
-    const em = orm.em.fork()
 
     const snapshotService = new EquipoSnapshotService(em)
     const ranking = await snapshotService.obtenerRankingJornadaPorTorneo(torneoId, jornadaId)
