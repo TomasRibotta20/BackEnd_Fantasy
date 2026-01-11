@@ -14,7 +14,7 @@ export async function ofertar(equipoId: number, itemMercadoId: number, monto: nu
     const item = await em.findOne(
       ItemMercado,
       itemMercadoId,
-      { populate: ['mercado', 'jugador'] }
+      { populate: ['mercado', 'mercado.torneo', 'jugador'] }
     );
 
     if (!item) {
@@ -35,7 +35,7 @@ export async function ofertar(equipoId: number, itemMercadoId: number, monto: nu
     const equipo = await em.findOne(
       Equipo,
       equipoId,
-      { populate: ['torneo_usuario', 'torneo_usuario.usuario'] }
+      { populate: ['torneo_usuario', 'torneo_usuario.usuario', 'torneo_usuario.torneo'] }
     );
 
     if (!equipo) {
@@ -44,6 +44,9 @@ export async function ofertar(equipoId: number, itemMercadoId: number, monto: nu
     const ownerId = equipo.torneo_usuario.usuario.id;
     if (ownerId !== userId) {
       throw ErrorFactory.forbidden('No tienes permisos para ofertar con este equipo');
+    }
+    if (equipo.torneo_usuario.torneo.id !== item.mercado.torneo.id) {
+      throw ErrorFactory.badRequest('El equipo no pertenece al torneo del mercado');
     }
 
     const pujaExistente = await em.findOne(MercadoPuja, {
