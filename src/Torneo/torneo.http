@@ -1,6 +1,6 @@
 ### Variables
 @baseUrl = http://localhost:3000/api
-@torneoId = 1
+@torneoId = 37
 @userId = 3
 @codigoAcceso = 4UUFXZ
 ### 5K79XN
@@ -37,11 +37,11 @@ POST {{baseUrl}}/torneos
 Content-Type: application/json
 
 {
-  "nombre": "Liga de Prueba N",
+  "nombre": "Liga de Prueba Mil",
   "nombre_equipo": "Mi Equipo Test 1",
   "descripcion": "Torneo de prueba para testing",
   "cupoMaximo": 4,
-  "fecha_inicio": "2025-01-15T10:00:00.000Z"
+  "fecha_inicio": "2026-01-12T22:45:54.529Z"
 }
 
 ### 8. PATCH - Actualizar torneo (creador o admin)
@@ -191,5 +191,5 @@ Content-Type: application/json
   "nombre_equipo": "Test1",
   "descripcion": "Torneo especial estilo mundial",
   "cupoMaximo": 5,
-  "fecha_inicio": "2026-01-11"
+  "fecha_inicio": "2026-01-12"
 }

@@ -4,7 +4,7 @@ import { EstadoTorneo, Torneo } from './torneo.entity.js';
 import { TorneoUsuario } from './torneoUsuario.entity.js';
 import { Users } from '../User/user.entity.js';
 import { Equipo } from '../Equipo/equipo.entity.js';
-import { inicializarJugadoresTorneo } from '../Mercado/mercado.service.js';
+import { inicializarJugadoresTorneo, abrirMercado} from '../Mercado/mercado.service.js';
 import { EntityManager } from '@mikro-orm/mysql';
 import { EquipoJugador } from '../Equipo/equipoJugador.entity.js';
 import { LockMode } from '@mikro-orm/core';
@@ -159,6 +159,7 @@ static async start(em: EntityManager, torneoId: number, userId: number) {
         expulsado: false
     }, { populate: ['equipo', 'usuario'] });
 
+    let mercadoInicial;
     await em.transactional(async (transactionalEm) => {
         await transactionalEm.nativeDelete(TorneoUsuario, {
             torneo: torneoId,
@@ -173,14 +174,21 @@ static async start(em: EntityManager, torneoId: number, userId: number) {
 
         console.log('Inicializando sistema de mercado...');
         await inicializarJugadoresTorneo(torneoId, transactionalEm);
+
         const torneoRef = transactionalEm.getReference(Torneo, torneoId);
         torneoRef.estado = EstadoTorneo.ACTIVO;
         if (!torneoRef.fecha_inicio) {
-            torneoRef.fecha_inicio = new Date();
+          torneoRef.fecha_inicio = new Date();
         }
+
+        console.log('Abriendo primer mercado...');
+        mercadoInicial = await abrirMercado(torneoId, transactionalEm);
     });
 
-    return { message: '¡Torneo iniciado! El mercado está abierto y los jugadores asignados.' };
+    return { 
+        message: '¡Torneo iniciado! El mercado está abierto y los jugadores asignados.',
+        mercado: mercadoInicial
+    };
 }
 
 static async kickUser(em: EntityManager, torneoId: number, creadorId: number, targetUserId: number) {

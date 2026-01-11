@@ -116,10 +116,10 @@ function shuffle<T>(array: T[]): T[] {
  * Abre un nuevo mercado para un torneo
  * Selecciona 10 jugadores aleatorios disponibles
  */
-export async function abrirMercado(torneoId: number) {
-  return await orm.em.transactional(async (em) => {
+export async function abrirMercado(torneoId: number, em?: EntityManager) {
+  const executeAbrirMercado = async (entityManager: EntityManager) => {
     // 1. Validar que no haya mercado abierto
-    const mercadoAbierto = await em.findOne(MercadoDiario, {
+    const mercadoAbierto = await entityManager.findOne(MercadoDiario, {
       torneo: torneoId,
       estado: EstadoMercado.ABIERTO
     });
@@ -128,7 +128,7 @@ export async function abrirMercado(torneoId: number) {
       throw ErrorFactory.conflict('Ya existe un mercado abierto para este torneo');
     }
 
-    const jugadoresLibres = await obtenerJugadoresLibresTorneo(torneoId, em);
+    const jugadoresLibres = await obtenerJugadoresLibresTorneo(torneoId, entityManager);
 
     if (jugadoresLibres.length === 0) {
       throw ErrorFactory.badRequest('No hay jugadores libres en el torneo');
@@ -165,7 +165,7 @@ export async function abrirMercado(torneoId: number) {
     } else {
       jugadoresSeleccionados = shuffle(disponibles).slice(0, JUGADORES_POR_MERCADO);
     }
-    const ultimoMercado = await em.findOne(
+    const ultimoMercado = await entityManager.findOne(
       MercadoDiario,
       { torneo: torneoId },
       { orderBy: { numero_mercado: 'DESC' } }
@@ -173,8 +173,8 @@ export async function abrirMercado(torneoId: number) {
 
     const numeroMercado = ultimoMercado ? ultimoMercado.numero_mercado + 1 : 1;
 
-    const torneo = await em.getReference(Torneo, torneoId);
-    const mercado = em.create(MercadoDiario, {
+    const torneo = await entityManager.getReference(Torneo, torneoId);
+    const mercado = entityManager.create(MercadoDiario, {
       torneo,
       numero_mercado: numeroMercado,
       fecha_apertura: new Date(),
@@ -182,15 +182,15 @@ export async function abrirMercado(torneoId: number) {
       hubo_reset_pool: huboReset
     });
 
-    em.persist(mercado);
+    entityManager.persist(mercado);
 
     for (const jugadorTorneo of jugadoresSeleccionados) {
-      const item = em.create(ItemMercado, {
+      const item = entityManager.create(ItemMercado, {
         mercado,
         jugador: jugadorTorneo.jugador,
         cantidad_pujas: 0
       });
-      em.persist(item);
+      entityManager.persist(item);
 
       if (huboReset && idsCompletados && jugadorTorneo.jugador.id && idsCompletados.has(jugadorTorneo.jugador.id)) {
       jugadorTorneo.aparecio_en_mercado = true;
@@ -199,7 +199,7 @@ export async function abrirMercado(torneoId: number) {
       }
     }
 
-    await em.flush();
+    await entityManager.flush();
 
     console.log(`Mercado #${numeroMercado} abierto con ${jugadoresSeleccionados.length} jugadores`);
 
@@ -219,7 +219,16 @@ export async function abrirMercado(torneoId: number) {
         precio_actual: jt.jugador.precio_actual
       }))
     };
-  });
+  };
+  // Si se proporciona un EntityManager, usarlo directamente (sin crear nueva transacción)
+  // Si no, crear una transacción nueva
+  if (em) {
+    return await executeAbrirMercado(em);
+  } else {
+    return await orm.em.transactional(async (transactionalEm) => {
+      return await executeAbrirMercado(transactionalEm);
+    });
+  }
 }
 
 /**
