@@ -9,7 +9,6 @@ import { TorneoService } from './torneo.service.js';
 import { crearEquipo } from '../Equipo/equipo.service.js';
 import { GameConfig } from '../Config/gameConfig.entity.js';
 import { Equipo } from '../Equipo/equipo.entity.js';
-import { es } from 'zod/locales';
 
 const em = orm.em;
 
@@ -203,13 +202,39 @@ async function add(req: Request, res: Response, next: NextFunction) {
       );
     }
 
+    let codigoAcceso = generateRandomCode();
+    let esUnico = false;
+    let intentos = 0;
+    const maxIntentos = 5;
+    while (!esUnico && intentos < maxIntentos) {
+        const existe = await em.findOne(Torneo, { codigo_acceso: codigoAcceso });
+        if (!existe) {
+            esUnico = true;
+        } else {
+            codigoAcceso = generateRandomCode();
+            intentos++;
+        }
+    }
+
+    if (!esUnico) {
+        throw ErrorFactory.conflict('No se pudo generar un código de torneo único. Intente nuevamente.');
+    }
+
     const nuevoTorneo = new Torneo();
     nuevoTorneo.nombre = nombre;
     nuevoTorneo.descripcion = descripcion;
-    if (fecha_inicio) nuevoTorneo.fecha_inicio = new Date(fecha_inicio);
+    if (fecha_inicio) {
+      const fechaLocal = new Date(`${fecha_inicio}T00:00:00`);
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      if (fechaLocal <= hoy) {
+      throw ErrorFactory.badRequest('La fecha de inicio no puede ser en el pasado o el mismo día de hoy.');
+      }
+      nuevoTorneo.fecha_inicio = fechaLocal;
+    }
     nuevoTorneo.cupo_maximo = cupoMaximo || 5;
     nuevoTorneo.estado = EstadoTorneo.ESPERA;
-    nuevoTorneo.codigo_acceso = generateRandomCode();
+    nuevoTorneo.codigo_acceso = codigoAcceso; 
 
     const inscripcionAdmin = new TorneoUsuario();
     if (currentUserId) inscripcionAdmin.usuario = em.getReference(Users, currentUserId);
@@ -219,27 +244,8 @@ async function add(req: Request, res: Response, next: NextFunction) {
     inscripcionAdmin.equipo = equipoAdmin;
     equipoAdmin.torneo_usuario = inscripcionAdmin;
 
-    em.persist([nuevoTorneo, inscripcionAdmin, equipoAdmin]);
-
-    let intentos = 0;
-    const maxIntentos = 3;
-    let guardadoExitoso = false;
-    while (intentos < maxIntentos && !guardadoExitoso) {
-        try {
-            await em.flush();
-            guardadoExitoso = true;  
-        } catch (error: any) {
-            if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
-              nuevoTorneo.codigo_acceso = generateRandomCode();
-              intentos++;
-            } else {
-              throw error; 
-            }
-        }       
-    }
-    if (!guardadoExitoso) {
-        throw ErrorFactory.internal('No se pudo generar un código de acceso único para el torneo');
-    }
+    await em.persistAndFlush([nuevoTorneo, inscripcionAdmin, equipoAdmin]);
+    
     res.status(201).json({ 
       message: 'Torneo creado exitosamente', 
       data: {

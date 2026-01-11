@@ -3,6 +3,8 @@ import { orm } from '../shared/db/orm.js'
 import { EquipoSnapshotService } from './equipoSnapshot.service.js'
 import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js'
 
+const em = orm.em;
+
 export async function getHistorial(req: Request, res: Response, next: NextFunction) {
   try {
     const equipoId = Number(req.params.equipoId)
@@ -28,10 +30,10 @@ export async function getEquipoEnJornada(req: Request, res: Response, next: Next
   try {
     const equipoId = Number(req.params.equipoId)
     const jornadaId = Number(req.params.jornadaId)
-    const em = orm.em.fork()
+    const userId = req.authUser.user?.userId!
 
     const snapshotService = new EquipoSnapshotService(em)
-    const resultado = await snapshotService.obtenerEquipoEnJornada(equipoId, jornadaId)
+    const resultado = await snapshotService.obtenerEquipoEnJornada(equipoId, jornadaId, userId)
 
     if (!resultado) {
       throw ErrorFactory.notFound('No se encontró registro para esta jornada');

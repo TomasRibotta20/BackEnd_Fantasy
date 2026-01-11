@@ -341,8 +341,7 @@ export async function poblarEquipoAleatoriamente(
  * @returns Una promesa que se resuelve con la entidad Equipo poblada.
  * @throws {ErrorFactory.notFound} Si el usuario no tiene un equipo.
  */
-export async function getEquipoById(equipoId: number) {
-  const em = orm.em.fork();
+export async function getEquipoById(em: EntityManager, equipoId: number, userId: number) {
 
   const gameConfig = await em.findOne(GameConfig, 1);
   const diasProteccion = gameConfig?.dias_proteccion_clausula ?? 2;
@@ -350,10 +349,21 @@ export async function getEquipoById(equipoId: number) {
   const equipo = await em.findOne(
     Equipo,
     { id: equipoId },
-    { populate: ['torneo_usuario', 'torneo_usuario.usuario','jugadores.jugador.posicion', 'jugadores.jugador.club'] }
+    { populate: ['torneo_usuario', 'torneo_usuario.usuario','torneo_usuario.torneo','jugadores.jugador.posicion', 'jugadores.jugador.club'] }
   );
   if (!equipo) {
     throw ErrorFactory.notFound('El equipo no existe');
+  }
+  const torneo = equipo.torneo_usuario.torneo.id;
+  const inscripcion = await em.findOne(TorneoUsuario, { torneo: torneo, usuario: userId });
+  if (!inscripcion) {
+    throw ErrorFactory.forbidden('No tienes permisos para ver este equipo');
+  }
+  if (inscripcion.expulsado) {
+    throw ErrorFactory.forbidden('Estás expulsado del torneo');
+  }
+  if (equipo.torneo_usuario.expulsado) {
+    throw ErrorFactory.forbidden('El equipo pertenece a un usuario expulsado del torneo');
   }
 
   equipo.jugadores.getItems().forEach((equipoJugador) => {

@@ -20,84 +20,123 @@ import { Transaccion, TipoTransaccion } from '../Equipo/transaccion.entity.js';
 import { EstadoMercado } from '../Mercado/mercadoDiario.entity.js';
 import { JugadorTorneo } from '../Mercado/jugadorTorneo.entity.js';
 
-async function generarRecompensasFinJornada(em: EntityManager, jornadaId: number) {
 
+async function generarRecompensasFinJornada(em: EntityManager, jornadaId: number) {
   const jornada = await em.findOneOrFail(Jornada, jornadaId);
-  const torneos = await em.find(Torneo, { estado: EstadoTorneo.ACTIVO });
+  await procesarRecompensasVencidas(em, jornadaId);
+  const torneosActivos = await em.find(Torneo, { estado: EstadoTorneo.ACTIVO }, { fields: ['id'] });
+  if (torneosActivos.length === 0) return;
   
-  for (const torneo of torneos) {
-    const countRecompensas = await em.count(Recompensa, { jornada: jornada, torneo_usuario: { torneo: torneo } });
-    if (countRecompensas > 0) {
-      continue;
-    }
-    await procesarTorneo(em, torneo, jornada);
+  let todosLosIds = torneosActivos.map(t => t.id!);
+  const torneosProcesados = await em.createQueryBuilder(Recompensa, 'r')
+    .select('tu.torneo_id')
+    .distinct()
+    .join('r.torneo_usuario', 'tu')
+    .where({ 'r.jornada': jornadaId })
+    .execute();
+  const idsProcesados = new Set(torneosProcesados.map((Row: any) => Row.torneo_id));
+  todosLosIds = todosLosIds.filter(id => !idsProcesados.has(id));
+  if (todosLosIds.length === 0) {
+    return;
+  }
+  const TAMANO_LOTE = 50;
+  
+  for (let i = 0; i < todosLosIds.length; i += TAMANO_LOTE) {
+    const loteIds = todosLosIds.slice(i, i + TAMANO_LOTE);
+    await procesarLoteTorneos(em, loteIds, jornada);
   }
   await em.flush();
 }
 
-async function procesarTorneo(em: EntityManager, torneo: Torneo, jornada: Jornada) {
+async function procesarLoteTorneos(em: EntityManager, torneosIds: number[], jornada: Jornada) {
   const qb = em.createQueryBuilder(EquipoJornada, 'ej');
 
-/*
-set @miJornada := 1;
-set @miTorneo := 21;
-
-select equipj.id, equipj.puntaje_total, e.nombre, tu.id torneo_id, coalesce(sum(ej.goles), 0) goles_total, coalesce(sum(ej.asistencias), 0) asistencias_total
-from equipo_jornada equipj
-inner join equipos e on e.id = equipj.equipo_id
-inner join torneo_usuario tu on tu.equipo_id = e.id
-left join  equipo_jornada_jugadores ejj on ejj.equipo_jornada_id = equipj.id
-left join estadistica_jugador ej on ej.jugador_id = ejj.player_id
-inner join partidos p on p.id = ej.partido_id
-where tu.torneo_id = @miTorneo and equipj.jornada_id = @miJornada
-group by equipj.id, tu.id, e.nombre, equipj.puntaje_total
-order by equipj.puntaje_total desc, goles_total desc, asistencias_total desc;
-*/
-
-const resultados = await qb
+  const resultados: any[] = await qb
     .select([
       'ej.id',
       'ej.puntaje_total',
       'e.nombre as nombre_equipo',
       'tu.id as torneo_usuario_id',
+      't.id as torneo_id'
     ])
     .addSelect(raw('COALESCE(SUM(CASE WHEN p.id IS NOT NULL THEN est.goles ELSE 0 END), 0) as goles_total'))
     .addSelect(raw('COALESCE(SUM(CASE WHEN p.id IS NOT NULL THEN est.asistencias ELSE 0 END), 0) as asistencias_total'))
     .join('ej.equipo', 'e')
-    .join('e.torneo_usuario', 'tu')
-    .join('ej.jugadores', 'ejj')
-    .join('ejj.jugador', 'j') 
-    .leftJoin('j.estadisticas', 'est') 
+    .join('e.torneo_usuario', 'tu') 
+    .join('tu.torneo', 't')
+    .join('ej.jugadores', 'pivot') 
+    .join('pivot.jugador', 'j')    
+    .leftJoin('j.estadisticas', 'est')
     .leftJoin('est.partido', 'p', { 'p.jornada': jornada.id }) 
     .where({
       'ej.jornada': jornada.id,
-      'tu.torneo': torneo.id,
-      'tu.expulsado': false
+      't.id': { $in: torneosIds }
     })
-    .groupBy(['ej.id', 'e.nombre', 'ej.puntaje_total', 'tu.id'])
+    .groupBy(['ej.id', 'e.nombre', 'ej.puntaje_total', 'tu.id', 't.id'])
     .orderBy({
+      't.id': 'ASC', 
       'ej.puntaje_total': 'DESC',
       [raw('goles_total')]: 'DESC',
       [raw('asistencias_total')]: 'DESC'
     })
     .execute();
+
   if (resultados.length === 0) return;
 
-  for (let index = 0; index < resultados.length; index++) {
-    const resultado = resultados[index] as any;
-    const posicion = index + 1;
-    const inscripcionRef = em.getReference(TorneoUsuario, resultado.torneo_usuario_id);
+  const resultadosPorTorneo = new Map<number, any[]>();
+  for (const row of resultados) {
+    if (!resultadosPorTorneo.has(row.torneo_id)) {
+      resultadosPorTorneo.set(row.torneo_id, []);
+    }
+    resultadosPorTorneo.get(row.torneo_id)?.push(row);
+  }
 
-    const nuevaRecompensa = em.create(Recompensa, {
-      jornada: jornada,
-      torneo_usuario: inscripcionRef,
-      posicion_jornada: posicion,
-      fecha_reclamo: null,
-      premio_configuracion: null,
-      monto: null,
-      jugador: null
-    });
-    em.persist(nuevaRecompensa);
+  for (const [torneoId, equipos] of resultadosPorTorneo) {
+    for (let index = 0; index < equipos.length; index++) {
+      const posicion = index + 1;
+      const inscripcionRef = em.getReference(TorneoUsuario, equipos[index].torneo_usuario_id);
+
+      const nuevaRecompensa = em.create(Recompensa, {
+        jornada: jornada,
+        torneo_usuario: inscripcionRef,
+        posicion_jornada: posicion,
+        fecha_reclamo: null,
+        premio_configuracion: null,
+        monto: null,
+        jugador: null
+      });
+      em.persist(nuevaRecompensa);
+    }
+  }
+}
+
+async function procesarRecompensasVencidas(em: EntityManager, jornadaActualId: number) {
+  const jornadaAnteriorId = jornadaActualId - 1;
+  if (jornadaAnteriorId <= 0) return;
+  const recompensasVencidas = await em.find(Recompensa, {
+    jornada: jornadaAnteriorId,
+    fecha_reclamo: null
+  }, {
+    populate: ['torneo_usuario', 'torneo_usuario.usuario', 'torneo_usuario.torneo']
+  });
+  if (recompensasVencidas.length === 0) return;
+
+  for (const recompensa of recompensasVencidas) {
+    try {
+      const tier = calcularTierPorPosicion(recompensa.posicion_jornada);
+      const montoCompensacion = calcularCompensacionPorTier(tier);
+      
+      const usuarioId = recompensa.torneo_usuario.usuario.id!;
+      const torneoId = recompensa.torneo_usuario.torneo.id!;
+      await addSaldoLocal(em, usuarioId, torneoId, montoCompensacion);
+      recompensa.monto_compensacion = montoCompensacion;
+      recompensa.fecha_reclamo = new Date(); 
+      recompensa.premio_configuracion = undefined;
+      recompensa.jugador = undefined;
+      recompensa.opciones_pick_disponibles = undefined;
+      em.persist(recompensa);
+    } catch (error) {
+    }
   }
 }
 
