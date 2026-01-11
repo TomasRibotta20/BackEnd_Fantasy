@@ -10,6 +10,7 @@ import { Equipo } from '../Equipo/equipo.entity.js';
 import { EquipoJugador } from '../Equipo/equipoJugador.entity.js';
 import { Transaccion, TipoTransaccion } from '../Equipo/transaccion.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
+import { TorneoUsuario } from '../Torneo/torneoUsuario.entity.js';
 
 const MAXIMO_JUGADORES_EQUIPO = 15;
 const JUGADORES_POR_MERCADO = 10;
@@ -423,9 +424,20 @@ export async function cerrarMercado(mercadoId: number) {
 /**
  * Obtiene el mercado activo de un torneo
  */
-export async function obtenerMercadoActivo(torneoId: number) {
+export async function obtenerMercadoActivo(torneoId: number, userId: number) {
   const em = orm.em.fork();
 
+  // 1. Verificar que el usuario participa en el torneo
+  const participacion = await em.findOne(TorneoUsuario, {
+    torneo: torneoId,
+    usuario: userId,
+    expulsado: false
+  });
+
+  if (!participacion) {
+    throw ErrorFactory.forbidden('No tienes acceso a este torneo');
+  }
+  // 2. Buscar si hay un mercado activo
   const mercado = await em.findOne(
     MercadoDiario,
     {
@@ -437,7 +449,7 @@ export async function obtenerMercadoActivo(torneoId: number) {
         'items.jugador',
         'items.jugador.posicion',
         'items.jugador.club',
-        'items'
+        'items',
       ]
     }
   );
@@ -445,7 +457,7 @@ export async function obtenerMercadoActivo(torneoId: number) {
   if (!mercado) {
     return null;
   }
-
+  //3. En caso de exito, formateamos la respuesta
   const items = mercado.items.getItems().map(item => ({
     id: item.id,
     jugador: {

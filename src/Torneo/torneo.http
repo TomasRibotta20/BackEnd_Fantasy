@@ -1,6 +1,6 @@
 ### Variables
 @baseUrl = http://localhost:3000/api
-@torneoId = 37
+@torneoId = 38
 @userId = 3
 @codigoAcceso = 4UUFXZ
 ### 5K79XN
@@ -143,7 +143,7 @@ Content-Type: application/json
   "nombre_equipo": "Test1",
   "descripcion": "Torneo competitivo de la Premier League",
   "cupoMaximo": 5,
-  "fecha_inicio": "2026-01-10"
+  "fecha_inicio": "2026-01-12"
 }
 
 ### Crear Torneo 2
