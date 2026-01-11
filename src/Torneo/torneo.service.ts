@@ -33,6 +33,15 @@ static async join(em: EntityManager, codigo_acceso: string, nombre_equipo: strin
     if (inscriptos >= torneo.cupo_maximo) {
         throw ErrorFactory.conflict('El torneo ya está lleno.');
     }
+    const nombreOcupado = await em.findOne(Equipo, {
+        nombre: nombre_equipo,
+        torneo_usuario: {
+            torneo: torneo.id
+        }
+    });
+    if (nombreOcupado) {
+        throw ErrorFactory.conflict(`El nombre de equipo "${nombre_equipo}" ya está en uso en este torneo. Por favor elige otro.`);
+    }
 
     await em.transactional(async (transactionalEm) => {
       const torneoLocked = await transactionalEm.findOne(Torneo, 
@@ -40,9 +49,7 @@ static async join(em: EntityManager, codigo_acceso: string, nombre_equipo: strin
         { lockMode: LockMode.PESSIMISTIC_WRITE } 
       );
       if (!torneoLocked) { throw ErrorFactory.notFound('Torneo no encontrado.') }
-      if ((torneoLocked.cantidad_participantes || 0) >= torneoLocked.cupo_maximo) {
-        throw ErrorFactory.conflict('El torneo ya está lleno.');
-      }
+      if ((torneoLocked.cantidad_participantes || 0) >= torneoLocked.cupo_maximo) { throw ErrorFactory.conflict('El torneo ya está lleno.') }
       const nuevaInscripcion = new TorneoUsuario();
       nuevaInscripcion.usuario = transactionalEm.getReference(Users, userId);
       nuevaInscripcion.torneo = transactionalEm.getReference(Torneo, torneo.id!);

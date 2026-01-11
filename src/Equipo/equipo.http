@@ -9,7 +9,7 @@ Content-Type: application/json
 }
 
 ### Obtener el equipo del usuario autenticado (requiere autenticación previa)
-GET http://localhost:3000/api/equipos/mi-equipo/101
+GET http://localhost:3000/api/equipos/detalle-equipo/2
 Content-Type: application/json
 
 ### Realizar un intercambio de jugadores en el equipo (requiere autenticación previa)
@@ -34,7 +34,7 @@ Content-Type: application/json
 GET http://localhost:3000/api/equipos/73/historial
 
 ### Obtener Las puntuaciones de un equipo para una jornada.
-GET http://localhost:3000/api/equipos/95/jornadas/1
+GET http://localhost:3000/api/equipos/8/puntos/jornadas/2
 Content-Type: application/json
 
 ### Obtener Las puntuaciones de un equipo para una jornada.

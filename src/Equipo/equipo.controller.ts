@@ -28,12 +28,11 @@ export async function obtenerEquipos(req: Request, res: Response, next: NextFunc
  * @param {NextFunction} next - La función para pasar el control al siguiente middleware.
  * @returns {Promise<Response|void>} Una promesa que se resuelve en una respuesta JSON con los datos del equipo o pasa un error a next.
  */
-export async function getMiEquipo(req: Request, res: Response, next: NextFunction) {
+export async function getDetalleEquipo(req: Request, res: Response, next: NextFunction) {
   try {
     const equipoId = Number(req.params.equipoId);
     const userId = req.authUser.user?.userId!;
-    await verificarExpulsion(equipoId, userId);
-    const equipo = await getEquipoById(equipoId);
+    const equipo = await getEquipoById(em, equipoId, userId);
     const ownerId = equipo.torneo_usuario.usuario.id;
     const esMio = ownerId === userId;
     res.status(200).json({
