@@ -123,7 +123,10 @@ export async function abrirMercado(torneoId: number, em?: EntityManager) {
       torneo: torneoId,
       estado: EstadoMercado.ABIERTO
     });
-
+    const torneo = await entityManager.getReference(Torneo, torneoId);
+    if (torneo.estado !== 'ACTIVO') {
+      throw ErrorFactory.badRequest('No se pueden abrir mercados en torneos que no están activos');
+    }
     if (mercadoAbierto) {
       throw ErrorFactory.conflict('Ya existe un mercado abierto para este torneo');
     }
@@ -173,7 +176,6 @@ export async function abrirMercado(torneoId: number, em?: EntityManager) {
 
     const numeroMercado = ultimoMercado ? ultimoMercado.numero_mercado + 1 : 1;
 
-    const torneo = await entityManager.getReference(Torneo, torneoId);
     const mercado = entityManager.create(MercadoDiario, {
       torneo,
       numero_mercado: numeroMercado,
