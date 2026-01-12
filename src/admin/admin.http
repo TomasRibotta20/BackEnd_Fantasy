@@ -24,6 +24,6 @@ PATCH {{baseUrl}}/api/admin/config
 Content-Type: application/json
 
 {
-  "modificacionesHabilitadas": true
+  "modificacionesHabilitadas": false
 }
 

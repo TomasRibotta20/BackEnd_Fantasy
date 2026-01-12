@@ -1,7 +1,7 @@
 ### Variables
 @baseUrl = http://localhost:3000/api
-@torneoId = 40
-@userId = 2
+@torneoId = 41
+@userId = 3
 @codigoAcceso = 4UUFXZ
 ### 5K79XN
 ### 
@@ -119,7 +119,7 @@ POST {{baseUrl}}/torneos/unirse
 Content-Type: application/json
 
 {
-  "codigo_acceso": "5AKP6I",
+  "codigo_acceso": "14HPUG",
   "nombre_equipo": "Test User 1"
 }
 
@@ -139,7 +139,7 @@ POST {{baseUrl}}/torneos
 Content-Type: application/json
 
 {
-  "nombre": "Testeo abandono",
+  "nombre": "Testeo abandono2",
   "nombre_equipo": "Test1",
   "descripcion": "Torneo competitivo de la Premier League",
   "cupoMaximo": 5,
@@ -155,7 +155,7 @@ Content-Type: application/json
   "nombre_equipo": "Test1",
   "descripcion": "El mejor torneo de Europa",
   "cupoMaximo": 4,
-  "fecha_inicio": "2026-01-10"
+  "fecha_inicio": "2026-01-18"
 }
 
 ### Crear Torneo 3

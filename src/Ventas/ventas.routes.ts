@@ -7,7 +7,7 @@ import { validate, validateParams, validateQuery } from '../shared/zod/validate.
 
 export const ventasRouter = Router();
 
-ventasRouter.post('/ofertar', requireAuth, verificarModi, validate(crearOfertaSchema), crearOfertaController);
+ventasRouter.post('/ofertar', requireAuth, validate(crearOfertaSchema), crearOfertaController);
 ventasRouter.get('/mis-ofertas-enviadas', requireAuth, validateQuery(misOfertasQuerySchema), obtenerOfertasEnviadasController);
 ventasRouter.get('/mis-ofertas-recibidas', requireAuth, validateQuery(misOfertasQuerySchema), obtenerOfertasRecibidasController);
 ventasRouter.get('/:ofertaId', requireAuth, validateParams(ofertaIdParamSchema), obtenerDetalleOfertaController);
