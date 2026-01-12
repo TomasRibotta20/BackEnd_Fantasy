@@ -11,6 +11,7 @@ import { LockMode } from '@mikro-orm/core';
 import { Recompensa } from '../Recompensa/recompensa.entity.js';
 import { MercadoPuja } from '../Mercado/mercadoPuja.entity.js';
 import { OfertaVenta } from '../Ventas/ofertaVenta.entity.js';
+import { Transaccion } from '../Equipo/transaccion.entity.js';
 
 
 export class TorneoService {
@@ -241,6 +242,7 @@ static async kickUser(em: EntityManager, torneoId: number, creadorId: number, ta
                 const equipoId = inscripcion.equipo.id;
                 await transactionalEm.nativeDelete(EquipoJugador, { equipo: equipoId });
                 await transactionalEm.nativeDelete(MercadoPuja, { equipo: equipoId });
+                await transactionalEm.nativeDelete(Transaccion, { equipo: equipoId }); 
                 await transactionalEm.nativeDelete(OfertaVenta, { vendedor: equipoId });
                 await transactionalEm.nativeDelete(OfertaVenta, { oferente: equipoId });
                 await transactionalEm.nativeDelete(Recompensa, { torneo_usuario: inscripcion.id });

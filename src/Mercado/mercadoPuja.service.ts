@@ -41,6 +41,9 @@ export async function ofertar(equipoId: number, itemMercadoId: number, monto: nu
     if (!equipo) {
       throw ErrorFactory.notFound('Equipo no encontrado');
     }
+    if (equipo.torneo_usuario.expulsado) {
+      throw ErrorFactory.forbidden('No puedes ofertar porque has sido expulsado de este torneo');
+    }
     const ownerId = equipo.torneo_usuario.usuario.id;
     if (ownerId !== userId) {
       throw ErrorFactory.forbidden('No tienes permisos para ofertar con este equipo');
@@ -137,6 +140,9 @@ export async function cancelarOferta(pujaId: number, userId: number) {
     if (ownerId !== userId) {
       throw ErrorFactory.forbidden('No tienes permisos para cancelar esta oferta');
     }
+    if (puja.equipo.torneo_usuario.expulsado) {
+      throw ErrorFactory.forbidden('No puedes cancelar ofertas porque has sido expulsado de este torneo');
+    } 
     if (puja.item.mercado.estado !== EstadoMercado.ABIERTO) {
       throw ErrorFactory.conflict('No se puede cancelar la oferta, el mercado está cerrado');
     }

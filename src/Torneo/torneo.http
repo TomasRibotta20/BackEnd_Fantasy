@@ -1,7 +1,7 @@
 ### Variables
 @baseUrl = http://localhost:3000/api
-@torneoId = 38
-@userId = 3
+@torneoId = 40
+@userId = 2
 @codigoAcceso = 4UUFXZ
 ### 5K79XN
 ### 
@@ -119,8 +119,8 @@ POST {{baseUrl}}/torneos/unirse
 Content-Type: application/json
 
 {
-  "codigo_acceso": "EAA6HT",
-  "nombre_equipo": "Test 3"
+  "codigo_acceso": "5AKP6I",
+  "nombre_equipo": "Test User 1"
 }
 
 ### 21. PATCH - Actualizar sin permisos
@@ -139,7 +139,7 @@ POST {{baseUrl}}/torneos
 Content-Type: application/json
 
 {
-  "nombre": "Liga Fantasy Premier",
+  "nombre": "Testeo abandono",
   "nombre_equipo": "Test1",
   "descripcion": "Torneo competitivo de la Premier League",
   "cupoMaximo": 5,

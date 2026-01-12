@@ -15,6 +15,7 @@ export const rechazarOfertaSchema = z.object({
 });
 
 export const misOfertasQuerySchema = z.object({
+  torneoId: z.string().regex(/^\d+$/, 'El ID del torneo debe ser numérico'),
   estado: z.enum(['PENDIENTE', 'ACEPTADA', 'RECHAZADA', 'VENCIDA', 'CANCELADA']).optional(),
   limit: z.string().regex(/^\d+$/).optional(),
   offset: z.string().regex(/^\d+$/).optional()

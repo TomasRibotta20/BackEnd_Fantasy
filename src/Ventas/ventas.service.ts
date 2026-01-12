@@ -7,8 +7,33 @@ import { Transaccion, TipoTransaccion } from '../Equipo/transaccion.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 import { sendOfertaRecibidaEmail, sendOfertaAceptadaEmail, sendOfertaRechazadaEmail, sendOfertaVencidaEmail } from '../shared/mailer/emailTemplates.js';
 import { Player } from '../Player/player.entity.js';
+import { TorneoUsuario } from '../Torneo/torneoUsuario.entity.js';
 
 const MAXIMO_JUGADORES_EQUIPO = 15;
+
+
+/**
+ * Valida que el usuario tenga un equipo activo (no expulsado) en el torneo
+ */
+async function validarParticipacionActiva(userId: number, torneoId: number, em: EntityManager) {
+  const equipoTorneo = await em.findOne(
+    Equipo,
+    {
+      torneo_usuario: {
+        usuario: userId,
+        torneo: torneoId,
+        expulsado: false
+      }
+    },
+    { populate: ['torneo_usuario'] }
+  );
+
+  if (!equipoTorneo) {
+    throw ErrorFactory.forbidden('No tienes un equipo activo en este torneo o has sido expulsado');
+  }
+
+  return equipoTorneo;
+}
 
 /**
  * Crear o actualizar una oferta de venta
@@ -42,21 +67,10 @@ export async function crearOferta(
   }
 
   const equipoVendedor = equipoJugador.equipo as any as Equipo;
+  const torneoId = equipoVendedor.torneo_usuario.torneo.id!;
+  const equipoOferente = await validarParticipacionActiva(userId, torneoId, entityManager);
+  await entityManager.populate(equipoOferente, ['torneo_usuario.usuario', 'jugadores', 'jugadores.jugador', 'jugadores.jugador.posicion']);
 
-  const equipoOferente = await entityManager.findOne(
-    Equipo,
-    {
-      torneo_usuario: {
-        usuario: userId,
-        torneo: equipoVendedor.torneo_usuario.torneo.id
-      }
-    },
-    { populate: ['torneo_usuario', 'torneo_usuario.usuario', 'jugadores', 'jugadores.jugador', 'jugadores.jugador.posicion'] }
-  );
-
-  if (!equipoOferente) {
-    throw ErrorFactory.notFound('No tienes un equipo en este torneo');
-  }
   if (equipoOferente.id === equipoVendedor.id) {
     throw ErrorFactory.validationAppError('No puedes hacer una oferta por tu propio jugador');
   }
@@ -404,15 +418,19 @@ export async function cancelarOferta(
  */
 export async function obtenerOfertasEnviadas(
   userId: number,
+  torneoId: number,
   filtros: { estado?: EstadoOferta; limit?: number; offset?: number },
   em?: EntityManager
 ) {
   const entityManager = em || orm.em.fork();
 
+  await validarParticipacionActiva(userId, torneoId, entityManager);
   const where: any = {
     oferente: {
       torneo_usuario: {
-        usuario: userId
+        usuario: userId,
+        torneo: torneoId,
+        expulsado: false
       }
     }
   };
@@ -454,15 +472,20 @@ export async function obtenerOfertasEnviadas(
  */
 export async function obtenerOfertasRecibidas(
   userId: number,
+  torneoId: number,
   filtros: { estado?: EstadoOferta; limit?: number; offset?: number },
   em?: EntityManager
 ) {
   const entityManager = em || orm.em.fork();
 
+  await validarParticipacionActiva(userId, torneoId, entityManager);
+
   const where: any = {
     vendedor: {
       torneo_usuario: {
-        usuario: userId
+        usuario: userId,
+        torneo: torneoId,
+        expulsado: false 
       }
     }
   };

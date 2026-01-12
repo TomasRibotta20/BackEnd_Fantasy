@@ -1,10 +1,10 @@
 ### Hacer una oferta por un jugador
-POST http://localhost:3000/api/mercado-puja/equipo/95/ofertar
+POST http://localhost:3000/api/mercado-puja/equipo/96/ofertar
 Content-Type: application/json
 
 {
-  "itemMercadoId": 33,
-  "monto": 4000000
+  "itemMercadoId": 40,
+  "monto": 15000000
 }
 
 ### Actualizar oferta (mismo endpoint)
