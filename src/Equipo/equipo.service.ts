@@ -453,9 +453,12 @@ export async function cambiarEstadoTitularidad(em: EntityManager, equipoId: numb
     const equipo = await txEm.findOne(
       Equipo,
       { id: equipoId },
-      { populate: ['jugadores', 'jugadores.jugador', 'jugadores.jugador.posicion'] }
+      { populate: ['jugadores', 'jugadores.jugador', 'jugadores.jugador.posicion', 'torneo_usuario'] }
     );
-
+    const torneoUsuario = equipo?.torneo_usuario;
+    if (torneoUsuario?.expulsado) {
+      throw ErrorFactory.forbidden('Estás expulsado del torneo. No puedes cambiar la alineación.');
+    }
     if (!equipo) {
       throw ErrorFactory.notFound('El equipo no existe');
     }
