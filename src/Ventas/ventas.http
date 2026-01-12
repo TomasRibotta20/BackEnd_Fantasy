@@ -21,7 +21,7 @@ Content-Type: application/json
 
 ### ========== VER OFERTAS ==========
 ### Ver mis ofertas enviadas (requiere torneoId)
-GET http://localhost:3000/api/ventas/mis-ofertas-enviadas?torneoId=40
+GET http://localhost:3000/api/ventas/mis-ofertas-enviadas?torneoId=35
 Content-Type: application/json
 
 ### Ver mis ofertas enviadas pendientes con torneoId
