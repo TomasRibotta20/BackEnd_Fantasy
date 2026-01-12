@@ -6,6 +6,8 @@ import { findAndPaginate } from '../Player/player.service.js';
 import { HistorialPrecio, MotivoActualizacionPrecio } from './historial-precio.entity.js';
 import { EstadisticaJugador } from '../EstadisticaJugador/estadistica-jugador.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
+import { Jornada } from '../Fixture/Jornada.entity.js';
+import { Partido } from '../Fixture/partido.entity.js';
 
 interface TendenciasAnalisis {
   modificadorTotal: number;
@@ -205,117 +207,247 @@ export class HistorialPrecioService {
       detalle: resultados
     };
   }
+ /**
+ * Actualiza los precios de todos los jugadores basándose en su rendimiento en la jornada
+ */
+static async actualizarPreciosPorRendimiento(em: EntityManager, jornadaId: number): Promise<any> {
 
-/**
-   * Actualiza los precios de todos los jugadores basándose en su rendimiento en la jornada
-   */
-  static async actualizarPreciosPorRendimiento(em: EntityManager, jornadaId: number): Promise<any> {
+  // Verificar si ya se procesaron precios para esta jornada
+  const preciosExistentes = await em.count(HistorialPrecio, {
+    jornada: jornadaId,
+    motivo: MotivoActualizacionPrecio.RENDIMIENTO
+  });
 
-    // Verificar si ya se procesaron precios para esta jornada
-    const preciosExistentes = await em.count(HistorialPrecio, {
-      jornada: jornadaId,
-      motivo: MotivoActualizacionPrecio.RENDIMIENTO
-    });
+  if (preciosExistentes > 0) {
+    console.log(`Ya se procesaron ${preciosExistentes} precios para la jornada ${jornadaId}. Omitiendo recálculo.`);
+    return {
+      total_jugadores_procesados: 0,
+      precios_actualizados: 0,
+      precios_sin_cambio: 0,
+      precios_sin_datos: 0,
+      jugadores_no_convocados: 0,
+      errores: 0,
+      mensaje: 'Los precios ya fueron procesados para esta jornada'
+    };
+  }
 
-    if (preciosExistentes > 0) {
-      console.log(`Ya se procesaron ${preciosExistentes} precios para la jornada ${jornadaId}. Omitiendo recálculo.`);
-      return {
-        total_jugadores_procesados: 0,
-        precios_actualizados: 0,
-        precios_sin_cambio: 0,
-        errores: 0,
-        mensaje: 'Los precios ya fueron procesados para esta jornada'
-      };
+  const jornada = await em.findOne(Jornada, jornadaId);
+  if (!jornada) {
+    throw ErrorFactory.notFound(`Jornada ${jornadaId} no encontrada`);
+  }
+
+  console.log(`\n=== INICIANDO ACTUALIZACIÓN DE PRECIOS - JORNADA ${jornadaId} ===\n`);
+
+  // Obtener partidos finalizados de la jornada
+  const partidosFinalizados = await em.find(
+    Partido,
+    { jornada: jornadaId, estado: 'FT' },
+    { populate: ['local', 'visitante'] }
+  );
+
+  if (partidosFinalizados.length === 0) {
+    console.log('No hay partidos finalizados en esta jornada');
+    return {
+      total_jugadores_procesados: 0,
+      precios_actualizados: 0,
+      precios_sin_cambio: 0,
+      precios_sin_datos: 0,
+      jugadores_no_convocados: 0,
+      errores: 0
+    };
+  }
+
+  // Obtener todas las estadísticas de la jornada
+  const estadisticas = await em.find(
+    EstadisticaJugador,
+    { partido: { jornada: jornadaId, estado: 'FT' } },
+    { populate: ['jugador', 'jugador.club', 'partido', 'partido.jornada'] }
+  );
+
+  // Crear Map de jugadores con estadísticas (acumulando puntajes si hay múltiples)
+  const jugadoresConEstadistica = new Map<number, EstadisticaJugador>();
+  estadisticas.forEach(est => {
+    if (est.jugador.id) {
+      const existente = jugadoresConEstadistica.get(est.jugador.id);
+      if (existente) {
+        existente.puntaje_total = (existente.puntaje_total || 0) + (est.puntaje_total || 0);
+      } else {
+        jugadoresConEstadistica.set(est.jugador.id, est);
+      }
     }
-    
-    const estadisticas = await em.find(
-      EstadisticaJugador, 
-      { 
-        partido: { 
-          jornada: jornadaId,
-          estado: 'FT'
-        } 
-      },
-      { populate: ['jugador', 'partido', 'partido.jornada'] }
-    );
+  });
 
-    if (estadisticas.length === 0) {
-      return {
-        total_jugadores_procesados: 0,
-        precios_actualizados: 0,
-        precios_sin_cambio: 0,
-        errores: 0
-      };
+  // Extraer clubes que jugaron
+  const clubesQueJugaron = new Set<number>();
+  partidosFinalizados.forEach(partido => {
+    if (partido.local?.id) clubesQueJugaron.add(partido.local.id);
+    if (partido.visitante?.id) clubesQueJugaron.add(partido.visitante.id);
+  });
+
+  // Obtener todos los jugadores de clubes que jugaron
+  const todosLosJugadores = await em.find(Player, {
+    club: { $in: Array.from(clubesQueJugaron) },
+    precio_actual: { $ne: null, $gt: 0 }
+  }, { populate: ['club'] });
+
+  // Identificar partidos sin estadísticas
+  const partidosConEstadisticas = new Set<number>();
+  estadisticas.forEach(est => {
+    if (est.partido?.id) {
+      partidosConEstadisticas.add(est.partido.id);
+    }
+  });
+
+  const partidosSinEstadisticas = new Map<number, Partido>();
+  partidosFinalizados.forEach(partido => {
+    if (partido.id && !partidosConEstadisticas.has(partido.id)) {
+      partidosSinEstadisticas.set(partido.id, partido);
+    }
+  });
+
+  // Procesar todos los jugadores
+  let preciosActualizados = 0;
+  let preciosSinCambio = 0;
+  let preciosSinDatos = 0;
+  let jugadoresNoConvocados = 0;
+  let errores = 0;
+
+  console.log(`Procesando ${todosLosJugadores.length} jugadores...\n`);
+
+  for (const jugador of todosLosJugadores) {
+    if (!jugador.id || !jugador.precio_actual) {
+      errores++;
+      continue;
     }
 
-    let preciosActualizados = 0;
-    let preciosSinCambio = 0;
-    let errores = 0;
+    try {
+      const estadistica = jugadoresConEstadistica.get(jugador.id);
 
-    for (const estadistica of estadisticas) {
-      try {
-        const jugador = estadistica.jugador;
+      // Caso A: Jugador con estadísticas (jugó)
+      if (estadistica) {
         const puntaje = estadistica.puntaje_total;
-
-        if (!jugador.precio_actual || jugador.precio_actual <= 0) {
-          console.warn(`Jugador ${jugador.nombre} (ID: ${jugador.id}) no tiene precio actual valido, omitiendo...`);
-          errores++;
-          continue;
-        }
-        if (!jugador.id) {
-          console.warn(`Jugador ${jugador.nombre} no tiene ID valido, omitiendo...`);
-          errores++;
-          continue;
-        }
-
         const ajusteBase = this.calcularAjusteBase(puntaje);
         const tendencias = await this.analizarTendencias(em, jugador.id, jornadaId);
         const ajusteTotal = ajusteBase + tendencias.modificadorTotal;
-
-        if (ajusteTotal === 0) {
-          preciosSinCambio++;
-          continue;
-        }
 
         const precioAnterior = jugador.precio_actual;
         let precioNuevo = Math.round(precioAnterior * (1 + ajusteTotal / 100));
 
         precioNuevo = this.redondearPrecio(precioNuevo);
         precioNuevo = this.aplicarPrecioMinimo(precioNuevo);
+
         jugador.precio_actual = precioNuevo;
         jugador.ultima_actualizacion_precio = new Date();
+
         const historial = new HistorialPrecio();
         historial.jugador = jugador;
         historial.precio = precioNuevo;
         historial.fecha = new Date();
-        historial.jornada = estadistica.partido.jornada;
+        historial.jornada = jornada;
         historial.motivo = MotivoActualizacionPrecio.RENDIMIENTO;
-        historial.observaciones = `Puntaje: ${puntaje.toFixed(1)} pts | Ajuste base: ${ajusteBase > 0 ? '+' : ''}${ajusteBase}% | Tendencias: ${tendencias.modificadorTotal > 0 ? '+' : ''}${tendencias.modificadorTotal}% | Total: ${ajusteTotal > 0 ? '+' : ''}${ajusteTotal}% | ${tendencias.detalles.join(', ')}`;
+        historial.observaciones = `Puntaje: ${puntaje.toFixed(1)} pts | Ajuste base: ${ajusteBase > 0 ? '+' : ''}${ajusteBase}% | Tendencias: ${tendencias.modificadorTotal > 0 ? '+' : ''}${tendencias.modificadorTotal}% | Total: ${ajusteTotal > 0 ? '+' : ''}${ajusteTotal}%${tendencias.detalles.length > 0 ? ' | ' + tendencias.detalles.join(', ') : ''}`;
 
         em.persist(historial);
-        preciosActualizados++;
 
-        console.log(`${jugador.nombre}: ${precioAnterior.toLocaleString()} -> ${precioNuevo.toLocaleString()} (${ajusteTotal > 0 ? '+' : ''}${ajusteTotal}%)`);
-
-      } catch (error: any) {
-        console.error(`Error procesando jugador:`, error.message);
-        errores++;
+        if (ajusteTotal === 0) {
+          preciosSinCambio++;
+        } else {
+          preciosActualizados++;
+          console.log(`✓ ${jugador.nombre}: ${precioAnterior.toLocaleString()} → ${precioNuevo.toLocaleString()} (${ajusteTotal > 0 ? '+' : ''}${ajusteTotal}%)`);
+        }
       }
+      // Caso B: Jugador en partido sin estadísticas disponibles
+      else if (this.jugadorEnPartidoSinEstadisticas(jugador, partidosSinEstadisticas)) {
+        const partido = this.obtenerPartidoDelJugador(jugador, partidosSinEstadisticas);
+        
+        const historial = new HistorialPrecio();
+        historial.jugador = jugador;
+        historial.precio = jugador.precio_actual;
+        historial.fecha = new Date();
+        historial.jornada = jornada;
+        historial.motivo = MotivoActualizacionPrecio.RENDIMIENTO;
+        historial.observaciones = partido 
+          ? `Sin datos disponibles para el partido ${partido.local.nombre} vs ${partido.visitante.nombre}. Variación: 0%`
+          : `Sin datos disponibles para el partido. Variación: 0%`;
+
+        em.persist(historial);
+        preciosSinDatos++;
+      }
+      // Caso C: Jugador no convocado
+      else {
+        const historial = new HistorialPrecio();
+        historial.jugador = jugador;
+        historial.precio = jugador.precio_actual;
+        historial.fecha = new Date();
+        historial.jornada = jornada;
+        historial.motivo = MotivoActualizacionPrecio.RENDIMIENTO;
+        historial.observaciones = `No convocado/No jugó en la jornada. Variación: 0%`;
+
+        em.persist(historial);
+        jugadoresNoConvocados++;
+      }
+
+    } catch (error: any) {
+      console.error(`Error procesando jugador ${jugador.nombre}:`, error.message);
+      errores++;
     }
-    await em.flush();
-
-    console.log(`\nActualizacion completada:`);
-    console.log(`- Precios actualizados: ${preciosActualizados}`);
-    console.log(`- Sin cambios: ${preciosSinCambio}`);
-    console.log(`- Errores: ${errores}`);
-
-    return {
-      total_jugadores_procesados: estadisticas.length,
-      precios_actualizados: preciosActualizados,
-      precios_sin_cambio: preciosSinCambio,
-      errores: errores
-    };
   }
+
+  await em.flush();
+
+  console.log(`\n=== RESUMEN FINAL ===`);
+  console.log(`Total jugadores procesados: ${todosLosJugadores.length}`);
+  console.log(`- Precios actualizados: ${preciosActualizados}`);
+  console.log(`- Sin cambios (ajuste 0%): ${preciosSinCambio}`);
+  console.log(`- Sin datos (partidos sin estadísticas): ${preciosSinDatos}`);
+  console.log(`- Jugadores no convocados: ${jugadoresNoConvocados}`);
+  console.log(`- Errores: ${errores}\n`);
+
+  return {
+    total_jugadores_procesados: todosLosJugadores.length,
+    precios_actualizados: preciosActualizados,
+    precios_sin_cambio: preciosSinCambio,
+    precios_sin_datos: preciosSinDatos,
+    jugadores_no_convocados: jugadoresNoConvocados,
+    errores: errores
+  };
+}
+
+/**
+ * Verifica si un jugador pertenece a un partido sin estadísticas
+ */
+private static jugadorEnPartidoSinEstadisticas(
+  jugador: Player, 
+  partidosSinEstadisticas: Map<number, Partido>
+): boolean {
+  if (!jugador.club?.id) return false;
+  
+  for (const partido of partidosSinEstadisticas.values()) {
+    if (partido.local?.id === jugador.club.id || partido.visitante?.id === jugador.club.id) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Obtiene el partido al que pertenece un jugador de los partidos sin estadísticas
+ */
+private static obtenerPartidoDelJugador(
+  jugador: Player,
+  partidosSinEstadisticas: Map<number, Partido>
+): Partido | null {
+  if (!jugador.club?.id) return null;
+  
+  for (const partido of partidosSinEstadisticas.values()) {
+    if (partido.local?.id === jugador.club.id || partido.visitante?.id === jugador.club.id) {
+      return partido;
+    }
+  }
+  return null;
+}
+
+
 
   /**
    * Calcula el ajuste base según el puntaje obtenido

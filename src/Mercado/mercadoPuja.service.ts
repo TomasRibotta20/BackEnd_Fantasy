@@ -14,7 +14,7 @@ export async function ofertar(equipoId: number, itemMercadoId: number, monto: nu
     const item = await em.findOne(
       ItemMercado,
       itemMercadoId,
-      { populate: ['mercado', 'jugador'] }
+      { populate: ['mercado', 'mercado.torneo', 'jugador'] }
     );
 
     if (!item) {
@@ -35,15 +35,21 @@ export async function ofertar(equipoId: number, itemMercadoId: number, monto: nu
     const equipo = await em.findOne(
       Equipo,
       equipoId,
-      { populate: ['torneo_usuario', 'torneo_usuario.usuario'] }
+      { populate: ['torneo_usuario', 'torneo_usuario.usuario', 'torneo_usuario.torneo'] }
     );
 
     if (!equipo) {
       throw ErrorFactory.notFound('Equipo no encontrado');
     }
+    if (equipo.torneo_usuario.expulsado) {
+      throw ErrorFactory.forbidden('No puedes ofertar porque has sido expulsado de este torneo');
+    }
     const ownerId = equipo.torneo_usuario.usuario.id;
     if (ownerId !== userId) {
       throw ErrorFactory.forbidden('No tienes permisos para ofertar con este equipo');
+    }
+    if (equipo.torneo_usuario.torneo.id !== item.mercado.torneo.id) {
+      throw ErrorFactory.badRequest('El equipo no pertenece al torneo del mercado');
     }
 
     const pujaExistente = await em.findOne(MercadoPuja, {
@@ -134,6 +140,9 @@ export async function cancelarOferta(pujaId: number, userId: number) {
     if (ownerId !== userId) {
       throw ErrorFactory.forbidden('No tienes permisos para cancelar esta oferta');
     }
+    if (puja.equipo.torneo_usuario.expulsado) {
+      throw ErrorFactory.forbidden('No puedes cancelar ofertas porque has sido expulsado de este torneo');
+    } 
     if (puja.item.mercado.estado !== EstadoMercado.ABIERTO) {
       throw ErrorFactory.conflict('No se puede cancelar la oferta, el mercado está cerrado');
     }

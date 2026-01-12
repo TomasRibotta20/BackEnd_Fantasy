@@ -10,6 +10,7 @@ import { Equipo } from '../Equipo/equipo.entity.js';
 import { EquipoJugador } from '../Equipo/equipoJugador.entity.js';
 import { Transaccion, TipoTransaccion } from '../Equipo/transaccion.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
+import { TorneoUsuario } from '../Torneo/torneoUsuario.entity.js';
 
 const MAXIMO_JUGADORES_EQUIPO = 15;
 const JUGADORES_POR_MERCADO = 10;
@@ -116,19 +117,22 @@ function shuffle<T>(array: T[]): T[] {
  * Abre un nuevo mercado para un torneo
  * Selecciona 10 jugadores aleatorios disponibles
  */
-export async function abrirMercado(torneoId: number) {
-  return await orm.em.transactional(async (em) => {
+export async function abrirMercado(torneoId: number, em?: EntityManager) {
+  const executeAbrirMercado = async (entityManager: EntityManager) => {
     // 1. Validar que no haya mercado abierto
-    const mercadoAbierto = await em.findOne(MercadoDiario, {
+    const mercadoAbierto = await entityManager.findOne(MercadoDiario, {
       torneo: torneoId,
       estado: EstadoMercado.ABIERTO
     });
-
+    const torneo = await entityManager.getReference(Torneo, torneoId);
+    if (torneo.estado !== 'ACTIVO') {
+      throw ErrorFactory.badRequest('No se pueden abrir mercados en torneos que no están activos');
+    }
     if (mercadoAbierto) {
       throw ErrorFactory.conflict('Ya existe un mercado abierto para este torneo');
     }
 
-    const jugadoresLibres = await obtenerJugadoresLibresTorneo(torneoId, em);
+    const jugadoresLibres = await obtenerJugadoresLibresTorneo(torneoId, entityManager);
 
     if (jugadoresLibres.length === 0) {
       throw ErrorFactory.badRequest('No hay jugadores libres en el torneo');
@@ -165,7 +169,7 @@ export async function abrirMercado(torneoId: number) {
     } else {
       jugadoresSeleccionados = shuffle(disponibles).slice(0, JUGADORES_POR_MERCADO);
     }
-    const ultimoMercado = await em.findOne(
+    const ultimoMercado = await entityManager.findOne(
       MercadoDiario,
       { torneo: torneoId },
       { orderBy: { numero_mercado: 'DESC' } }
@@ -173,8 +177,7 @@ export async function abrirMercado(torneoId: number) {
 
     const numeroMercado = ultimoMercado ? ultimoMercado.numero_mercado + 1 : 1;
 
-    const torneo = await em.getReference(Torneo, torneoId);
-    const mercado = em.create(MercadoDiario, {
+    const mercado = entityManager.create(MercadoDiario, {
       torneo,
       numero_mercado: numeroMercado,
       fecha_apertura: new Date(),
@@ -182,15 +185,15 @@ export async function abrirMercado(torneoId: number) {
       hubo_reset_pool: huboReset
     });
 
-    em.persist(mercado);
+    entityManager.persist(mercado);
 
     for (const jugadorTorneo of jugadoresSeleccionados) {
-      const item = em.create(ItemMercado, {
+      const item = entityManager.create(ItemMercado, {
         mercado,
         jugador: jugadorTorneo.jugador,
         cantidad_pujas: 0
       });
-      em.persist(item);
+      entityManager.persist(item);
 
       if (huboReset && idsCompletados && jugadorTorneo.jugador.id && idsCompletados.has(jugadorTorneo.jugador.id)) {
       jugadorTorneo.aparecio_en_mercado = true;
@@ -199,7 +202,7 @@ export async function abrirMercado(torneoId: number) {
       }
     }
 
-    await em.flush();
+    await entityManager.flush();
 
     console.log(`Mercado #${numeroMercado} abierto con ${jugadoresSeleccionados.length} jugadores`);
 
@@ -219,7 +222,16 @@ export async function abrirMercado(torneoId: number) {
         precio_actual: jt.jugador.precio_actual
       }))
     };
-  });
+  };
+  // Si se proporciona un EntityManager, usarlo directamente (sin crear nueva transacción)
+  // Si no, crear una transacción nueva
+  if (em) {
+    return await executeAbrirMercado(em);
+  } else {
+    return await orm.em.transactional(async (transactionalEm) => {
+      return await executeAbrirMercado(transactionalEm);
+    });
+  }
 }
 
 /**
@@ -412,9 +424,20 @@ export async function cerrarMercado(mercadoId: number) {
 /**
  * Obtiene el mercado activo de un torneo
  */
-export async function obtenerMercadoActivo(torneoId: number) {
+export async function obtenerMercadoActivo(torneoId: number, userId: number) {
   const em = orm.em.fork();
 
+  // 1. Verificar que el usuario participa en el torneo
+  const participacion = await em.findOne(TorneoUsuario, {
+    torneo: torneoId,
+    usuario: userId,
+    expulsado: false
+  });
+
+  if (!participacion) {
+    throw ErrorFactory.forbidden('No tienes acceso a este torneo');
+  }
+  // 2. Buscar si hay un mercado activo
   const mercado = await em.findOne(
     MercadoDiario,
     {
@@ -426,7 +449,7 @@ export async function obtenerMercadoActivo(torneoId: number) {
         'items.jugador',
         'items.jugador.posicion',
         'items.jugador.club',
-        'items'
+        'items',
       ]
     }
   );
@@ -434,7 +457,7 @@ export async function obtenerMercadoActivo(torneoId: number) {
   if (!mercado) {
     return null;
   }
-
+  //3. En caso de exito, formateamos la respuesta
   const items = mercado.items.getItems().map(item => ({
     id: item.id,
     jugador: {

@@ -10,7 +10,7 @@ export const mercadoRouter = Router();
 
 // Rutas de admin
 mercadoRouter.post('/abrir', requireAdmin, validate(abrirMercadoSchema), abrirMercado);
-mercadoRouter.post('/:mercadoId/cerrar', requireAdmin, verificarModi, validateParams(cerrarMercadoParamsSchema), cerrarMercado);
+mercadoRouter.post('/:mercadoId/cerrar', requireAdmin, validateParams(cerrarMercadoParamsSchema), cerrarMercado);
 
 // Rutas públicas/usuarios
 mercadoRouter.get('/activo/torneo/:torneoId', requireAuth, validateParams(obtenerMercadoActivoParamsSchema), obtenerMercadoActivo);

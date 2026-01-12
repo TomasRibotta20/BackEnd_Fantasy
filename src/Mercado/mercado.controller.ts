@@ -94,7 +94,9 @@ export async function cerrarMercado(req: Request, res: Response, next: NextFunct
 export async function obtenerMercadoActivo(req: Request, res: Response, next: NextFunction) {
   try {
     const torneoId = Number(req.params.torneoId);
-    const mercado = await obtenerMercadoActivoService(torneoId);
+    const userId = req.authUser.user?.userId!;
+    const mercado = await obtenerMercadoActivoService(torneoId,userId);
+    
     if (!mercado) {
       return res.status(200).json({
         message: 'No hay mercado activo en este momento',

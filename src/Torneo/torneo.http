@@ -1,6 +1,6 @@
 ### Variables
 @baseUrl = http://localhost:3000/api
-@torneoId = 1
+@torneoId = 41
 @userId = 3
 @codigoAcceso = 4UUFXZ
 ### 5K79XN
@@ -37,11 +37,11 @@ POST {{baseUrl}}/torneos
 Content-Type: application/json
 
 {
-  "nombre": "Liga de Prueba N",
+  "nombre": "Liga de Prueba Mil",
   "nombre_equipo": "Mi Equipo Test 1",
   "descripcion": "Torneo de prueba para testing",
   "cupoMaximo": 4,
-  "fecha_inicio": "2025-01-15T10:00:00.000Z"
+  "fecha_inicio": "2026-01-12T22:45:54.529Z"
 }
 
 ### 8. PATCH - Actualizar torneo (creador o admin)
@@ -119,8 +119,8 @@ POST {{baseUrl}}/torneos/unirse
 Content-Type: application/json
 
 {
-  "codigo_acceso": "EAA6HT",
-  "nombre_equipo": "Test 3"
+  "codigo_acceso": "14HPUG",
+  "nombre_equipo": "Test User 1"
 }
 
 ### 21. PATCH - Actualizar sin permisos
@@ -139,11 +139,11 @@ POST {{baseUrl}}/torneos
 Content-Type: application/json
 
 {
-  "nombre": "Liga Fantasy Premier",
+  "nombre": "Testeo abandono2",
   "nombre_equipo": "Test1",
   "descripcion": "Torneo competitivo de la Premier League",
   "cupoMaximo": 5,
-  "fecha_inicio": "2026-01-10"
+  "fecha_inicio": "2026-01-12"
 }
 
 ### Crear Torneo 2
@@ -155,7 +155,7 @@ Content-Type: application/json
   "nombre_equipo": "Test1",
   "descripcion": "El mejor torneo de Europa",
   "cupoMaximo": 4,
-  "fecha_inicio": "2026-01-10"
+  "fecha_inicio": "2026-01-18"
 }
 
 ### Crear Torneo 3
@@ -191,5 +191,5 @@ Content-Type: application/json
   "nombre_equipo": "Test1",
   "descripcion": "Torneo especial estilo mundial",
   "cupoMaximo": 5,
-  "fecha_inicio": "2026-01-11"
+  "fecha_inicio": "2026-01-12"
 }

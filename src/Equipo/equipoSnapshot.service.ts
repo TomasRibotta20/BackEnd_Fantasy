@@ -22,10 +22,10 @@ export class EquipoSnapshotService {
   async crearSnapshotsJornada(jornadaId: number): Promise<number> {
     const jornada = await this.em.findOneOrFail(Jornada, jornadaId)
     
-    // Buscar equipos de torneos activos
+    // Buscar equipos de torneos activos, y de jugadores no expulsados
     const equipos = await this.em.find(
       Equipo, 
-      { torneo_usuario: { torneo: { estado: EstadoTorneo.ACTIVO } } }, 
+      { torneo_usuario: { torneo: { estado: EstadoTorneo.ACTIVO }, expulsado: false } }, 
       { populate: ['jugadores.jugador'] }
     )
     

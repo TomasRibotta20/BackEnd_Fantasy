@@ -1,6 +1,7 @@
 import e, { Request, Response, NextFunction } from 'express';
 import { crearOferta, aceptarOferta, rechazarOferta, cancelarOferta, obtenerOfertasEnviadas, obtenerOfertasRecibidas, obtenerDetalleOferta, procesarOfertasVencidas } from './ventas.service.js';
 import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
+import { Torneo } from '../Torneo/torneo.entity.js';
 
 export async function crearOfertaController(req: Request, res: Response, next: NextFunction) {
   try {
@@ -88,8 +89,8 @@ export async function cancelarOfertaController(req: Request, res: Response, next
 export async function obtenerOfertasEnviadasController(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = req.authUser?.user?.userId!;
-    const { estado, limit, offset } = req.query;
-    const resultado = await obtenerOfertasEnviadas(userId, {
+    const { torneoId,estado, limit, offset } = req.query;
+    const resultado = await obtenerOfertasEnviadas(userId, parseInt(torneoId as string), {
       estado: estado as any,
       limit: limit ? parseInt(limit as string) : undefined,
       offset: offset ? parseInt(offset as string) : undefined
@@ -110,8 +111,8 @@ export async function obtenerOfertasEnviadasController(req: Request, res: Respon
 export async function obtenerOfertasRecibidasController(req: Request, res: Response, next: NextFunction) {
   try {
     const userId = req.authUser?.user?.userId!;
-    const { estado, limit, offset } = req.query;
-    const resultado = await obtenerOfertasRecibidas(userId, {
+    const { torneoId, estado, limit, offset } = req.query;
+    const resultado = await obtenerOfertasRecibidas(userId,parseInt(torneoId as string), {
       estado: estado as any,
       limit: limit ? parseInt(limit as string) : undefined,
       offset: offset ? parseInt(offset as string) : undefined

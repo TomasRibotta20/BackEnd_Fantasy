@@ -130,6 +130,9 @@ export async function ejecutarClausula(
       { id: compradorEquipoId },
       { populate: ['torneo_usuario.usuario', 'torneo_usuario.torneo', 'jugadores'] }
     );
+    if(equipoComprador?.torneo_usuario.expulsado) {
+      throw ErrorFactory.forbidden('Estás expulsado del torneo. No puedes ejecutar cláusulas.');
+    }
     
     if (!equipoComprador) {
       throw ErrorFactory.notFound('Tu equipo no existe');
