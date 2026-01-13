@@ -1,0 +1,187 @@
+/config/jornada-activa:
+  get:
+    summary: Obtiene la jornada activa del sistema
+    description: Recupera la información de la jornada actualmente activa en el sistema, incluyendo el estado de modificaciones habilitadas.
+    tags: [Configuración del Juego]
+    responses:
+      200:
+        description: Jornada activa recuperada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    jornada:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 10
+                        numero:
+                          type: integer
+                          example: 10
+                          description: Número de la jornada
+                        nombre:
+                          type: string
+                          example: 'Fecha 10'
+                        fecha_inicio:
+                          type: string
+                          format: date-time
+                          example: '2026-01-15T00:00:00Z'
+                        fecha_fin:
+                          type: string
+                          format: date-time
+                          example: '2026-01-17T23:59:59Z'
+                        estado:
+                          type: string
+                          enum: [PENDIENTE, EN_CURSO, FINALIZADA]
+                          example: 'EN_CURSO'
+                    modificaciones_habilitadas:
+                      type: boolean
+                      example: true
+                      description: Indica si los usuarios pueden modificar sus equipos
+      404:
+        description: No hay jornada activa configurada.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'No hay jornada activa configurada'
+      500:
+        description: Error del servidor.
+
+/config/estado-modificaciones:
+  get:
+    summary: Verifica si las modificaciones de equipo están habilitadas
+    description: Obtiene el estado actual del sistema para determinar si los usuarios pueden realizar cambios en sus equipos (fichajes, ventas, cláusulas, etc.).
+    tags: [Configuración del Juego]
+    responses:
+      200:
+        description: Estado de modificaciones recuperado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    modificaciones_habilitadas:
+                      type: boolean
+                      example: true
+                      description: true = se pueden hacer modificaciones, false = están bloqueadas
+                    mensaje:
+                      type: string
+                      example: 'Puedes modificar tu equipo'
+                      description: Mensaje descriptivo del estado actual
+      500:
+        description: Error del servidor.
+
+/config:
+  get:
+    summary: Obtiene todas las configuraciones del sistema
+    description: Recupera la configuración completa del juego, incluyendo jornada activa, límites de torneos, configuraciones de cláusulas y estado de modificaciones.
+    tags: [Configuración del Juego]
+    responses:
+      200:
+        description: Configuración del sistema recuperada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                      description: ID de la configuración (siempre 1, singleton)
+                    jornada_activa:
+                      type: object
+                      nullable: true
+                      properties:
+                        id:
+                          type: integer
+                          example: 10
+                        numero:
+                          type: integer
+                          example: 10
+                        nombre:
+                          type: string
+                          example: 'Fecha 10'
+                        estado:
+                          type: string
+                          example: 'EN_CURSO'
+                    modificaciones_habilitadas:
+                      type: boolean
+                      example: true
+                      description: Indica si los usuarios pueden modificar sus equipos
+                    cupo_maximo_torneos:
+                      type: integer
+                      example: 5
+                      description: Cantidad máxima de torneos en los que un usuario puede participar simultáneamente
+                    dias_proteccion_clausula:
+                      type: integer
+                      example: 2
+                      description: Días que un jugador está protegido después de ser fichado o adquirido por cláusula
+                    ratio_blindaje_clausula:
+                      type: number
+                      example: 2
+                      description: Ratio de conversión para blindar jugadores (monto_incremento / ratio = costo en presupuesto)
+                    ultima_modificacion:
+                      type: string
+                      format: date-time
+                      example: '2026-01-13T10:30:00Z'
+                      description: Fecha de la última actualización de la configuración
+      500:
+        description: Error del servidor.
+
+/config/clausulas:
+  get:
+    summary: Obtiene las configuraciones específicas de cláusulas
+    description: Recupera los parámetros de configuración relacionados con el sistema de cláusulas de rescisión y blindaje de jugadores.
+    tags: [Configuración del Juego]
+    responses:
+      200:
+        description: Configuración de cláusulas recuperada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    dias_proteccion_clausula:
+                      type: integer
+                      example: 2
+                      description: Número de días que un jugador está protegido contra ejecución de cláusulas después de ser adquirido
+                    ratio_blindaje_clausula:
+                      type: number
+                      example: 2
+                      description: Ratio de conversión para calcular el costo de blindar un jugador. Ej. ratio 2 = por cada $2 de incremento en cláusula, pagas $1 de presupuesto
+                    mensaje:
+                      type: string
+                      example: 'Protección: 2 días | Ratio blindaje: 1:2'
+                      description: Resumen legible de la configuración de cláusulas
+      500:
+        description: Error del servidor.

@@ -11,9 +11,8 @@ export class HistorialPrecioController {
    */
   static async previewPreciosPorClub(req: Request, res: Response, next: NextFunction) {
     try {
+      const em = orm.em
       const clubId = Number(req.params.clubId);
-
-      const em = orm.em.fork();
       const resultado = await HistorialPrecioService.obtenerPreciosSugeridosPorClub(em, clubId);
 
       res.json({
@@ -37,8 +36,8 @@ export class HistorialPrecioController {
    */
   static async calcularYGuardarPreciosClub(req: Request, res: Response, next: NextFunction) {
     try {
+      const em = orm.em
       const clubId = Number(req.params.clubId);
-      const em = orm.em.fork();
       const resultado = await HistorialPrecioService.calcularYGuardarPreciosClub(em, clubId);
 
       res.json({
@@ -63,7 +62,7 @@ export class HistorialPrecioController {
    */
   static async calcularYGuardarTodosLosClubes(req: Request, res: Response, next: NextFunction) {
     try {
-      const em = orm.em.fork();
+      const em = orm.em
       const resultado = await HistorialPrecioService.calcularYGuardarPreciosTodosLosClubes(em);
       res.json({
         success: true,
@@ -86,8 +85,8 @@ export class HistorialPrecioController {
    */
   static async actualizarPreciosPorRendimiento(req: Request, res: Response, next: NextFunction) {
     try {
+      const em = orm.em
       const jornadaId = Number(req.params.jornadaId);
-      const em = orm.em.fork();
       const resultado = await HistorialPrecioService.actualizarPreciosPorRendimiento(em, jornadaId);
 
       res.json({
@@ -104,5 +103,4 @@ export class HistorialPrecioController {
       }
     }
   }
-
 }

@@ -31,7 +31,6 @@ export class Equipo extends BaseEntity {
   })
   jugadores = new Collection<EquipoJugador>(this);
 
-  //helper para obtener el presupuesto disponible del equipo
   get presupuestoDisponible(): number {
     return this.presupuesto - this.presupuesto_bloqueado;
   }

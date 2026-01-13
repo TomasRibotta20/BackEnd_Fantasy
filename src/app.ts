@@ -15,7 +15,7 @@ import { positionRouter } from './Position/position.routes.js';
 import { equipoRouter } from './Equipo/equipo.routes.js';
 import { torneoRouter } from './Torneo/torneo.routes.js';
 import { estadisticaJugadorRouter } from './EstadisticaJugador/estadistica-jugador.routes.js';
-import { orm, safeUpdateSchema } from './shared/db/orm.js';
+import { orm } from './shared/db/orm.js';
 import { RequestContext } from '@mikro-orm/core';
 import { userRouter } from './User/user.routes.js';
 import { authRouter } from './Auth/auth.routes.js';

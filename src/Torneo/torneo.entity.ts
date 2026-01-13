@@ -25,9 +25,6 @@ export class Torneo extends BaseEntity {
   @Formula(alias => `(SELECT COUNT(*) FROM torneo_usuario tu WHERE tu.torneo_id = ${alias}.id and tu.expulsado = false)`)
   cantidad_participantes?: number;
 
-  @Property({ nullable: true })
-  fecha_inicio!: Date
-
   @Property({ onCreate: () => new Date() })
   fecha_creacion = new Date();
 

@@ -3,10 +3,9 @@ import { orm } from '../shared/db/orm.js'
 import { EquipoSnapshotService } from './equipoSnapshot.service.js'
 import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js'
 
-const em = orm.em;
-
 export async function getHistorial(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const equipoId = Number(req.params.equipoId)
 
     const snapshotService = new EquipoSnapshotService(em)
@@ -27,6 +26,7 @@ export async function getHistorial(req: Request, res: Response, next: NextFuncti
 
 export async function getEquipoEnJornada(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const equipoId = Number(req.params.equipoId)
     const jornadaId = Number(req.params.jornadaId)
     const userId = req.authUser.user?.userId!
@@ -53,6 +53,7 @@ export async function getEquipoEnJornada(req: Request, res: Response, next: Next
 
 export async function getRankingTorneoJornada(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const jornadaId = Number(req.params.jornadaId)
     const torneoId = Number(req.params.torneoId)
 

@@ -1,6 +1,6 @@
 ### Variables
 @baseUrl = http://localhost:3000/api
-@torneoId = 41
+@torneoId = 4
 @userId = 3
 @codigoAcceso = 4UUFXZ
 ### 5K79XN
@@ -188,8 +188,7 @@ Content-Type: application/json
 
 {
   "nombre": "Mundial",
-  "nombre_equipo": "Test1",
+  "nombre_equipo": "Test221",
   "descripcion": "Torneo especial estilo mundial",
-  "cupoMaximo": 5,
-  "fecha_inicio": "2026-01-12"
+  "cupoMaximo": 5
 }

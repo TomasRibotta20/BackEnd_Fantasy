@@ -4,12 +4,13 @@ import { ItemMercado } from './itemMercado.entity.js';
 import { Equipo } from '../Equipo/equipo.entity.js';
 import { MercadoDiario, EstadoMercado } from './mercadoDiario.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
+import { EntityManager } from '@mikro-orm/core';
 
 /**
  * Crea o actualiza una oferta por un jugador del mercado
  */
-export async function ofertar(equipoId: number, itemMercadoId: number, monto: number, userId: number) {
-  return await orm.em.transactional(async (em) => {
+export async function ofertar(em: EntityManager, equipoId: number, itemMercadoId: number, monto: number, userId: number) {
+  return await em.transactional(async (em) => {
 
     const item = await em.findOne(
       ItemMercado,
@@ -124,8 +125,8 @@ export async function ofertar(equipoId: number, itemMercadoId: number, monto: nu
 /**
  * Cancela una oferta antes del cierre del mercado
  */
-export async function cancelarOferta(pujaId: number, userId: number) {
-  return await orm.em.transactional(async (em) => {
+export async function cancelarOferta(em: EntityManager, pujaId: number, userId: number) {
+  return await em.transactional(async (em) => {
     const puja = await em.findOne(
       MercadoPuja,
       pujaId,
@@ -176,9 +177,7 @@ export async function cancelarOferta(pujaId: number, userId: number) {
 /**
  * Obtiene las ofertas activas de un equipo
  */
-export async function obtenerMisOfertas(equipoId: number, userId: number) {
-  const em = orm.em.fork();
-
+export async function obtenerMisOfertas(em: EntityManager, equipoId: number, userId: number) {
   const equipo = await em.findOne(
     Equipo,
     equipoId,

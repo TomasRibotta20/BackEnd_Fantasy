@@ -4,8 +4,6 @@ import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
 import { Equipo } from './equipo.entity.js';
 import { orm } from '../shared/db/orm.js';
 
-const em = orm.em;
-
 /**
  * Maneja la petición para obtener todos los equipos.
  * @param {Request} req - El objeto de solicitud de Express.
@@ -14,6 +12,7 @@ const em = orm.em;
  */
 export async function obtenerEquipos(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const equipos = await em.find(Equipo, {}, { orderBy: { id: 'ASC' } });
     res.status(200).json(equipos);
   } catch (error: any) {
@@ -30,6 +29,7 @@ export async function obtenerEquipos(req: Request, res: Response, next: NextFunc
  */
 export async function getDetalleEquipo(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const equipoId = Number(req.params.equipoId);
     const userId = req.authUser.user?.userId!;
     const equipo = await getEquipoById(em, equipoId, userId);
@@ -58,6 +58,7 @@ export async function getDetalleEquipo(req: Request, res: Response, next: NextFu
  */
 export async function cambiarEstadoJugador(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const equipoId = Number(req.params.equipoId);
     const { jugadorId } = req.body;
     const userId = req.authUser.user?.userId!;
@@ -98,6 +99,7 @@ export async function cambiarEstadoJugador(req: Request, res: Response, next: Ne
  */
 export async function actualizarAlineacion(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const userId = req.authUser.user?.userId;
     const equipoId = Number(req.params.equipoId);
     const { jugadorTitularId, jugadorSuplenteId } = req.body;
@@ -136,6 +138,7 @@ export async function actualizarAlineacion(req: Request, res: Response, next: Ne
  */
 export async function venderJugador(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const equipoId = Number(req.params.equipoId);
     const { jugadorId } = req.body;
     const userId = req.authUser.user?.userId!;

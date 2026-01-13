@@ -6,7 +6,6 @@ import { Jornada } from './Jornada.entity.js';
 import { clubes } from '../Club/club.entity.js';
 import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
 
-const em = orm.em;
 /**
  * Recupera todos los partidos de la base de datos
  * @param req El objeto de solicitud de Express (no utilizado en este endpoint, pero se mantiene para la firma).
@@ -15,6 +14,7 @@ const em = orm.em;
  */
 async function findAll(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const { jornadaId, clubId, from, to } = req.query;
     const where: any = {};
     if (jornadaId) where.jornada = Number(jornadaId);
@@ -58,6 +58,7 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
 async function findOne(req: Request, res: Response, next: NextFunction) {
   const id = Number(req.params.id);
   try {
+    const em = orm.em;
     const partido = await em.findOneOrFail(
       Partido,
       { id },
@@ -80,6 +81,7 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
  */
 async function add(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const { id_api, fecha, estado, estado_detalle, estadio, jornadaId, localId, visitanteId } = req.body;
 
     const jornada = await em.findOne(Jornada, { id: Number(jornadaId) });
@@ -124,6 +126,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
 async function update(req: Request, res: Response, next: NextFunction) {
   const id = Number(req.params.id);
   try {
+    const em = orm.em;
     const partido = await em.findOne(Partido, { id });
     if (!partido) throw ErrorFactory.notFound('Partido no encontrado');
 
@@ -168,6 +171,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
  */
 async function remove(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const id = Number(req.params.id);
     const partido = em.getReference(Partido, id);
     await em.removeAndFlush(partido);

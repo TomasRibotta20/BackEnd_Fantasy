@@ -20,34 +20,27 @@ const JUGADORES_POR_MERCADO = 10;
  * Y actualiza las relaciones para jugadores que ya tienen equipo
  * se ejecuta cuando creamos un torneo
  */
-export async function inicializarJugadoresTorneo(torneoId: number, em?: EntityManager) {
-  const entityManager = em || orm.em.fork();
-  
-  const torneo = await entityManager.findOne(Torneo, torneoId);
+export async function inicializarJugadoresTorneo(em: EntityManager, torneoId: number) {
+  const torneo = await em.findOne(Torneo, torneoId);
   if (!torneo) {
     throw ErrorFactory.notFound(`Torneo con ID ${torneoId} no encontrado`);
   }
 
-  const todosLosJugadores = await entityManager.find(Player, {});
+  const todosLosJugadores = await em.find(Player, {});
   
   console.log(`Inicializando ${todosLosJugadores.length} jugadores para el torneo ${torneo.nombre}...`);
 
   for (const jugador of todosLosJugadores) {
-    const jugadorTorneo = entityManager.create(JugadorTorneo, {
+    const jugadorTorneo = em.create(JugadorTorneo, {
       jugador,
       torneo,
       aparecio_en_mercado: false,
       equipo_jugador: null
     });
-    
-    entityManager.persist(jugadorTorneo);
-  }
-  
-  if (!em) {
-    await entityManager.flush();
+    em.persist(jugadorTorneo);
   }
 
-  const equiposDelTorneo = await entityManager.find(
+  const equiposDelTorneo = await em.find(
     Equipo,
     { torneo_usuario: { torneo: torneoId } },
     { populate: ['jugadores'] }
@@ -61,7 +54,7 @@ export async function inicializarJugadoresTorneo(torneoId: number, em?: EntityMa
         ? equipoJugador.jugador 
         : (equipoJugador.jugador as any).id;
 
-      const jugadorTorneo = await entityManager.findOne(JugadorTorneo, {
+      const jugadorTorneo = await em.findOne(JugadorTorneo, {
         jugador: jugadorId,
         torneo: torneoId
       });
@@ -71,10 +64,6 @@ export async function inicializarJugadoresTorneo(torneoId: number, em?: EntityMa
         jugadoresAsignados++;
       }
     }
-  }
-
-  if (!em) {
-    await entityManager.flush();
   }
 
   console.log(`Inicialización completada para torneo ${torneo.nombre}`);
@@ -90,7 +79,7 @@ export async function inicializarJugadoresTorneo(torneoId: number, em?: EntityMa
 /**
  * Obtiene jugadores libres de un torneo
  */
-async function obtenerJugadoresLibresTorneo(torneoId: number, em: EntityManager): Promise<JugadorTorneo[]> {
+async function obtenerJugadoresLibresTorneo(em: EntityManager, torneoId: number): Promise<JugadorTorneo[]> {
   return await em.find(
     JugadorTorneo,
     {
@@ -132,7 +121,7 @@ export async function abrirMercado(torneoId: number, em?: EntityManager) {
       throw ErrorFactory.conflict('Ya existe un mercado abierto para este torneo');
     }
 
-    const jugadoresLibres = await obtenerJugadoresLibresTorneo(torneoId, entityManager);
+    const jugadoresLibres = await obtenerJugadoresLibresTorneo(entityManager, torneoId);
 
     if (jugadoresLibres.length === 0) {
       throw ErrorFactory.badRequest('No hay jugadores libres en el torneo');
@@ -239,9 +228,9 @@ export async function abrirMercado(torneoId: number, em?: EntityManager) {
  * Verifica límite total y límite por posición
  */
 export async function validarCupoParaCompra(
+  em: EntityManager,
   equipoId: number,
-  jugadorId: number,
-  em: EntityManager
+  jugadorId: number
 ): Promise<{ valido: boolean; razon?: string }> {
   
   const equipo = await em.findOne(Equipo, equipoId, {
@@ -319,7 +308,7 @@ export async function cerrarMercado(mercadoId: number) {
       let ganador: MercadoPuja | null = null;
 
       for (const puja of pujas) {
-        const validacion = await validarCupoParaCompra(puja.equipo.id!, item.jugador.id!, em);
+        const validacion = await validarCupoParaCompra(em, puja.equipo.id!, item.jugador.id!);
 
         if (validacion.valido) {
           ganador = puja;
@@ -424,9 +413,7 @@ export async function cerrarMercado(mercadoId: number) {
 /**
  * Obtiene el mercado activo de un torneo
  */
-export async function obtenerMercadoActivo(torneoId: number, userId: number) {
-  const em = orm.em.fork();
-
+export async function obtenerMercadoActivo(em: EntityManager, torneoId: number, userId: number) {
   // 1. Verificar que el usuario participa en el torneo
   const participacion = await em.findOne(TorneoUsuario, {
     torneo: torneoId,

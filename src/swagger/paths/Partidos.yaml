@@ -1,103 +1,481 @@
 /partidos:
   get:
-    summary: Lista partidos
-    description: Filtra por jornada, club y rango de fechas.
+    summary: Obtiene todos los partidos (solo administrador)
+    description: Recupera una lista de todos los partidos registrados en la base de datos con opciones de filtrado por jornada, club y rango de fechas.
     tags: [Partidos]
     parameters:
       - in: query
         name: jornadaId
-        schema: { type: integer }
-        required: false
+        schema:
+          type: integer
+        description: Filtrar por ID de jornada
+        example: 10
       - in: query
         name: clubId
-        schema: { type: integer }
-        required: false
+        schema:
+          type: integer
+        description: Filtrar por ID de club (local o visitante)
+        example: 5
       - in: query
         name: from
-        schema: { type: string, format: date }
-        required: false
-        description: Fecha mínima (YYYY-MM-DD)
+        schema:
+          type: string
+          format: date-time
+        description: Fecha desde (formato ISO 8601)
+        example: '2024-08-01T00:00:00Z'
       - in: query
         name: to
-        schema: { type: string, format: date }
-        required: false
-        description: Fecha máxima (YYYY-MM-DD)
+        schema:
+          type: string
+          format: date-time
+        description: Fecha hasta (formato ISO 8601)
+        example: '2024-08-31T23:59:59Z'
     responses:
       200:
-        description: Partidos listados.
+        description: Partidos obtenidos exitosamente.
         content:
           application/json:
             schema:
               type: object
               properties:
-                message: { type: string, example: 'Partidos obtenidos' }
-                count: { type: integer }
+                message:
+                  type: string
+                  example: 'Partidos obtenidos'
+                count:
+                  type: integer
+                  example: 10
+                  description: Cantidad total de partidos encontrados
                 data:
                   type: array
-                  items: { $ref: '#/components/schemas/Partido' }
-      500: { description: Error. }
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      id_api:
+                        type: integer
+                        example: 868120
+                        description: ID del partido en la API externa
+                      fecha:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: '2024-08-15T20:00:00Z'
+                      estado:
+                        type: string
+                        nullable: true
+                        example: 'FT'
+                        description: Estado del partido (NS=No Started, FT=Full Time, 1H=First Half, etc.)
+                      estado_detalle:
+                        type: string
+                        nullable: true
+                        example: 'Match Finished'
+                      estadio:
+                        type: string
+                        nullable: true
+                        example: 'Estadio Santiago Bernabéu'
+                      jornada:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          nombre:
+                            type: string
+                          temporada:
+                            type: integer
+                      local:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          nombre:
+                            type: string
+                          logo:
+                            type: string
+                      visitante:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          nombre:
+                            type: string
+                          logo:
+                            type: string
+      500:
+        description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error obteniendo partidos'
   post:
-    summary: Crea un partido
+    summary: Crea un nuevo partido (solo administrador)
+    description: Crea un nuevo registro de partido en la base de datos con información de clubes local y visitante, jornada y datos del partido.
     tags: [Partidos]
     requestBody:
       required: true
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/PartidoCreate' }
+          schema:
+            type: object
+            required:
+              - id_api
+              - jornadaId
+              - localId
+              - visitanteId
+            properties:
+              id_api:
+                type: integer
+                example: 868120
+                description: ID único del partido en la API externa
+              fecha:
+                type: string
+                format: date-time
+                nullable: true
+                example: '2024-08-15T20:00:00Z'
+                description: Fecha y hora del partido
+              estado:
+                type: string
+                nullable: true
+                example: 'NS'
+                description: Estado del partido
+              estado_detalle:
+                type: string
+                nullable: true
+                example: 'Not Started'
+                description: Descripción detallada del estado
+              estadio:
+                type: string
+                nullable: true
+                example: 'Estadio Santiago Bernabéu'
+                description: Nombre del estadio
+              jornadaId:
+                type: integer
+                example: 10
+                description: ID de la jornada a la que pertenece el partido
+              localId:
+                type: integer
+                example: 5
+                description: ID del club local
+              visitanteId:
+                type: integer
+                example: 8
+                description: ID del club visitante
     responses:
       201:
-        description: Partido creado.
+        description: Partido creado exitosamente.
         content:
           application/json:
             schema:
               type: object
               properties:
-                message: { type: string, example: 'Partido creado' }
-                data: { $ref: '#/components/schemas/Partido' }
-      400: { description: Datos inválidos. }
-      404: { description: Jornada o club no encontrado. }
-      409: { description: id_api duplicado. }
-      500: { description: Error. }
+                message:
+                  type: string
+                  example: 'Partido creado'
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    id_api:
+                      type: integer
+                      example: 868120
+                    fecha:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    estado:
+                      type: string
+                      nullable: true
+                    estado_detalle:
+                      type: string
+                      nullable: true
+                    estadio:
+                      type: string
+                      nullable: true
+                    jornada:
+                      type: object
+                    local:
+                      type: object
+                    visitante:
+                      type: object
+      404:
+        description: Jornada, club local o club visitante no encontrado.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  examples:
+                    jornada:
+                      value: 'Jornada no encontrada'
+                    local:
+                      value: 'Club local no encontrado'
+                    visitante:
+                      value: 'Club visitante no encontrado'
+      409:
+        description: Ya existe un partido con ese id_api.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'El partido con id_api 868120 ya existe'
+      500:
+        description: Error del servidor.
 
 /partidos/{id}:
   get:
-    summary: Obtiene un partido por ID interno
+    summary: Obtiene un partido por su ID (solo administrador)
+    description: Recupera los detalles de un partido específico utilizando su identificador único, incluyendo información de clubes local y visitante, y jornada.
     tags: [Partidos]
     parameters:
       - in: path
         name: id
         required: true
-        schema: { type: integer }
+        schema:
+          type: integer
+        description: ID del partido a recuperar
+        example: 1
     responses:
-      200: { description: Partido encontrado. }
-      404: { description: No encontrado. }
-      500: { description: Error. }
-  patch:
-    summary: Actualiza parcialmente un partido
+      200:
+        description: Partido encontrado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Partido encontrado'
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    id_api:
+                      type: integer
+                      example: 868120
+                    fecha:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    estado:
+                      type: string
+                      nullable: true
+                      example: 'FT'
+                    estado_detalle:
+                      type: string
+                      nullable: true
+                      example: 'Match Finished'
+                    estadio:
+                      type: string
+                      nullable: true
+                      example: 'Estadio Santiago Bernabéu'
+                    jornada:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        nombre:
+                          type: string
+                        temporada:
+                          type: integer
+                    local:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        nombre:
+                          type: string
+                        logo:
+                          type: string
+                    visitante:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        nombre:
+                          type: string
+                        logo:
+                          type: string
+      404:
+        description: Partido no encontrado.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Partido con ID 1 no encontrado'
+      500:
+        description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error obteniendo partido'
+  put:
+    summary: Actualiza completamente un partido (solo administrador)
+    description: Actualiza todos los campos de un partido específico por su ID.
     tags: [Partidos]
     parameters:
       - in: path
         name: id
         required: true
-        schema: { type: integer }
+        schema:
+          type: integer
+        description: ID del partido a actualizar
+        example: 1
     requestBody:
       required: true
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/PartidoPatch' }
+          schema:
+            type: object
+            properties:
+              fecha:
+                type: string
+                format: date-time
+                nullable: true
+                example: '2024-08-15T20:00:00Z'
+              estado:
+                type: string
+                nullable: true
+                example: 'FT'
+              estado_detalle:
+                type: string
+                nullable: true
+                example: 'Match Finished'
+              estadio:
+                type: string
+                nullable: true
+                example: 'Estadio Santiago Bernabéu'
+              jornadaId:
+                type: integer
+                example: 10
+              localId:
+                type: integer
+                example: 5
+              visitanteId:
+                type: integer
+                example: 8
     responses:
-      200: { description: Actualizado. }
-      404: { description: No encontrado. }
-      500: { description: Error. }
-  delete:
-    summary: Elimina un partido
+      200:
+        description: Partido actualizado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Partido actualizado'
+                data:
+                  type: object
+      404:
+        description: Partido, jornada, club local o club visitante no encontrado.
+      500:
+        description: Error del servidor.
+  patch:
+    summary: Actualiza parcialmente un partido (solo administrador)
+    description: Actualiza uno o más campos específicos de un partido por su ID.
     tags: [Partidos]
     parameters:
       - in: path
         name: id
         required: true
-        schema: { type: integer }
+        schema:
+          type: integer
+        description: ID del partido a actualizar
+        example: 1
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              fecha:
+                type: string
+                format: date-time
+                nullable: true
+              estado:
+                type: string
+                nullable: true
+              estado_detalle:
+                type: string
+                nullable: true
+              estadio:
+                type: string
+                nullable: true
+              jornadaId:
+                type: integer
+              localId:
+                type: integer
+              visitanteId:
+                type: integer
     responses:
-      200: { description: Partido eliminado. }
-      404: { description: No encontrado. }
-      500: { description: Error. }
+      200:
+        description: Partido actualizado parcialmente exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Partido actualizado'
+                data:
+                  type: object
+      404:
+        description: Partido, jornada, club local o club visitante no encontrado.
+      500:
+        description: Error del servidor.
+  delete:
+    summary: Elimina un partido (solo administrador)
+    description: Elimina un partido específico de la base de datos utilizando su identificador único.
+    tags: [Partidos]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: ID del partido a eliminar
+        example: 1
+    responses:
+      200:
+        description: Partido eliminado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Partido eliminado'
+      500:
+        description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error eliminando partido'

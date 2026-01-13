@@ -1,0 +1,603 @@
+/torneos:
+  get:
+    summary: Obtiene todos los torneos con filtros (solo administrador)
+    description: Recupera una lista filtrada de torneos registrados en la base de datos.
+    tags: [Torneos]
+    parameters:
+      - in: query
+        name: estado
+        schema:
+          type: string
+          enum: [ESPERA, ACTIVO, FINALIZADO]
+        description: Estado del torneo
+      - in: query
+        name: fecha_creacion_desde
+        schema:
+          type: string
+          format: date
+        description: Fecha de creación desde (formato YYYY-MM-DD)
+      - in: query
+        name: fecha_creacion_hasta
+        schema:
+          type: string
+          format: date
+        description: Fecha de creación hasta (formato YYYY-MM-DD)
+      - in: query
+        name: min_participantes
+        schema:
+          type: integer
+        description: Cantidad mínima de participantes
+      - in: query
+        name: max_participantes
+        schema:
+          type: integer
+        description: Cantidad máxima de participantes
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          default: 20
+        description: Cantidad de resultados por página
+      - in: query
+        name: offset
+        schema:
+          type: integer
+          default: 0
+        description: Desplazamiento para paginación
+    responses:
+      200:
+        description: Lista de torneos recuperada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Torneos encontrados exitosamente'
+                data:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Torneo'
+                total:
+                  type: integer
+                  example: 50
+                filtros:
+                  type: object
+      400:
+        description: Rango de fechas inválido.
+      500:
+        description: Error del servidor.
+  post:
+    summary: Crea un nuevo torneo
+    description: Crea un nuevo torneo y asigna al usuario autenticado como creador.
+    tags: [Torneos]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - nombre
+              - nombre_equipo
+            properties:
+              nombre:
+                type: string
+                example: 'Liga Premier 2026'
+              nombre_equipo:
+                type: string
+                example: 'Los Invencibles'
+              cupoMaximo:
+                type: integer
+                example: 8
+              fecha_inicio:
+                type: string
+                format: date
+                example: '2026-02-15'
+              descripcion:
+                type: string
+                example: 'Torneo de la temporada'
+    responses:
+      201:
+        description: Torneo creado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Torneo creado exitosamente'
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    nombre:
+                      type: string
+                    codigo_acceso:
+                      type: string
+                    estado:
+                      type: string
+                    fecha_inicio:
+                      type: string
+      400:
+        description: Datos de entrada inválidos.
+      409:
+        description: Conflicto al generar código único.
+      500:
+        description: Error del servidor.
+
+/torneos/{id}:
+  get:
+    summary: Obtiene un torneo por su ID (solo administrador)
+    description: Recupera los detalles completos de un torneo específico incluyendo participantes.
+    tags: [Torneos]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: ID del torneo
+        example: 1
+    responses:
+      200:
+        description: Detalle de torneo recuperado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Detalle de torneo para Administración'
+                data:
+                  type: object
+                  properties:
+                    info_basica:
+                      type: object
+                    fechas:
+                      type: object
+                    responsable:
+                      type: object
+                    participantes:
+                      type: array
+      404:
+        description: Torneo no encontrado.
+      500:
+        description: Error del servidor.
+  patch:
+    summary: Actualiza parcialmente un torneo
+    description: Actualiza los campos especificados de un torneo. Solo el creador o administrador puede modificarlo.
+    tags: [Torneos]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: ID del torneo
+        example: 1
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              nombre:
+                type: string
+              cupoMaximo:
+                type: integer
+              fecha_inicio:
+                type: string
+                format: date
+              codigo_acceso:
+                type: string
+                description: Solo admin puede modificar
+    responses:
+      200:
+        description: Torneo actualizado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Torneo actualizado'
+                data:
+                  $ref: '#/components/schemas/Torneo'
+      400:
+        description: Datos de entrada inválidos.
+      403:
+        description: No tienes permisos para modificar este torneo.
+      404:
+        description: Torneo no encontrado.
+      409:
+        description: Código de acceso duplicado.
+      500:
+        description: Error del servidor.
+  put:
+    summary: Actualiza completamente un torneo
+    description: Actualiza los campos especificados de un torneo. Solo el creador o administrador puede modificarlo.
+    tags: [Torneos]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: ID del torneo
+        example: 1
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              nombre:
+                type: string
+              cupoMaximo:
+                type: integer
+              fecha_inicio:
+                type: string
+                format: date
+              codigo_acceso:
+                type: string
+                description: Solo admin puede modificar
+    responses:
+      200:
+        description: Torneo actualizado exitosamente.
+      400:
+        description: Datos de entrada inválidos.
+      403:
+        description: No tienes permisos.
+      404:
+        description: Torneo no encontrado.
+      500:
+        description: Error del servidor.
+  delete:
+    summary: Elimina un torneo por su ID (solo administrador)
+    description: Elimina un torneo y todos sus equipos asociados de la base de datos.
+    tags: [Torneos]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: ID del torneo a eliminar
+        example: 1
+    responses:
+      200:
+        description: Torneo eliminado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Torneo y equipos eliminados.'
+      500:
+        description: Error del servidor.
+
+/torneos/validar-codigo:
+  post:
+    summary: Valida un código de acceso a torneo
+    description: Verifica si un código de acceso es válido y si el torneo acepta nuevos participantes.
+    tags: [Torneos]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - codigo_acceso
+            properties:
+              codigo_acceso:
+                type: string
+                example: 'ABC123'
+    responses:
+      200:
+        description: Código válido.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Código válido'
+                data:
+                  type: object
+                  properties:
+                    torneo_id:
+                      type: integer
+                    codigo_acceso:
+                      type: string
+                    nombre:
+                      type: string
+                    cupos:
+                      type: object
+                      properties:
+                        ocupados:
+                          type: integer
+                        maximo:
+                          type: integer
+      404:
+        description: Código de acceso inválido.
+      409:
+        description: El torneo ya comenzó o está lleno, o ya estás inscrito.
+      500:
+        description: Error del servidor.
+
+/torneos/unirse:
+  post:
+    summary: Unirse a un torneo
+    description: Permite a un usuario unirse a un torneo existente usando un código de acceso.
+    tags: [Torneos]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - codigo_acceso
+              - nombre_equipo
+            properties:
+              codigo_acceso:
+                type: string
+                example: 'ABC123'
+              nombre_equipo:
+                type: string
+                example: 'Los Campeones'
+    responses:
+      201:
+        description: Usuario unido exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: '¡Te has unido exitosamente!'
+                data:
+                  type: object
+                  properties:
+                    torneo:
+                      type: string
+                    mi_equipo:
+                      type: string
+                    estado:
+                      type: string
+      400:
+        description: Datos inválidos.
+      403:
+        description: Has sido expulsado de este torneo.
+      409:
+        description: Ya estás inscrito, el torneo está lleno, ya inició, o el nombre de equipo está en uso.
+      500:
+        description: Error del servidor.
+
+/torneos/mis-torneos:
+  post:
+    summary: Obtiene los torneos del usuario autenticado
+    description: Recupera una lista de todos los torneos en los que el usuario está inscrito.
+    tags: [Torneos]
+    parameters:
+      - in: query
+        name: estado
+        schema:
+          type: string
+          enum: [ESPERA, ACTIVO, FINALIZADO]
+        description: Filtrar por estado del torneo
+    responses:
+      200:
+        description: Lista de torneos recuperada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Mis torneos obtenidos exitosamente'
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      torneo_id:
+                        type: integer
+                      nombre:
+                        type: string
+                      estado:
+                        type: string
+                      codigo_acceso:
+                        type: string
+                      mi_rol:
+                        type: string
+                      mi_equipo:
+                        type: object
+                      cant_participantes:
+                        type: integer
+                      cupo_maximo:
+                        type: integer
+      500:
+        description: Error del servidor.
+
+/torneos/abandonar/{id}:
+  delete:
+    summary: Abandona un torneo
+    description: Permite a un usuario abandonar un torneo en el que está inscrito.
+    tags: [Torneos]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: ID del torneo a abandonar
+        example: 1
+    responses:
+      200:
+        description: Torneo abandonado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Has abandonado el torneo exitosamente.'
+      404:
+        description: No estás inscrito en este torneo.
+      500:
+        description: Error del servidor.
+
+/torneos/mi-torneo/{id}:
+  get:
+    summary: Obtiene los detalles de un torneo para el usuario autenticado
+    description: Recupera información del torneo y lista de participantes desde la perspectiva del usuario.
+    tags: [Torneos]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: ID del torneo
+        example: 1
+    responses:
+      200:
+        description: Detalle del torneo recuperado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    nombre:
+                      type: string
+                    estado:
+                      type: string
+                    codigo:
+                      type: string
+                    mi_equipo_id:
+                      type: integer
+                    soy_admin:
+                      type: boolean
+                    participantes:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          pos:
+                            type: integer
+                          usuario_id:
+                            type: integer
+                          usuario:
+                            type: string
+                          equipo_id:
+                            type: integer
+                          nombre_equipo:
+                            type: string
+                          puntos:
+                            type: number
+                          es_mi_equipo:
+                            type: boolean
+                          es_admin:
+                            type: boolean
+                          expulsado:
+                            type: boolean
+      403:
+        description: No tienes acceso a este torneo o has sido expulsado.
+      404:
+        description: Torneo no encontrado.
+      500:
+        description: Error del servidor.
+
+/torneos/{id}/participante/{userId}:
+  delete:
+    summary: Expulsa un participante del torneo
+    description: Permite al creador del torneo expulsar a otro participante.
+    tags: [Torneos]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: ID del torneo
+        example: 1
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: integer
+        description: ID del usuario a expulsar
+        example: 5
+    responses:
+      200:
+        description: Participante expulsado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Participante expulsado correctamente.'
+      400:
+        description: No puedes expulsarte a ti mismo.
+      403:
+        description: Solo el creador puede expulsar participantes.
+      404:
+        description: Usuario no participa en este torneo.
+      500:
+        description: Error del servidor.
+
+/torneos/iniciar/{id}:
+  post:
+    summary: Inicia un torneo
+    description: Permite al creador iniciar el torneo, asignando jugadores y activando el mercado.
+    tags: [Torneos]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: ID del torneo a iniciar
+        example: 1
+    responses:
+      200:
+        description: Torneo iniciado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: '¡Torneo iniciado! El mercado está abierto y los jugadores asignados.'
+      403:
+        description: Solo el creador puede iniciar el torneo.
+      404:
+        description: Torneo no encontrado.
+      409:
+        description: El torneo ya ha iniciado.
+      500:
+        description: Error del servidor.

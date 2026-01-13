@@ -4,8 +4,6 @@ import { clubes } from './club.entity.js';
 import { orm } from '../shared/db/orm.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 
-const em = orm.em;
-
 /**
  * Recupera todos los clubes de la base de datos.
  * @param req El objeto de solicitud de Express (no utilizado en este endpoint, pero se mantiene para la firma).
@@ -14,6 +12,7 @@ const em = orm.em;
  */
 async function findAll(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const clubs = await em.find(clubes, {}, { orderBy: { id: 'ASC' } });
     res.status(200).json({ message: 'found all Clubs', data: clubs });
   } catch (error: any) {
@@ -29,6 +28,7 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
 async function findOne(req: Request, res: Response, next: NextFunction) {
   const id = Number.parseInt(req.params.id);
   try {
+    const em = orm.em;
     const club = await em.findOneOrFail(clubes, { id });
     res.status(200).json({ message: 'found club', data: club });
   } catch (error: any) {
@@ -47,6 +47,7 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
  */
 async function add(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const club = em.create(clubes, req.body);
     await em.flush();
     res.status(201).json({ message: 'club created', data: club });
@@ -67,6 +68,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
 async function update(req: Request, res: Response, next: NextFunction) {
   const id = Number.parseInt(req.params.id);
   try {
+    const em = orm.em;
     const club = await em.findOneOrFail(clubes, { id });
     em.assign(club, req.body);
     await em.flush();
@@ -89,6 +91,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
  */
 async function remove(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const id = Number.parseInt(req.params.id);
     const club = em.getReference(clubes, id);
     await em.removeAndFlush(club);

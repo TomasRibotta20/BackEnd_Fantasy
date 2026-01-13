@@ -1,451 +1,603 @@
-paths:
-  /api/equipos:
-    post:
-      tags: [Equipo]
-      summary: Crea un nuevo equipo para el usuario autenticado
-      description: >
-        Realiza un draft automático de 15 jugadores (11 titulares, 4 suplentes) y crea el equipo.
-        Esta operación es transaccional. El usuario no puede tener un equipo previamente creado.
-      security:
-        - cookieAuth: []
-        - bearerAuth: []
-      requestBody:
-        $ref: '#/components/requestBodies/CreateEquipo'
-      responses:
-        '201':
-          description: Equipo creado exitosamente. Devuelve el equipo creado envuelto en un objeto con mensaje.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiEquipoCreateResponse'
-        '400':
-          description: Petición inválida. Falta el nombre del equipo o no hay suficientes jugadores en la base de datos para el draft.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Usuario no autenticado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '409':
-          description: Conflicto. El usuario ya tiene un equipo creado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /api/equipos/mi-equipo:
-    get:
-      tags: [Equipo]
-      summary: Obtiene el equipo completo del usuario autenticado
-      description: Devuelve el objeto del equipo del usuario con jugadores, posiciones y clubes.
-      security:
-        - cookieAuth: []
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Equipo del usuario encontrado y devuelto.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Equipo'
-        '401':
-          description: Usuario no autenticado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: No encontrado. El usuario no tiene un equipo.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /api/equipos/mi-equipo/intercambio:
-    patch:
-      tags: [Equipo]
-      summary: Intercambia un jugador del equipo por uno del mercado
-      description: >
-        Realiza un fichaje atómico. El jugador que sale es eliminado del equipo y el que entra es añadido,
-        heredando el estado de titularidad. Ambos jugadores deben ser de la misma posición.
-      security:
-        - cookieAuth: []
-        - bearerAuth: []
-      requestBody:
-        $ref: '#/components/requestBodies/IntercambioJugador'
-      responses:
-        '200':
-          description: Intercambio realizado con éxito.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OperationMessage'
-        '400':
-          description: Petición inválida (IDs faltantes, jugadores no pertenecen al equipo, o las posiciones no coinciden).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Usuario no autenticado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: No encontrado. El equipo del usuario o uno de los jugadores no existe.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '409':
-          description: Conflicto. El jugador que se intenta fichar ya está en el equipo.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /api/equipos/mi-equipo/alineacion:
-    patch:
-      tags: [Equipo]
-      summary: Cambia un jugador titular por un suplente dentro del equipo
-      description: >
-        Intercambia el estado es_titular entre dos jugadores del mismo equipo.
-        Ambos deben tener la misma posición y sus roles (titular/suplente) deben ser los correctos para el cambio.
-      security:
-        - cookieAuth: []
-        - bearerAuth: []
-      requestBody:
-        $ref: '#/components/requestBodies/CambioAlineacion'
-      responses:
-        '200':
-          description: Alineación actualizada con éxito.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/OperationMessage'
-        '400':
-          description: Petición inválida (IDs faltantes, jugadores no pertenecen al equipo, roles incorrectos, o posiciones no coinciden).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Usuario no autenticado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: No encontrado. El equipo del usuario no existe.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /api/equipos/{equipoId}/historial:
-    get:
-      tags:
-        - Equipo
-      summary: Obtener historial de puntajes del equipo
-      description: Retorna el historial completo de puntajes del equipo en todas las jornadas procesadas
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: equipoId
-          required: true
-          schema:
-            type: number
-          description: ID del equipo
-          example: 1
-      responses:
-        200:
-          description: Historial obtenido exitosamente
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Historial del equipo obtenido"
-                  data:
-                    type: array
-                    items:
+/equipos/detalle-equipo/{equipoId}:
+  get:
+    summary: Obtiene el detalle completo de un equipo
+    description: Recupera la información detallada de un equipo específico, incluyendo todos sus jugadores (titulares y suplentes), presupuesto, valores de cláusula y estado de protección. Solo accesible para usuarios que participan en el mismo torneo.
+    tags: [Equipos]
+    parameters:
+      - in: path
+        name: equipoId
+        required: true
+        schema:
+          type: integer
+        description: ID del equipo
+        example: 1
+    responses:
+      200:
+        description: Detalle del equipo recuperado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    nombre:
+                      type: string
+                      example: 'Los Invencibles'
+                    presupuesto:
+                      type: number
+                      example: 45000000
+                      description: Presupuesto disponible del equipo
+                    es_mio:
+                      type: boolean
+                      example: true
+                      description: Indica si el equipo pertenece al usuario autenticado
+                    torneo_usuario:
                       type: object
                       properties:
                         id:
-                          type: number
-                          example: 1
-                        jornada:
+                          type: integer
+                        usuario:
                           type: object
                           properties:
                             id:
-                              type: number
-                              example: 2
+                              type: integer
+                            username:
+                              type: string
+                        torneo:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
                             nombre:
                               type: string
-                              example: "2nd Phase - 2"
-                            temporada:
-                              type: number
-                              example: 2021
-                            fecha_inicio:
-                              type: string
-                              format: date-time
-                            fecha_fin:
-                              type: string
-                              format: date-time
-                        puntajeTotal:
-                          type: number
-                          example: 65
-                        fechaSnapshot:
-                          type: string
-                          format: date-time
-                          example: "2025-11-08T20:44:52.000Z"
-        404:
-          description: Equipo no encontrado
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Equipo no encontrado"
-        401:
-          $ref: '#/components/responses/UnauthorizedError'
-
-  /api/equipos/{equipoId}/jornadas/{jornadaId}:
-    get:
-      tags:
-        - Equipo
-      summary: Obtener equipo en una jornada específica
-      description: |
-        Retorna el snapshot del equipo en una jornada específica, incluyendo:
-        - Información del equipo y jornada
-        - Lista de jugadores (titulares y suplentes)
-        - Puntajes individuales y estadísticas detalladas
-        - Puntaje total del equipo
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: equipoId
-          required: true
-          schema:
-            type: number
-          description: ID del equipo
-          example: 1
-        - in: path
-          name: jornadaId
-          required: true
-          schema:
-            type: number
-          description: ID de la jornada
-          example: 2
-      responses:
-        200:
-          description: Equipo en jornada obtenido exitosamente
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Equipo en jornada obtenido"
-                  data:
-                    type: object
-                    properties:
-                      equipo:
+                        expulsado:
+                          type: boolean
+                    jugadores:
+                      type: array
+                      items:
                         type: object
                         properties:
                           id:
-                            type: number
-                            example: 1
-                          nombre:
+                            type: integer
+                          es_titular:
+                            type: boolean
+                          fecha_incorporacion:
                             type: string
-                            example: "Club Atletico AntiPinguinos"
-                          usuarioId:
+                            format: date-time
+                          valor_clausula:
                             type: number
-                            example: 2
+                            description: Valor base de la cláusula
+                          valor_clausula_efectiva:
+                            type: number
+                            description: Valor efectivo de la cláusula (puede estar blindada)
+                          dias_proteccion_restantes:
+                            type: integer
+                            nullable: true
+                            description: Días restantes de protección contra cláusulas
+                          esta_protegido:
+                            type: boolean
+                            description: Si el jugador está actualmente protegido
+                          jugador:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              nombre:
+                                type: string
+                              primer_nombre:
+                                type: string
+                              apellido:
+                                type: string
+                              foto:
+                                type: string
+                              precio_actual:
+                                type: number
+                              posicion:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  descripcion:
+                                    type: string
+                              club:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  nombre:
+                                    type: string
+                                  logo:
+                                    type: string
+      403:
+        description: No tienes permisos para ver este equipo o estás expulsado del torneo.
+      404:
+        description: El equipo no existe.
+      500:
+        description: Error del servidor.
+
+/equipos/todos:
+  get:
+    summary: Obtiene todos los equipos del sistema (solo administrador)
+    description: Recupera una lista completa de todos los equipos registrados en la base de datos, ordenados por ID.
+    tags: [Equipos]
+    responses:
+      200:
+        description: Lista de equipos recuperada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  nombre:
+                    type: string
+                    example: 'Los Invencibles'
+                  presupuesto:
+                    type: number
+                    example: 45000000
+      500:
+        description: Error del servidor.
+
+/equipos/mi-equipo/{equipoId}/alineacion:
+  patch:
+    summary: Actualiza la alineación intercambiando un titular con un suplente
+    description: Permite intercambiar las posiciones de un jugador titular y un suplente del mismo equipo. Ambos jugadores deben tener la misma posición. Requiere que las modificaciones estén habilitadas.
+    tags: [Equipos]
+    parameters:
+      - in: path
+        name: equipoId
+        required: true
+        schema:
+          type: integer
+        description: ID del equipo
+        example: 1
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - jugadorTitularId
+              - jugadorSuplenteId
+            properties:
+              jugadorTitularId:
+                type: integer
+                example: 45
+                description: ID del jugador actualmente titular que pasará a suplente
+              jugadorSuplenteId:
+                type: integer
+                example: 78
+                description: ID del jugador actualmente suplente que pasará a titular
+    responses:
+      200:
+        description: Alineación actualizada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Alineación actualizada con éxito.'
+      400:
+        description: Error de validación.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  examples:
+                    no_pertenecen:
+                      value: 'Ambos jugadores deben pertenecer a tu equipo para ser intercambiados.'
+                    no_titular:
+                      value: 'El jugador con ID 45 no es titular.'
+                    no_suplente:
+                      value: 'El jugador con ID 78 no es suplente.'
+                    posicion_diferente:
+                      value: 'No se puede cambiar la alineación. El jugador titular es Attacker y el suplente es Defender.'
+                    sin_posicion:
+                      value: 'Ambos jugadores deben tener una posición definida.'
+      403:
+        description: No puedes modificar este equipo o estás expulsado del torneo.
+      404:
+        description: Equipo o jugador no encontrado.
+      500:
+        description: Error del servidor.
+
+/equipos/mi-equipo/{equipoId}/cambiar-estado:
+  patch:
+    summary: Cambia el estado de titularidad de un jugador
+    description: Permite promover un suplente a titular o bajar un titular a suplente. Al promover, valida los límites de la formación 4-3-3. Requiere que las modificaciones estén habilitadas.
+    tags: [Equipos]
+    parameters:
+      - in: path
+        name: equipoId
+        required: true
+        schema:
+          type: integer
+        description: ID del equipo
+        example: 1
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - jugadorId
+            properties:
+              jugadorId:
+                type: integer
+                example: 45
+                description: ID del jugador cuyo estado de titularidad se cambiará
+    responses:
+      200:
+        description: Estado de titularidad cambiado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  examples:
+                    a_suplente:
+                      value: 'Jugador movido a suplente con éxito'
+                    a_titular:
+                      value: 'Jugador promovido a titular con éxito'
+                data:
+                  type: object
+                  properties:
+                    jugador:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 45
+                        nombre:
+                          type: string
+                          example: 'L. Messi'
+                        posicion:
+                          type: string
+                          example: 'Attacker'
+                    estado_anterior:
+                      type: string
+                      enum: [titular, suplente]
+                      example: 'suplente'
+                    estado_nuevo:
+                      type: string
+                      enum: [titular, suplente]
+                      example: 'titular'
+                    estadisticas_posicion:
+                      type: object
+                      nullable: true
+                      description: Solo aparece cuando se promociona a titular
+                      properties:
+                        posicion:
+                          type: string
+                          example: 'Attacker'
+                        titulares_actuales:
+                          type: integer
+                          example: 3
+                        limite_formacion:
+                          type: integer
+                          example: 3
+                        espacios_disponibles:
+                          type: integer
+                          example: 0
+      400:
+        description: Error de validación.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  examples:
+                    limite_excedido:
+                      value: 'No puedes agregar más titulares en la posición Attacker. Límite de la formación 4-3-3: 3. Actualmente tienes 3 titular(es). Primero debes hacer suplente a otro jugador de esta posición.'
+                    sin_posicion:
+                      value: 'El jugador no tiene una posición definida'
+                    posicion_invalida:
+                      value: 'Posición inválida: Unknown'
+      403:
+        description: No puedes modificar este equipo o estás expulsado del torneo.
+      404:
+        description: Equipo o jugador no encontrado.
+      500:
+        description: Error del servidor.
+
+/equipos/{equipoId}/historial:
+  get:
+    summary: Obtiene el historial completo de un equipo en todas las jornadas
+    description: Recupera los snapshots y puntajes del equipo en todas las jornadas procesadas.
+    tags: [Equipos]
+    parameters:
+      - in: path
+        name: equipoId
+        required: true
+        schema:
+          type: integer
+        description: ID del equipo
+        example: 1
+    responses:
+      200:
+        description: Historial del equipo recuperado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Historial obtenido'
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      puntaje_total:
+                        type: number
+                        example: 85.5
+                      fecha_snapshot:
+                        type: string
+                        format: date-time
                       jornada:
                         type: object
                         properties:
                           id:
-                            type: number
-                            example: 2
+                            type: integer
                           nombre:
                             type: string
-                            example: "2nd Phase - 2"
-                          temporada:
-                            type: number
-                            example: 2021
+                            example: 'Fecha 10'
                           fecha_inicio:
                             type: string
                             format: date-time
-                          fecha_fin:
-                            type: string
-                            format: date-time
-                      puntajeTotal:
-                        type: number
-                        example: 65
-                        description: Puntaje total del equipo (solo jugadores titulares)
-                      fechaSnapshot:
-                        type: string
-                        format: date-time
-                        example: "2025-11-08T20:44:52.000Z"
-                      jugadores:
-                        type: array
-                        description: Lista de jugadores ordenada (titulares primero)
-                        items:
-                          type: object
-                          properties:
-                            id:
-                              type: number
-                              example: 21
-                            nombre:
-                              type: string
-                              example: "R. Rey"
-                            nombreCompleto:
-                              type: string
-                              example: "Rodrigo Francisco Jesús Rey"
-                            posicion:
-                              type: string
-                              example: "Goalkeeper"
-                              enum: [Goalkeeper, Defender, Midfielder, Attacker]
-                            club:
-                              type: string
-                              example: "Gimnasia L.P."
-                            clubLogo:
-                              type: string
-                              example: "https://media.api-sports.io/football/teams/434.png"
-                            foto:
-                              type: string
-                              example: "https://media.api-sports.io/football/players/2356.png"
-                            esTitular:
-                              type: boolean
-                              example: true
-                              description: Indica si el jugador era titular en este snapshot
-                            puntaje:
-                              type: number
-                              example: 11.7
-                              description: Puntaje del jugador en esta jornada
-                            estadisticas:
-                              type: object
-                              nullable: true
-                              description: Estadísticas del partido (null si no jugó)
-                              properties:
-                                minutos:
-                                  type: number
-                                  example: 95
-                                rating:
-                                  type: number
-                                  format: float
-                                  example: 6.7
-                                goles:
-                                  type: number
-                                  example: 0
-                                asistencias:
-                                  type: number
-                                  example: 0
-                                golesRecibidos:
-                                  type: number
-                                  example: 0
-                                atajadas:
-                                  type: number
-                                  example: 0
-                                tarjetasAmarillas:
-                                  type: number
-                                  example: 0
-                                tarjetasRojas:
-                                  type: number
-                                  example: 0
-                                porteriaCero:
-                                  type: boolean
-                                  example: true
-        404:
-          description: No se encontró el snapshot
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "No se encontró información del equipo en esta jornada"
-        401:
-          $ref: '#/components/responses/UnauthorizedError'
+      500:
+        description: Error del servidor.
 
-  /api/jornadas/{jornadaId}/ranking:
-    get:
-      tags:
-        - Jornadas
-      summary: Obtener ranking de una jornada
-      description: Retorna el ranking de equipos en una jornada ordenado por puntaje (mayor a menor)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: jornadaId
-          required: true
-          schema:
-            type: number
-          description: ID de la jornada
-          example: 2
-      responses:
-        200:
-          description: Ranking obtenido exitosamente
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Ranking obtenido"
-                  data:
-                    type: array
-                    items:
+/equipos/{equipoId}/puntos/jornadas/{jornadaId}:
+  get:
+    summary: Obtiene el equipo y sus puntajes en una jornada específica
+    description: Recupera el snapshot del equipo en una jornada particular, incluyendo jugadores titulares y suplentes con sus estadísticas y puntajes. Si es la jornada activa, muestra el equipo actual sin puntajes. Solo accesible para usuarios del mismo torneo.
+    tags: [Equipos]
+    parameters:
+      - in: path
+        name: equipoId
+        required: true
+        schema:
+          type: integer
+        description: ID del equipo
+        example: 1
+      - in: path
+        name: jornadaId
+        required: true
+        schema:
+          type: integer
+        description: ID de la jornada
+        example: 10
+    responses:
+      200:
+        description: Equipo en jornada recuperado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Equipo en jornada obtenido'
+                data:
+                  type: object
+                  properties:
+                    equipo:
                       type: object
                       properties:
                         id:
-                          type: number
+                          type: integer
                           example: 1
-                        equipo:
-                          type: object
-                          properties:
-                            id:
-                              type: number
-                              example: 1
-                            nombre:
-                              type: string
-                              example: "Club Atletico AntiPinguinos"
-                            usuario:
-                              type: object
-                              properties:
-                                id:
-                                  type: number
-                                  example: 2
-                                username:
-                                  type: string
-                                  example: "jugador1"
-                        puntajeTotal:
+                        nombre:
+                          type: string
+                          example: 'Los Invencibles'
+                        usuarioId:
+                          type: integer
+                          example: 5
+                        usuarioNombre:
+                          type: string
+                          example: 'johndoe'
+                    jornada:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 10
+                        nombre:
+                          type: string
+                          example: 'Fecha 10'
+                        fecha_inicio:
+                          type: string
+                          format: date-time
+                          nullable: true
+                    puntajeTotal:
+                      type: number
+                      nullable: true
+                      example: 85.5
+                      description: null si es la jornada activa
+                    fechaSnapshot:
+                      type: string
+                      format: date-time
+                    titulares:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          nombre:
+                            type: string
+                          nombreCompleto:
+                            type: string
+                          posicion:
+                            type: string
+                          club:
+                            type: string
+                          clubLogo:
+                            type: string
+                          foto:
+                            type: string
+                          esTitular:
+                            type: boolean
+                            example: true
+                          puntaje:
+                            type: number
+                            nullable: true
+                            example: 12.5
+                          estadisticas:
+                            type: object
+                            nullable: true
+                            properties:
+                              minutos:
+                                type: integer
+                              rating:
+                                type: number
+                              goles:
+                                type: integer
+                              asistencias:
+                                type: integer
+                              golesRecibidos:
+                                type: integer
+                              atajadas:
+                                type: integer
+                              tarjetasAmarillas:
+                                type: integer
+                              tarjetasRojas:
+                                type: integer
+                              porteriaCero:
+                                type: boolean
+                    suplentes:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          nombre:
+                            type: string
+                          nombreCompleto:
+                            type: string
+                          posicion:
+                            type: string
+                          club:
+                            type: string
+                          clubLogo:
+                            type: string
+                          foto:
+                            type: string
+                          esTitular:
+                            type: boolean
+                            example: false
+                          puntaje:
+                            type: number
+                            nullable: true
+                          estadisticas:
+                            type: object
+                            nullable: true
+      403:
+        description: No tienes permiso para ver este equipo, estás expulsado del torneo, o intentas ver una jornada futura.
+      404:
+        description: No se encontró registro para esta jornada o equipo no encontrado.
+      500:
+        description: Error del servidor.
+
+/equipos/mi-equipo/{equipoId}/vender-jugador:
+  post:
+    summary: Vende un jugador al mercado instantáneamente
+    description: Vende un jugador del equipo devolviendo el 70% de su precio actual al presupuesto. La transacción es irreversible. Requiere que las modificaciones estén habilitadas.
+    tags: [Equipos]
+    parameters:
+      - in: path
+        name: equipoId
+        required: true
+        schema:
+          type: integer
+        description: ID del equipo
+        example: 1
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - jugadorId
+            properties:
+              jugadorId:
+                type: integer
+                example: 45
+                description: ID del jugador a vender
+    responses:
+      200:
+        description: Jugador vendido exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Jugador vendido exitosamente'
+                data:
+                  type: object
+                  properties:
+                    jugador:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 45
+                        nombre:
+                          type: string
+                          example: 'L. Messi'
+                        precio_actual:
                           type: number
-                          example: 65
-                        jornada:
-                          type: object
-                          properties:
-                            id:
-                              type: number
-                              example: 2
-                            nombre:
-                              type: string
-                              example: "2nd Phase - 2"
-        401:
-          $ref: '#/components/responses/UnauthorizedError'
+                          example: 15000000
+                    devolucion:
+                      type: number
+                      example: 10500000
+                      description: Monto devuelto al presupuesto (70% del precio actual)
+                    porcentaje:
+                      type: number
+                      example: 70
+                      description: Porcentaje del precio que se devuelve
+                    presupuesto_nuevo:
+                      type: number
+                      example: 55500000
+                      description: Presupuesto del equipo después de la venta
+                    cantidad_jugadores_restantes:
+                      type: integer
+                      example: 14
+                      description: Cantidad de jugadores que quedan en el equipo
+      400:
+        description: El jugador no tiene un precio válido.
+      403:
+        description: No tienes permisos para vender jugadores de este equipo o estás expulsado del torneo.
+      404:
+        description: El jugador no pertenece a tu equipo.
+      500:
+        description: Error del servidor.

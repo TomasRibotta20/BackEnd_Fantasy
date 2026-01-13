@@ -1,13 +1,14 @@
-import e, { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { crearOferta, aceptarOferta, rechazarOferta, cancelarOferta, obtenerOfertasEnviadas, obtenerOfertasRecibidas, obtenerDetalleOferta, procesarOfertasVencidas } from './ventas.service.js';
 import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
-import { Torneo } from '../Torneo/torneo.entity.js';
+import { orm } from '../shared/db/orm.js';
 
 export async function crearOfertaController(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const userId = req.authUser?.user?.userId!;
     const { equipoJugador_id, monto_ofertado, mensaje_oferente } = req.body;
-    const resultado = await crearOferta(userId, equipoJugador_id, monto_ofertado, mensaje_oferente);
+    const resultado = await crearOferta(userId, equipoJugador_id, monto_ofertado, mensaje_oferente, em);
     res.status(201).json({
       message: resultado.mensaje,
       data: {
@@ -26,9 +27,10 @@ export async function crearOfertaController(req: Request, res: Response, next: N
 
 export async function aceptarOfertaController(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const userId = req.authUser?.user?.userId!;
     const ofertaId = Number(req.params.ofertaId);
-    const resultado = await aceptarOferta(userId, ofertaId);
+    const resultado = await aceptarOferta(userId, ofertaId, em);
     res.status(200).json({
       message: resultado.mensaje,
       data: {
@@ -47,10 +49,11 @@ export async function aceptarOfertaController(req: Request, res: Response, next:
 
 export async function rechazarOfertaController(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const userId = req.authUser?.user?.userId!;
     const ofertaId = Number(req.params.ofertaId);
     const { mensaje_respuesta } = req.body;
-    const resultado = await rechazarOferta(userId, ofertaId, mensaje_respuesta);
+    const resultado = await rechazarOferta(userId, ofertaId, mensaje_respuesta, em);
     res.status(200).json({
       message: resultado.mensaje,
       data: {
@@ -68,9 +71,10 @@ export async function rechazarOfertaController(req: Request, res: Response, next
 
 export async function cancelarOfertaController(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const userId = req.authUser?.user?.userId!;
     const ofertaId = Number(req.params.ofertaId);
-    const resultado = await cancelarOferta(userId, ofertaId);
+    const resultado = await cancelarOferta(userId, ofertaId, em);
     res.status(200).json({
       message: resultado.mensaje,
       data: {
@@ -88,13 +92,14 @@ export async function cancelarOfertaController(req: Request, res: Response, next
 
 export async function obtenerOfertasEnviadasController(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const userId = req.authUser?.user?.userId!;
     const { torneoId,estado, limit, offset } = req.query;
     const resultado = await obtenerOfertasEnviadas(userId, parseInt(torneoId as string), {
       estado: estado as any,
       limit: limit ? parseInt(limit as string) : undefined,
       offset: offset ? parseInt(offset as string) : undefined
-    });
+    }, em);
     res.status(200).json({
       message: 'Ofertas enviadas obtenidas exitosamente',
       data: resultado
@@ -110,13 +115,14 @@ export async function obtenerOfertasEnviadasController(req: Request, res: Respon
 
 export async function obtenerOfertasRecibidasController(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const userId = req.authUser?.user?.userId!;
     const { torneoId, estado, limit, offset } = req.query;
     const resultado = await obtenerOfertasRecibidas(userId,parseInt(torneoId as string), {
       estado: estado as any,
       limit: limit ? parseInt(limit as string) : undefined,
       offset: offset ? parseInt(offset as string) : undefined
-    });
+    }, em);
     res.status(200).json({
       message: 'Ofertas recibidas obtenidas exitosamente',
       data: resultado
@@ -132,9 +138,10 @@ export async function obtenerOfertasRecibidasController(req: Request, res: Respo
 
 export async function obtenerDetalleOfertaController(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const userId = req.authUser?.user?.userId!;
     const ofertaId = Number(req.params.ofertaId);
-    const oferta = await obtenerDetalleOferta(userId, ofertaId);
+    const oferta = await obtenerDetalleOferta(userId, ofertaId, em);
     res.status(200).json({
       message: 'Detalle de oferta obtenido exitosamente',
       data: oferta
@@ -150,8 +157,9 @@ export async function obtenerDetalleOfertaController(req: Request, res: Response
 
 export async function procesarOfertasVencidasController(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     // Este endpoint debería ser llamado por un cron job o tener autenticación de admin
-    const resultado = await procesarOfertasVencidas();
+    const resultado = await procesarOfertasVencidas(em);
 
     res.status(200).json({
       message: resultado.mensaje,

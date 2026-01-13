@@ -1,178 +1,37 @@
-/auth/login:
-  post:
-    summary: Inicia sesión en la cuenta del usuario
-    description: Autentica a un usuario y genera un token JWT para sesiones autenticadas.
-    tags: [Auth]
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Login'
-    responses:
-      200:
-        description: Inicio de sesión exitoso.
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                message:
-                  type: string
-                  example: 'login successful'
-                data:
-                  type: object
-                  properties:
-                    user:
-                      $ref: '#/components/schemas/User'
-                    token:
-                      type: string
-                      example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
-      400:
-        description: Datos de entrada inválidos.
-      401:
-        description: Credenciales inválidas.
-      500:
-        description: Error del servidor.
-      404:
-        description: Recurso no encontrado.
-/auth/logout:
-  post:
-    summary: Cierra la sesión del usuario
-    description: Invalida el token JWT del usuario para cerrar la sesión, y borra la sesión en la base de datos.
-    tags: [Auth]
-    security:
-      - bearerAuth: []
-    responses:
-      200:
-        description: Cierre de sesión exitoso.
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                message:
-                  type: string
-                  example: 'logout successful'
-/auth/forgot-password:
-  post:
-    summary: Solicita un restablecimiento de contraseña
-    description: Envía un correo electrónico con un enlace para restablecer la contraseña del usuario.
-    tags: [Auth]
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              email:
-                type: string
-                format: email
-                example: 'user@example.com'
-    responses:
-      200:
-        description: Solicitud de restablecimiento de contraseña enviada.
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                message:
-                  type: string
-                  example: 'Password reset link sent to email'
-      500:
-        description: Error del servidor.
-/auth/new-password:
-  post:
-    summary: Restablece la contraseña del usuario
-    description: Permite al usuario restablecer su contraseña utilizando un token enviado por correo electrónico.
-    tags: [Auth]
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              token:
-                type: string
-                example: 'reset-token-123'
-              newPassword:
-                type: string
-                format: password
-                example: 'newSecurePassword123'
-    responses:
-      200:
-        description: Contraseña restablecida exitosamente.
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                message:
-                  type: string
-                  example: 'Password has been reset successfully'
-      401:
-        description: Token inválido o expirado.
-      400:
-        description: Datos de entrada inválidos.
-      500:
-        description: Error del servidor.
-/auth/refreshToken:
-  post:
-    summary: Refresca el token JWT del usuario
-    description: Genera un nuevo token JWT utilizando un refresh token válido.
-    tags: [Auth]
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              refreshToken:
-                type: string
-                example: 'refresh-token-123'
-    responses:
-      200:
-        description: Token refrescado exitosamente.
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                message:
-                  type: string
-                  example: 'Token refreshed successfully'
-                data:
-                  type: object
-                  properties:
-                    token:
-                      type: string
-                      example: 'new-jwt-token-123'
-      401:
-        description: Refresh token inválido o expirado.
-      400:
-        description: Datos de entrada inválidos.
-      404:
-        description: Usuario no encontrado.
-      500:
-        description: Error del servidor.
 /auth/register:
   post:
     summary: Registra un nuevo usuario
-    description: Crea una nueva cuenta de usuario.
+    description: Crea una nueva cuenta de usuario en el sistema con email único. La contraseña se hashea automáticamente antes de almacenarse.
     tags: [Auth]
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Register'
+            type: object
+            required:
+              - username
+              - email
+              - password
+            properties:
+              username:
+                type: string
+                example: 'johndoe'
+                description: Nombre de usuario único
+              email:
+                type: string
+                format: email
+                example: 'john@example.com'
+                description: Correo electrónico único del usuario
+              password:
+                type: string
+                format: password
+                minLength: 8
+                example: 'SecurePass123!'
+                description: Contraseña (mínimo 8 caracteres)
     responses:
       201:
-        description: Registro exitoso.
+        description: Usuario registrado exitosamente.
         content:
           application/json:
             schema:
@@ -180,15 +39,276 @@
               properties:
                 message:
                   type: string
-                  example: 'User registered successfully'
+                  example: 'User created successfully'
                 data:
                   type: object
                   properties:
-                    user:
-                      $ref: '#/components/schemas/User'
+                    id:
+                      type: integer
+                      example: 1
+                    username:
+                      type: string
+                      example: 'johndoe'
+                    email:
+                      type: string
+                      example: 'john@example.com'
+                    rol:
+                      type: string
+                      example: 'user'
+                    resetToken:
+                      type: string
+                      nullable: true
       400:
         description: Datos de entrada inválidos.
       409:
         description: El usuario ya existe.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'User already exists'
+      429:
+        description: Demasiados intentos. Límite de rate limiting alcanzado (5 intentos cada 5 segundos).
+      500:
+        description: Error del servidor.
+
+/auth/login:
+  post:
+    summary: Inicia sesión en el sistema
+    description: Autentica un usuario con email y contraseña. Genera tokens JWT (access y refresh) y los establece como cookies HttpOnly. El access token expira en 10 minutos y el refresh token en 7 días.
+    tags: [Auth]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+              - password
+            properties:
+              email:
+                type: string
+                format: email
+                example: 'john@example.com'
+              password:
+                type: string
+                format: password
+                example: 'SecurePass123!'
+    responses:
+      200:
+        description: Login exitoso.
+        headers:
+          Set-Cookie:
+            schema:
+              type: string
+              example: access_token=eyJhbGc...; HttpOnly; SameSite=Strict
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Login successful'
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    username:
+                      type: string
+                      example: 'johndoe'
+                    email:
+                      type: string
+                      example: 'john@example.com'
+                    rol:
+                      type: string
+                      example: 'user'
+                    resetToken:
+                      type: string
+                      nullable: true
+      400:
+        description: Contraseña inválida.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Invalid password'
+      404:
+        description: Usuario no encontrado.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'User not found'
+      429:
+        description: Demasiados intentos de login (5 intentos cada 5 segundos).
+      500:
+        description: Error del servidor.
+
+/auth/logout:
+  post:
+    summary: Cierra la sesión del usuario
+    description: Invalida el refresh token en la base de datos y elimina las cookies de autenticación (access_token y refresh_token).
+    tags: [Auth]
+    responses:
+      200:
+        description: Logout exitoso.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Logout successful'
+      500:
+        description: Error del servidor.
+
+/auth/forgot-password:
+  post:
+    summary: Solicita restablecimiento de contraseña
+    description: Envía un email con un enlace de recuperación de contraseña al usuario. El token expira en 10 minutos. Por seguridad, siempre responde con éxito incluso si el email no existe.
+    tags: [Auth]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+                format: email
+                example: 'john@example.com'
+                description: Email del usuario que olvidó su contraseña
+    responses:
+      200:
+        description: Solicitud procesada (email enviado si existe).
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Si el email existe, recibirás un enlace de recuperación'
+      500:
+        description: Error del servidor.
+
+/auth/new-password/{resetToken}:
+  post:
+    summary: Establece una nueva contraseña
+    description: Permite al usuario establecer una nueva contraseña usando el token de recuperación recibido por email. El token es de un solo uso y expira en 10 minutos.
+    tags: [Auth]
+    parameters:
+      - in: path
+        name: resetToken
+        required: true
+        schema:
+          type: string
+        description: Token JWT de recuperación recibido por email
+        example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - password
+            properties:
+              password:
+                type: string
+                format: password
+                minLength: 8
+                example: 'NewSecurePass123!'
+                description: Nueva contraseña del usuario
+    responses:
+      200:
+        description: Contraseña actualizada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Contraseña actualizada exitosamente'
+      400:
+        description: Token de reset requerido.
+      401:
+        description: Token inválido o expirado.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  examples:
+                    token_invalido:
+                      value: 'Token inválido'
+                    token_expirado:
+                      value: 'Token inválido o expirado'
+                    token_usado:
+                      value: 'Token inválido o expirado'
+      500:
+        description: Error del servidor.
+
+/auth/refreshToken:
+  post:
+    summary: Refresca el access token
+    description: Genera un nuevo par de tokens (access y refresh) usando el refresh token existente. El refresh token debe estar presente en las cookies. Ambos tokens se renuevan en cada petición.
+    tags: [Auth]
+    responses:
+      200:
+        description: Tokens renovados exitosamente.
+        headers:
+          Set-Cookie:
+            schema:
+              type: string
+              example: access_token=eyJhbGc...; HttpOnly; SameSite=Strict
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Tokens refreshed exitosamente'
+      401:
+        description: Error con el refresh token.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  examples:
+                    no_token:
+                      value: 'No refresh token provided'
+                    token_invalido:
+                      value: 'Invalid refresh token format'
+                    token_expirado:
+                      value: 'Refresh token expirado'
+                    token_no_coincide:
+                      value: 'Refresh token inválido'
+      404:
+        description: Usuario no encontrado o no tiene refresh token.
       500:
         description: Error del servidor.

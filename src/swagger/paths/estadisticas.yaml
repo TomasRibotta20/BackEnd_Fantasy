@@ -1,0 +1,255 @@
+/estadisticas/jornadas/{jornadaId}/actualizar:
+  post:
+    summary: Actualiza las estadísticas de todos los jugadores de una jornada (solo administrador)
+    description: Obtiene las estadísticas desde la API externa y las procesa para todos los partidos finalizados de la jornada. Calcula puntajes según el rendimiento de cada jugador. Solo procesa partidos que no tienen estadísticas previas.
+    tags: [Estadísticas]
+    parameters:
+      - in: path
+        name: jornadaId
+        required: true
+        schema:
+          type: integer
+        description: ID de la jornada
+        example: 10
+    responses:
+      200:
+        description: Estadísticas actualizadas exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Estadísticas actualizadas correctamente para 10 partidos de la jornada 10'
+      404:
+        description: No se encontraron partidos finalizados para la jornada.
+      500:
+        description: Error del servidor o error obteniendo datos de la API externa.
+
+/estadisticas/jornadas/{jornadaId}/puntajes:
+  get:
+    summary: Obtiene los puntajes de todos los jugadores de una jornada
+    description: Recupera las estadísticas y puntajes calculados de todos los jugadores que participaron en los partidos de la jornada especificada.
+    tags: [Estadísticas]
+    parameters:
+      - in: path
+        name: jornadaId
+        required: true
+        schema:
+          type: integer
+        description: ID de la jornada
+        example: 10
+    responses:
+      200:
+        description: Puntajes de la jornada recuperados exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Puntajes para la jornada 10'
+                count:
+                  type: integer
+                  example: 220
+                  description: Cantidad total de jugadores con estadísticas en la jornada
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      jugador:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 45
+                          nombre:
+                            type: string
+                            example: 'L. Messi'
+                          posicion:
+                            type: string
+                            example: 'Delantero'
+                          club:
+                            type: string
+                            example: 'Inter Miami'
+                      partido:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 100
+                          local:
+                            type: string
+                            example: 'Inter Miami'
+                          visitante:
+                            type: string
+                            example: 'LA Galaxy'
+                      minutos:
+                        type: integer
+                        example: 90
+                        description: Minutos jugados
+                      posicion:
+                        type: string
+                        example: 'F'
+                        description: Posición en el partido (G, D, M, F)
+                      rating:
+                        type: number
+                        format: float
+                        example: 8.5
+                        nullable: true
+                        description: Calificación del jugador
+                      capitan:
+                        type: boolean
+                        example: true
+                      goles:
+                        type: integer
+                        example: 2
+                      asistencias:
+                        type: integer
+                        example: 1
+                      goles_concedidos:
+                        type: integer
+                        example: 0
+                        description: Solo para porteros
+                      atajadas:
+                        type: integer
+                        example: 0
+                        description: Solo para porteros
+                      tarjetas_amarillas:
+                        type: integer
+                        example: 0
+                      tarjetas_rojas:
+                        type: integer
+                        example: 0
+                      porterias_a_cero:
+                        type: boolean
+                        example: false
+                        description: Solo para porteros y defensas con más de 60 minutos
+                      puntaje_total:
+                        type: number
+                        format: float
+                        example: 20.5
+                        description: Puntaje total calculado del jugador en el partido
+      404:
+        description: Jornada no encontrada.
+      500:
+        description: Error del servidor.
+
+/estadisticas/jornadas/{jornadaId}/jugadores/{jugadorId}:
+  get:
+    summary: Obtiene el puntaje de un jugador específico en una jornada
+    description: Recupera las estadísticas detalladas y el puntaje calculado de un jugador en particular para la jornada especificada.
+    tags: [Estadísticas]
+    parameters:
+      - in: path
+        name: jornadaId
+        required: true
+        schema:
+          type: integer
+        description: ID de la jornada
+        example: 10
+      - in: path
+        name: jugadorId
+        required: true
+        schema:
+          type: integer
+        description: ID del jugador
+        example: 45
+    responses:
+      200:
+        description: Puntaje del jugador recuperado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Puntaje del jugador 45 en la jornada 10'
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    jugador:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        nombre:
+                          type: string
+                        posicion:
+                          type: string
+                        club:
+                          type: string
+                    partido:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        local:
+                          type: string
+                        visitante:
+                          type: string
+                        fecha:
+                          type: string
+                          format: date-time
+                    minutos:
+                      type: integer
+                      example: 90
+                    posicion:
+                      type: string
+                      example: 'F'
+                    rating:
+                      type: number
+                      format: float
+                      example: 8.5
+                      nullable: true
+                    capitan:
+                      type: boolean
+                      example: true
+                    goles:
+                      type: integer
+                      example: 2
+                    asistencias:
+                      type: integer
+                      example: 1
+                    goles_concedidos:
+                      type: integer
+                      example: 0
+                    atajadas:
+                      type: integer
+                      example: 0
+                    tarjetas_amarillas:
+                      type: integer
+                      example: 0
+                    tarjetas_rojas:
+                      type: integer
+                      example: 0
+                    porterias_a_cero:
+                      type: boolean
+                      example: false
+                    puntaje_total:
+                      type: number
+                      format: float
+                      example: 20.5
+                      description: |
+                        Puntaje calculado según:
+                        - +1 por jugar 60+ minutos
+                        - Goles: +6 (G/D), +5 (M), +4 (F)
+                        - +3 por asistencia
+                        - +4 por portería a cero (G/D con 60+ min)
+                        - -2 por tarjeta amarilla
+                        - -5 por tarjeta roja
+                        - + rating del jugador
+      404:
+        description: No se encontró estadística para el jugador en la jornada especificada.
+      500:
+        description: Error del servidor.

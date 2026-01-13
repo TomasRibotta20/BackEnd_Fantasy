@@ -5,17 +5,19 @@ import {
   obtenerMisOfertas as obtenerMisOfertasService
 } from './mercadoPuja.service.js';
 import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
+import { orm } from '../shared/db/orm.js';
 
 /**
  * Crea o actualiza una oferta por un jugador del mercado
  */
 export async function ofertar(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em
     const equipoId = Number(req.params.equipoId);
     const { itemMercadoId, monto } = req.body;
     const userId = req.authUser.user?.userId!;
 
-    const resultado = await ofertarService(equipoId, itemMercadoId, monto, userId);
+    const resultado = await ofertarService(em ,equipoId, itemMercadoId, monto, userId);
 
     return res.status(200).json({
       message: `Oferta ${resultado.accion} exitosamente`,
@@ -35,10 +37,11 @@ export async function ofertar(req: Request, res: Response, next: NextFunction) {
  */
 export async function cancelarOferta(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em
     const pujaId = Number(req.params.pujaId);
     const userId = req.authUser.user?.userId!;
 
-    const resultado = await cancelarOfertaService(pujaId, userId);
+    const resultado = await cancelarOfertaService(em, pujaId, userId);
 
     return res.status(200).json(resultado);
   } catch (error: any) {
@@ -55,10 +58,11 @@ export async function cancelarOferta(req: Request, res: Response, next: NextFunc
  */
 export async function obtenerMisOfertas(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em
     const equipoId = Number(req.params.equipoId);
     const userId = req.authUser.user?.userId!;
 
-    const ofertas = await obtenerMisOfertasService(equipoId, userId);
+    const ofertas = await obtenerMisOfertasService(em, equipoId, userId);
 
     return res.status(200).json({
       data: ofertas

@@ -1,0 +1,222 @@
+/mercado-puja/equipo/{equipoId}/ofertar:
+  post:
+    summary: Crea o actualiza una oferta por un jugador del mercado
+    description: Permite al usuario crear una nueva oferta o actualizar una existente por un jugador disponible en el mercado activo. El monto ofertado se bloquea del presupuesto del equipo.
+    tags: [Mercado Puja]
+    parameters:
+      - in: path
+        name: equipoId
+        required: true
+        schema:
+          type: integer
+        description: ID del equipo que realiza la oferta
+        example: 1
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - itemMercadoId
+              - monto
+            properties:
+              itemMercadoId:
+                type: integer
+                example: 5
+                description: ID del item del mercado (jugador disponible)
+              monto:
+                type: number
+                example: 8000000
+                description: Monto de la oferta (debe ser igual o mayor al precio actual del jugador)
+    responses:
+      200:
+        description: Oferta creada o actualizada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Oferta creada exitosamente'
+                data:
+                  type: object
+                  properties:
+                    accion:
+                      type: string
+                      enum: [creada, actualizada]
+                      example: 'creada'
+                    puja:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        monto:
+                          type: number
+                          example: 8000000
+                        jugador:
+                          type: string
+                          example: 'L. Messi'
+                        precio_referencia:
+                          type: number
+                          example: 7500000
+                          description: Precio del jugador al momento de ofertar
+                    presupuesto:
+                      type: object
+                      properties:
+                        bloqueado:
+                          type: number
+                          example: 15000000
+                          description: Total del presupuesto bloqueado en ofertas
+                        disponible:
+                          type: number
+                          example: 35000000
+                          description: Presupuesto disponible restante
+      400:
+        description: Datos inválidos, monto menor al precio actual, presupuesto insuficiente, o equipo no pertenece al torneo del mercado.
+      403:
+        description: No tienes permisos para ofertar con este equipo o has sido expulsado del torneo.
+      404:
+        description: Item de mercado o equipo no encontrado.
+      409:
+        description: El mercado está cerrado.
+      500:
+        description: Error del servidor.
+
+/mercado-puja/puja/{pujaId}/cancelar:
+  delete:
+    summary: Cancela una oferta antes del cierre del mercado
+    description: Permite al usuario cancelar una oferta pendiente, liberando el monto bloqueado y devolviéndolo al presupuesto disponible del equipo.
+    tags: [Mercado Puja]
+    parameters:
+      - in: path
+        name: pujaId
+        required: true
+        schema:
+          type: integer
+        description: ID de la puja/oferta a cancelar
+        example: 1
+    responses:
+      200:
+        description: Oferta cancelada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Oferta cancelada exitosamente'
+                puja:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    jugador:
+                      type: string
+                      example: 'L. Messi'
+                    monto:
+                      type: number
+                      example: 8000000
+                presupuesto:
+                  type: object
+                  properties:
+                    bloqueado:
+                      type: number
+                      example: 7000000
+                      description: Presupuesto bloqueado restante después de cancelar
+                    disponible:
+                      type: number
+                      example: 43000000
+                      description: Presupuesto disponible después de liberar el monto
+      400:
+        description: Solo se pueden cancelar ofertas pendientes.
+      403:
+        description: No tienes permisos para cancelar esta oferta o has sido expulsado del torneo.
+      404:
+        description: Oferta no encontrada.
+      409:
+        description: No se puede cancelar la oferta porque el mercado está cerrado.
+      500:
+        description: Error del servidor.
+
+/mercado-puja/equipo/{equipoId}/mis-ofertas:
+  get:
+    summary: Obtiene las ofertas activas de un equipo
+    description: Recupera todas las ofertas pendientes que un equipo tiene en el mercado activo, mostrando los detalles de cada jugador y el monto ofertado.
+    tags: [Mercado Puja]
+    parameters:
+      - in: path
+        name: equipoId
+        required: true
+        schema:
+          type: integer
+        description: ID del equipo
+        example: 1
+    responses:
+      200:
+        description: Lista de ofertas recuperada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      monto:
+                        type: number
+                        example: 8000000
+                      precio_referencia:
+                        type: number
+                        example: 7500000
+                        description: Precio del jugador cuando se hizo la oferta
+                      fecha_oferta:
+                        type: string
+                        format: date-time
+                        example: '2026-01-13T10:30:00Z'
+                      jugador:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 45
+                          nombre:
+                            type: string
+                            example: 'L. Messi'
+                          posicion:
+                            type: string
+                            example: 'Delantero'
+                          club:
+                            type: string
+                            example: 'Inter Miami'
+                          precio_actual:
+                            type: number
+                            example: 7500000
+                          foto:
+                            type: string
+                            example: 'https://example.com/messi.jpg'
+                      mercado:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          numero:
+                            type: integer
+                            example: 5
+                            description: Número del mercado (contador secuencial)
+      403:
+        description: No tienes permisos para ver las ofertas de este equipo.
+      404:
+        description: Equipo no encontrado.
+      500:
+        description: Error del servidor.

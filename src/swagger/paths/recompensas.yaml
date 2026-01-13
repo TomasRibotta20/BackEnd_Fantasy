@@ -1,0 +1,435 @@
+/recompensas/pendientes:
+  get:
+    summary: Obtiene las recompensas pendientes del usuario autenticado
+    description: Recupera todas las recompensas no reclamadas del usuario en todos sus torneos activos.
+    tags: [Recompensas]
+    responses:
+      200:
+        description: Lista de recompensas pendientes recuperada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                hayPendientes:
+                  type: boolean
+                  example: true
+                cantidad:
+                  type: integer
+                  example: 3
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id_recompensa:
+                        type: integer
+                        example: 1
+                      id_torneo:
+                        type: integer
+                        example: 5
+                      torneo:
+                        type: string
+                        example: 'Liga Premier 2026'
+                      jornada:
+                        type: string
+                        example: 'Fecha 15'
+                      posicion:
+                        type: integer
+                        example: 1
+      500:
+        description: Error del servidor.
+
+/recompensas/pendientes/torneo/{torneoId}:
+  get:
+    summary: Obtiene las recompensas pendientes de un torneo específico
+    description: Recupera todas las recompensas no reclamadas del usuario en un torneo particular.
+    tags: [Recompensas]
+    parameters:
+      - in: path
+        name: torneoId
+        required: true
+        schema:
+          type: integer
+        description: ID del torneo
+        example: 5
+    responses:
+      200:
+        description: Recompensas pendientes del torneo recuperadas exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                hayPendientes:
+                  type: boolean
+                  example: true
+                cantidad:
+                  type: integer
+                  example: 2
+                torneoId:
+                  type: integer
+                  example: 5
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id_recompensa:
+                        type: integer
+                        example: 1
+                      jornada:
+                        type: string
+                        example: 'Fecha 15'
+                      posicion:
+                        type: integer
+                        example: 1
+                      tier:
+                        type: string
+                        enum: [ORO, PLATA, BRONCE]
+                        example: 'ORO'
+      403:
+        description: No participas en este torneo o fuiste expulsado.
+      404:
+        description: Torneo no encontrado.
+      409:
+        description: El torneo no está activo.
+      500:
+        description: Error del servidor.
+
+/recompensas/historial/torneo/{torneoId}:
+  get:
+    summary: Obtiene el historial completo de recompensas de un torneo
+    description: Recupera todas las recompensas (reclamadas y pendientes) del usuario en un torneo específico.
+    tags: [Recompensas]
+    parameters:
+      - in: path
+        name: torneoId
+        required: true
+        schema:
+          type: integer
+        description: ID del torneo
+        example: 5
+    responses:
+      200:
+        description: Historial de recompensas recuperado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cantidad:
+                  type: integer
+                  example: 10
+                torneoId:
+                  type: integer
+                  example: 5
+                torneoNombre:
+                  type: string
+                  example: 'Liga Premier 2026'
+                data:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id_recompensa:
+                        type: integer
+                      jornada:
+                        type: string
+                      posicion:
+                        type: integer
+                      tier:
+                        type: string
+                        enum: [ORO, PLATA, BRONCE]
+                      estado:
+                        type: string
+                        enum: [reclamada, pendiente]
+                      fecha_reclamo:
+                        type: string
+                        format: date-time
+                        nullable: true
+                      premio:
+                        type: object
+                        nullable: true
+                        properties:
+                          tipo:
+                            type: string
+                          descripcion:
+                            type: string
+                      resultado:
+                        type: object
+                        properties:
+                          monto:
+                            type: number
+                            nullable: true
+                          monto_compensacion:
+                            type: number
+                            nullable: true
+                          jugador:
+                            type: object
+                            nullable: true
+                            properties:
+                              id:
+                                type: integer
+                              nombre:
+                                type: string
+                              posicion:
+                                type: string
+                              club:
+                                type: string
+                              foto:
+                                type: string
+      403:
+        description: No participas en este torneo o fuiste expulsado.
+      404:
+        description: Torneo no encontrado.
+      409:
+        description: El torneo no está activo.
+      500:
+        description: Error del servidor.
+
+/recompensas/{id}/opciones:
+  get:
+    summary: Obtiene las opciones disponibles para una recompensa
+    description: Recupera los premios disponibles según el tier de la recompensa, o las opciones de jugadores si hay un pick pendiente.
+    tags: [Recompensas]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: ID de la recompensa
+        example: 1
+    responses:
+      200:
+        description: Opciones de recompensa recuperadas exitosamente.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  properties:
+                    tipo:
+                      type: string
+                      example: 'pick_pendiente'
+                    recompensaId:
+                      type: integer
+                    mensaje:
+                      type: string
+                      example: 'Tienes un pick pendiente. Elige tu jugador.'
+                    opciones:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          nombre:
+                            type: string
+                          posicion:
+                            type: string
+                          club:
+                            type: string
+                          precio_actual:
+                            type: number
+                          foto_perfil:
+                            type: string
+                    opcionesIds:
+                      type: array
+                      items:
+                        type: integer
+                    expira:
+                      type: string
+                      format: date-time
+                - type: object
+                  properties:
+                    recompensaId:
+                      type: integer
+                    posicion:
+                      type: integer
+                    tier:
+                      type: string
+                      enum: [ORO, PLATA, BRONCE]
+                    opciones:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Premio'
+      403:
+        description: Esta recompensa no es tuya.
+      404:
+        description: Recompensa no encontrada.
+      409:
+        description: La recompensa ya fue reclamada o el tiempo para elegir expiró.
+      500:
+        description: Error del servidor.
+
+/recompensas/elegir:
+  post:
+    summary: Elige un premio para una recompensa
+    description: Permite al usuario seleccionar y procesar un premio (saldo, ruleta o player pick) para una recompensa pendiente.
+    tags: [Recompensas]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - recompensaId
+              - premioId
+            properties:
+              recompensaId:
+                type: integer
+                example: 1
+              premioId:
+                type: integer
+                example: 3
+    responses:
+      200:
+        description: Premio procesado exitosamente.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  description: Resultado de Saldo
+                  properties:
+                    tipo:
+                      type: string
+                      example: 'saldo'
+                    monto:
+                      type: number
+                      example: 5000000
+                    mensaje:
+                      type: string
+                      example: '¡Dinero acreditado!'
+                - type: object
+                  description: Resultado de Ruleta - Éxito
+                  properties:
+                    tipo:
+                      type: string
+                      example: 'ruleta'
+                    jugador:
+                      $ref: '#/components/schemas/Player'
+                    mensaje:
+                      type: string
+                      example: '¡Jugador fichado exitosamente!'
+                - type: object
+                  description: Resultado de Ruleta - Compensación
+                  properties:
+                    tipo:
+                      type: string
+                      example: 'compensacion_saldo'
+                    montoCompensacion:
+                      type: number
+                    jugadorIntentado:
+                      type: string
+                    mensaje:
+                      type: string
+                - type: object
+                  description: Resultado de Player Pick
+                  properties:
+                    tipo:
+                      type: string
+                      example: 'pick'
+                    opciones:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Player'
+                    expira:
+                      type: string
+                      format: date-time
+                    mensaje:
+                      type: string
+                      example: 'Elige tu jugador'
+                - type: object
+                  description: Compensación por mercado vacío
+                  properties:
+                    tipo:
+                      type: string
+                      example: 'dinero_fallback'
+                    montoCompensacion:
+                      type: number
+                    rangoOriginal:
+                      type: object
+                    mensaje:
+                      type: string
+      400:
+        description: Datos de entrada inválidos o tipo de premio no reconocido.
+      403:
+        description: No es tu recompensa o error de integridad (tier incorrecto).
+      404:
+        description: Recompensa o premio no encontrado.
+      409:
+        description: La recompensa ya fue reclamada, ya elegiste una opción, o plantilla llena.
+      500:
+        description: Error del servidor.
+
+/recompensas/confirmar-pick:
+  post:
+    summary: Confirma la elección de un jugador en un player pick
+    description: Finaliza el proceso de player pick seleccionando uno de los jugadores disponibles.
+    tags: [Recompensas]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - recompensaId
+              - jugadorId
+            properties:
+              recompensaId:
+                type: integer
+                example: 1
+              jugadorId:
+                type: integer
+                example: 45
+    responses:
+      200:
+        description: Pick confirmado exitosamente.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  description: Pick confirmado exitosamente
+                  properties:
+                    success:
+                      type: boolean
+                      example: true
+                    tipo:
+                      type: string
+                      example: 'pick_confirmado'
+                    jugador:
+                      $ref: '#/components/schemas/Player'
+                    mensaje:
+                      type: string
+                      example: '¡Has fichado a Lionel Messi!'
+                - type: object
+                  description: Compensación porque el jugador fue fichado
+                  properties:
+                    tipo:
+                      type: string
+                      example: 'compensacion_saldo'
+                    montoCompensacion:
+                      type: number
+                      example: 3000000
+                    jugadorIntentado:
+                      type: string
+                      example: 'Lionel Messi'
+                    mensaje:
+                      type: string
+                      example: '¡Tardaste mucho! Alguien fichó a Lionel Messi mientras decidías. Te acreditamos su valor.'
+      400:
+        description: El jugador seleccionado no estaba entre las opciones válidas o no hay proceso de selección activo.
+      403:
+        description: No es tu recompensa.
+      404:
+        description: Recompensa o jugador no encontrado.
+      409:
+        description: La recompensa ya fue reclamada, el tiempo expiró, o tu plantilla está llena.
+      500:
+        description: Error del servidor.

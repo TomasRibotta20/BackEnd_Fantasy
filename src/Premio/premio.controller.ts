@@ -6,8 +6,6 @@ import { Ruleta } from './ruleta.entity.js';
 import { PlayerPick } from './playerpick.entity.js';
 import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
 
-const em = orm.em;
-
 /**
  * Recupera todos los premios de la base de datos.
  * @param req El objeto de solicitud de Express (no utilizado en este endpoint, pero se mantiene para la firma).
@@ -17,6 +15,7 @@ const em = orm.em;
  */
 async function findAll(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const premios = await em.find( Premio, {}, { orderBy: { id: 'ASC' } } );
     res.status(200).json({ message: 'Premios encontrados', data: premios });
   } catch (error: any) {
@@ -33,6 +32,7 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
  */
 async function findByTier(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const tier = req.params.tier as Tier;
     const premios = await em.find( Premio, { tier }, { orderBy: { id: 'ASC' } } );
     res.status(200).json({ message: `Premios de tier ${tier} encontrados`, data: premios });
@@ -50,6 +50,7 @@ async function findByTier(req: Request, res: Response, next: NextFunction) {
  */
 async function findByTipo(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const tipo = req.params.tipo.toUpperCase();
     let premios;
 
@@ -87,6 +88,7 @@ async function findByTipo(req: Request, res: Response, next: NextFunction) {
 async function findOne(req: Request, res: Response, next: NextFunction) {
   const id = Number.parseInt(req.params.id);
   try {
+    const em = orm.em;
     const premio = await em.findOneOrFail( Premio, { id } );
     res.status(200).json({ message: 'Premio encontrado', data: premio });
   } catch (error: any) {
@@ -94,61 +96,6 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
       return next(ErrorFactory.notFound(`Premio con ID ${id} no encontrado`));
     }
     next(ErrorFactory.internal('Error al obtener el premio'));
-  }
-}
-
-/**
- * Agrega un nuevo premio a la base de datos.
- * Soporta tres tipos de premios: saldo (dinero directo), ruleta (juego de azar), y pick (selección de jugador).
- * @param req El objeto de solicitud de Express que contiene los datos del premio en el cuerpo.
- * @param res El objeto de respuesta de Express para enviar los resultados.
- * @param next La función de middleware de Express para manejar errores.
- * @returns Una respuesta HTTP 201 con un mensaje de éxito y los datos del premio creado, o un error HTTP 400/500 si falla.
- */
-async function add(req: Request, res: Response, next: NextFunction) {
-  try {
-    const { tipo, tier, descripcion, monto, configuracion } = req.body;
-    let nuevoPremio;
-
-    switch (tipo) {
-      case 'saldo':
-        nuevoPremio = em.create(Saldo, {
-          tipo: 'SALDO',
-          tier,
-          descripcion,
-          monto
-        });
-        break;
-
-      case 'ruleta':
-        nuevoPremio = em.create(Ruleta, {
-          tipo: 'RULETA',
-          tier,
-          descripcion,
-          configuracion
-        });
-        break;
-
-      case 'pick':
-        nuevoPremio = em.create(PlayerPick, {
-          tipo: 'PICK',
-          tier,
-          descripcion,
-          configuracion
-        });
-        break;
-
-      default:
-        throw ErrorFactory.badRequest('Tipo de premio inválido. Debe ser: saldo, ruleta o pick');
-    }
-    await em.flush();
-    res.status(201).json({ message: 'Premio creado exitosamente', data: nuevoPremio });
-  } catch (error: any) {
-    if (error instanceof AppError) {
-      next(error);
-    } else {
-      next(ErrorFactory.internal('Error al crear el premio'));
-    }
   }
 }
 
@@ -163,6 +110,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
 async function update(req: Request, res: Response, next: NextFunction) {
   const id = Number.parseInt(req.params.id);
   try {
+    const em = orm.em;
     const premio = await em.findOneOrFail( Premio, { id } );
     const { tier, descripcion, monto, configuracion } = req.body;
 
@@ -197,6 +145,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
 async function remove(req: Request, res: Response, next: NextFunction) {
   const id = Number.parseInt(req.params.id);
   try {
+    const em = orm.em;
     const premio = em.getReference(Premio, id);
     await em.removeAndFlush(premio);
     res.status(200).json({ message: 'Premio eliminado exitosamente' });
@@ -205,4 +154,4 @@ async function remove(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-export { findAll, findByTier, findByTipo, findOne, add, update, remove };
+export { findAll, findByTier, findByTipo, findOne, update, remove };

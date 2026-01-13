@@ -1,7 +1,130 @@
+/users/profile:
+  get:
+    summary: Obtiene el perfil del usuario autenticado
+    description: Recupera los detalles completos del perfil del usuario actualmente autenticado, excluyendo información sensible como contraseñas y tokens.
+    tags: [Users]
+    responses:
+      200:
+        description: Perfil del usuario recuperado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Perfil obtenido exitosamente'
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    username:
+                      type: string
+                      example: 'johndoe'
+                    email:
+                      type: string
+                      example: 'john@example.com'
+                    rol:
+                      type: string
+                      example: 'user'
+                    createdAt:
+                      type: string
+                      format: date-time
+                    updatedAt:
+                      type: string
+                      format: date-time
+      404:
+        description: Usuario no encontrado.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Usuario no encontrado'
+      500:
+        description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error obteniendo perfil'
+  put:
+    summary: Actualiza el nombre de usuario del perfil autenticado
+    description: Permite al usuario autenticado actualizar su propio nombre de usuario.
+    tags: [Users]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - username
+            properties:
+              username:
+                type: string
+                example: 'johndoe_updated'
+                description: Nuevo nombre de usuario
+    responses:
+      200:
+        description: Perfil actualizado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Perfil actualizado exitosamente'
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    username:
+                      type: string
+                      example: 'johndoe_updated'
+                    email:
+                      type: string
+                      example: 'john@example.com'
+                    rol:
+                      type: string
+                      example: 'user'
+      400:
+        description: Datos de entrada inválidos.
+      404:
+        description: Usuario no encontrado.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Usuario no encontrado'
+      500:
+        description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error actualizando perfil'
+
 /users:
   get:
     summary: Obtiene todos los usuarios (solo administrador)
-    description: Recupera una lista completa de todos los usuarios registrados en la base de datos.
+    description: Recupera una lista completa de todos los usuarios registrados en la base de datos, ordenados por ID de forma ascendente.
     tags: [Users]
     responses:
       200:
@@ -13,11 +136,40 @@
               properties:
                 message:
                   type: string
-                  example: 'found all Users'
+                  example: 'found all users'
                 data:
                   type: array
                   items:
-                    $ref: '#/components/schemas/User'
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      username:
+                        type: string
+                        example: 'johndoe'
+                      email:
+                        type: string
+                        example: 'john@example.com'
+                      rol:
+                        type: string
+                        example: 'user'
+                      password:
+                        type: string
+                        example: '$2b$10$...'
+                        description: Contraseña hasheada
+                      resetToken:
+                        type: string
+                        nullable: true
+                      refreshToken:
+                        type: string
+                        nullable: true
+                      createdAt:
+                        type: string
+                        format: date-time
+                      updatedAt:
+                        type: string
+                        format: date-time
       500:
         description: Error del servidor.
         content:
@@ -27,17 +179,38 @@
               properties:
                 message:
                   type: string
-                  example: 'Error interno del servidor'
+                  example: 'Error al obtener los usuarios'
   post:
     summary: Crea un nuevo usuario (solo administrador)
-    description: Crea un nuevo registro de usuario en la base de datos.
+    description: Crea un nuevo registro de usuario en la base de datos. La contraseña se hashea automáticamente antes de almacenarse.
     tags: [Users]
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/User'
+            type: object
+            required:
+              - username
+              - email
+              - password
+            properties:
+              username:
+                type: string
+                example: 'johndoe'
+              email:
+                type: string
+                format: email
+                example: 'john@example.com'
+              password:
+                type: string
+                format: password
+                example: 'SecurePass123!'
+              rol:
+                type: string
+                enum: [user, admin]
+                default: 'user'
+                example: 'user'
     responses:
       201:
         description: Usuario creado exitosamente.
@@ -48,15 +221,42 @@
               properties:
                 message:
                   type: string
-                  example: 'user created'
+                  example: 'User created successfully'
                 data:
-                  $ref: '#/components/schemas/User'
-      400:
-        description: Datos de entrada inválidos.
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    username:
+                      type: string
+                      example: 'johndoe'
+                    email:
+                      type: string
+                      example: 'john@example.com'
+                    rol:
+                      type: string
+                      example: 'user'
       409:
-        description: El usuario ya existe.
+        description: Ya existe un usuario con ese correo electrónico.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Ya existe un usuario con ese correo electrónico'
       500:
         description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error al crear el usuario'
 
 /users/{id}:
   get:
@@ -69,8 +269,7 @@
         required: true
         schema:
           type: integer
-          format: int64
-        description: ID numérico del usuario a recuperar.
+        description: ID del usuario a recuperar
         example: 1
     responses:
       200:
@@ -84,14 +283,51 @@
                   type: string
                   example: 'found user'
                 data:
-                  $ref: '#/components/schemas/User'
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    username:
+                      type: string
+                      example: 'johndoe'
+                    email:
+                      type: string
+                      example: 'john@example.com'
+                    rol:
+                      type: string
+                      example: 'user'
+                    password:
+                      type: string
+                    resetToken:
+                      type: string
+                      nullable: true
+                    refreshToken:
+                      type: string
+                      nullable: true
       404:
         description: Usuario no encontrado.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Usuario no encontrado: 1'
       500:
         description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error al obtener el usuario'
   put:
-    summary: Actualiza un usuario existente (solo administrador)
-    description: Actualiza completamente la información de un usuario específico por su ID.
+    summary: Actualiza completamente un usuario (solo administrador)
+    description: Actualiza todos los campos de un usuario específico por su ID. Si se proporciona una contraseña, se hashea automáticamente.
     tags: [Users]
     parameters:
       - in: path
@@ -99,15 +335,31 @@
         required: true
         schema:
           type: integer
-          format: int64
-        description: ID numérico del usuario a actualizar.
+        description: ID del usuario a actualizar
         example: 1
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/User'
+            type: object
+            properties:
+              username:
+                type: string
+                example: 'johndoe_updated'
+              email:
+                type: string
+                format: email
+                example: 'john_updated@example.com'
+              password:
+                type: string
+                format: password
+                example: 'NewSecurePass123!'
+                description: Si se proporciona, será hasheada automáticamente
+              rol:
+                type: string
+                enum: [user, admin]
+                example: 'admin'
     responses:
       200:
         description: Usuario actualizado exitosamente.
@@ -119,17 +371,50 @@
                 message:
                   type: string
                   example: 'user updated'
-      400:
-        description: Datos de entrada inválidos.
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    username:
+                      type: string
+                    email:
+                      type: string
+                    rol:
+                      type: string
       404:
         description: Usuario no encontrado.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Usuario con ID 1 no encontrado'
       409:
-        description: Conflicto al actualizar el usuario.
+        description: Ya existe un usuario con ese correo electrónico.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Ya existe un usuario con ese correo electrónico'
       500:
         description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error al actualizar el usuario'
   patch:
-    summary: Actualiza parcialmente un usuario existente (solo administrador)
-    description: Realiza una actualización parcial de la información de un usuario específico por su ID.
+    summary: Actualiza parcialmente un usuario (solo administrador)
+    description: Actualiza uno o más campos específicos de un usuario por su ID. Si se proporciona una contraseña, se hashea automáticamente.
     tags: [Users]
     parameters:
       - in: path
@@ -137,15 +422,29 @@
         required: true
         schema:
           type: integer
-          format: int64
-        description: ID numérico del usuario a actualizar.
+        description: ID del usuario a actualizar
         example: 1
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/User'
+            type: object
+            properties:
+              username:
+                type: string
+                example: 'johndoe_updated'
+              email:
+                type: string
+                format: email
+                example: 'john_updated@example.com'
+              password:
+                type: string
+                format: password
+                example: 'NewSecurePass123!'
+              rol:
+                type: string
+                enum: [user, admin]
     responses:
       200:
         description: Usuario actualizado parcialmente exitosamente.
@@ -157,16 +456,32 @@
                 message:
                   type: string
                   example: 'user updated'
-      400:
-        description: Datos de entrada inválidos.
+                data:
+                  type: object
       404:
         description: Usuario no encontrado.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Usuario con ID 1 no encontrado'
       409:
-        description: Conflicto al actualizar el usuario.
+        description: Ya existe un usuario con ese correo electrónico.
       500:
         description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error al actualizar el usuario'
   delete:
-    summary: Elimina un usuario por su ID (solo administrador)
+    summary: Elimina un usuario (solo administrador)
     description: Elimina un usuario específico de la base de datos utilizando su identificador único.
     tags: [Users]
     parameters:
@@ -175,8 +490,7 @@
         required: true
         schema:
           type: integer
-          format: int64
-        description: ID numérico del usuario a eliminar.
+        description: ID del usuario a eliminar
         example: 1
     responses:
       200:
@@ -191,15 +505,6 @@
                   example: 'user deleted'
       500:
         description: Error del servidor.
-
-/users/profile:
-  get:
-    summary: Obtiene el perfil del usuario autenticado
-    description: Recupera los detalles del perfil del usuario actualmente autenticado.
-    tags: [Users]
-    responses:
-      200:
-        description: Perfil del usuario recuperado exitosamente.
         content:
           application/json:
             schema:
@@ -207,43 +512,4 @@
               properties:
                 message:
                   type: string
-                  example: 'user profile'
-                data:
-                  $ref: '#/components/schemas/User'
-      404:
-        description: Usuario no encontrado.
-      500:
-        description: Error del servidor.
-  put:
-    summary: Actualiza el nombre del usuario autenticado
-    description: Actualiza el nombre del usuario actualmente autenticado.
-    tags: [Users]
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              name:
-                type: string
-                example: 'Nuevo Nombre'
-    responses:
-      200:
-        description: Nombre del usuario actualizado exitosamente.
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                message:
-                  type: string
-                  example: 'user name updated'
-                data:
-                  $ref: '#/components/schemas/User'
-      400:
-        description: Datos de entrada inválidos.
-      404:
-        description: Usuario no encontrado.
-      500:
-        description: Error del servidor.
+                  example: 'Error al eliminar el usuario'

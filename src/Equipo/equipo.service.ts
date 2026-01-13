@@ -97,8 +97,8 @@ export function crearEquipo(nombre: string, inscripcion: TorneoUsuario): Equipo 
  * Pobla un equipo con jugadores considerando presupuesto y precios
  */
 export async function poblarEquipoAleatoriamente(
-  equipoId: number, 
-  transactionalEm: EntityManager
+  transactionalEm: EntityManager,
+  equipoId: number
 ) {
   const equipo = await transactionalEm.findOne(Equipo, { id: equipoId }, { 
     populate: ['torneo_usuario', 'torneo_usuario.torneo'] 

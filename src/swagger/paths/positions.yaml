@@ -1,81 +1,276 @@
 /positions:
   get:
-    summary: Lista posiciones
+    summary: Obtiene todas las posiciones
+    description: Recupera una lista completa de todas las posiciones de jugadores registradas en la base de datos, ordenadas por ID de forma ascendente.
     tags: [Positions]
     responses:
       200:
-        description: Lista de posiciones.
+        description: Lista de posiciones recuperada exitosamente.
         content:
           application/json:
             schema:
               type: object
               properties:
-                message: { type: string, example: 'Found all positions' }
+                message:
+                  type: string
+                  example: 'found all positions'
                 data:
                   type: array
-                  items: { $ref: '#/components/schemas/Position' }
-      500: { description: Error. }
+                  items:
+                    $ref: '#/components/schemas/Position'
+      500:
+        description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error al obtener las posiciones'
   post:
-    summary: Crea una posición
+    summary: Crea una nueva posición (solo administrador)
+    description: Agrega una nueva posición de jugador a la base de datos. La descripción debe ser única.
     tags: [Positions]
     requestBody:
       required: true
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/PositionCreate' }
+          schema:
+            type: object
+            required:
+              - descripcion
+            properties:
+              descripcion:
+                type: string
+                example: 'Midfielder'
+                description: Descripción única de la posición
     responses:
       201:
-        description: Posición creada.
+        description: Posición creada exitosamente.
         content:
           application/json:
             schema:
               type: object
               properties:
-                message: { type: string, example: 'Position created' }
-                data: { $ref: '#/components/schemas/Position' }
-      400: { description: Datos inválidos. }
-      409: { description: Ya existe. }
-      500: { description: Error. }
+                message:
+                  type: string
+                  example: 'New position succesfuly created'
+                data:
+                  $ref: '#/components/schemas/Position'
+      409:
+        description: Ya existe una posición con esa descripción.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Ya existe una posición con esa descripción'
+      500:
+        description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error al crear la posición'
 
 /positions/{id}:
   get:
-    summary: Obtiene una posición por ID
+    summary: Obtiene una posición por su ID
+    description: Recupera los detalles de una posición específica utilizando su identificador único.
     tags: [Positions]
     parameters:
       - in: path
         name: id
         required: true
-        schema: { type: integer }
+        schema:
+          type: integer
+        description: ID de la posición a recuperar
+        example: 1
     responses:
-      200: { description: Posición encontrada. }
-      404: { description: No encontrada. }
-      500: { description: Error. }
-  patch:
-    summary: Actualiza parcialmente una posición
+      200:
+        description: Posición encontrada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'found position'
+                data:
+                  $ref: '#/components/schemas/Position'
+      404:
+        description: Posición no encontrada.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Posición con ID 1 no encontrada'
+      500:
+        description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error al obtener la posición'
+  put:
+    summary: Actualiza completamente una posición (solo administrador)
+    description: Actualiza todos los campos de una posición específica por su ID.
     tags: [Positions]
     parameters:
       - in: path
         name: id
         required: true
-        schema: { type: integer }
+        schema:
+          type: integer
+        description: ID de la posición a actualizar
+        example: 1
     requestBody:
       required: true
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/PositionPatch' }
+          schema:
+            type: object
+            required:
+              - descripcion
+            properties:
+              descripcion:
+                type: string
+                example: 'Central Midfielder'
     responses:
-      200: { description: Actualizada. }
-      404: { description: No encontrada. }
-      409: { description: Duplicado. }
-      500: { description: Error. }
-  delete:
-    summary: Elimina una posición
+      200:
+        description: Posición actualizada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'position updated'
+                data:
+                  $ref: '#/components/schemas/Position'
+      404:
+        description: Posición no encontrada.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Posición con ID 1 no encontrada'
+      409:
+        description: Ya existe una posición con esa descripción.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Ya existe una posición con esa descripción'
+      500:
+        description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error al actualizar la posición'
+  patch:
+    summary: Actualiza parcialmente una posición (solo administrador)
+    description: Actualiza uno o más campos específicos de una posición por su ID.
     tags: [Positions]
     parameters:
       - in: path
         name: id
         required: true
-        schema: { type: integer }
+        schema:
+          type: integer
+        description: ID de la posición a actualizar
+        example: 1
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              descripcion:
+                type: string
+                example: 'Defensive Midfielder'
     responses:
-      200: { description: Eliminada. }
-      500: { description: Error. }
+      200:
+        description: Posición actualizada parcialmente exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'position updated'
+                data:
+                  $ref: '#/components/schemas/Position'
+      404:
+        description: Posición no encontrada.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Posición con ID 1 no encontrada'
+      409:
+        description: Ya existe una posición con esa descripción.
+      500:
+        description: Error del servidor.
+  delete:
+    summary: Elimina una posición (solo administrador)
+    description: Elimina una posición específica de la base de datos utilizando su identificador único.
+    tags: [Positions]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: ID de la posición a eliminar
+        example: 1
+    responses:
+      200:
+        description: Posición eliminada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'position removed'
+      500:
+        description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error al eliminar la posición'

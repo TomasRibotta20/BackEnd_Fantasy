@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import e, { Request, Response, NextFunction } from 'express';
 import { orm } from '../shared/db/orm.js';
 import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
 import { EstadoTorneo, Torneo } from './torneo.entity.js';
@@ -10,8 +10,6 @@ import { crearEquipo } from '../Equipo/equipo.service.js';
 import { GameConfig } from '../Config/gameConfig.entity.js';
 import { Equipo } from '../Equipo/equipo.entity.js';
 
-const em = orm.em;
-
 /**
  * Recupera todos los torneos con filtros para administradores.
  * @param req El objeto de solicitud de Express que contiene los filtros en query.
@@ -20,6 +18,7 @@ const em = orm.em;
  */
 async function findAll(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const { 
       estado, 
       fecha_creacion_desde, 
@@ -89,6 +88,7 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
  */
 async function findOne(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const torneoId = Number(req.params.id);
     const torneo = await em.findOneOrFail(Torneo, { id: torneoId });
 
@@ -160,7 +160,6 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
           }
         },
         fechas: {
-          inicio: torneo.fecha_inicio,
           creacion: torneo.fecha_creacion
         },
         responsable: datosCreador,
@@ -183,11 +182,11 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
  */
 async function add(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const { 
       nombre,
       nombre_equipo,
       cupoMaximo, 
-      fecha_inicio,
       descripcion
     } = req.body;
     
@@ -223,15 +222,6 @@ async function add(req: Request, res: Response, next: NextFunction) {
     const nuevoTorneo = new Torneo();
     nuevoTorneo.nombre = nombre;
     nuevoTorneo.descripcion = descripcion;
-    if (fecha_inicio) {
-      const fechaLocal = new Date(`${fecha_inicio}T00:00:00`);
-      const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0);
-      if (fechaLocal <= hoy) {
-      throw ErrorFactory.badRequest('La fecha de inicio no puede ser en el pasado o el mismo día de hoy.');
-      }
-      nuevoTorneo.fecha_inicio = fechaLocal;
-    }
     nuevoTorneo.cupo_maximo = cupoMaximo || 5;
     nuevoTorneo.estado = EstadoTorneo.ESPERA;
     nuevoTorneo.codigo_acceso = codigoAcceso; 
@@ -253,7 +243,6 @@ async function add(req: Request, res: Response, next: NextFunction) {
         nombre: nuevoTorneo.nombre,
         codigo_acceso: nuevoTorneo.codigo_acceso,
         estado: nuevoTorneo.estado,
-        fecha_inicio: nuevoTorneo.fecha_inicio || 'Por definir' 
       }
     })
   } catch (error: any) {
@@ -272,8 +261,9 @@ async function add(req: Request, res: Response, next: NextFunction) {
  */
 async function update(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const torneoId = Number(req.params.id);
-    const { nombre, cupoMaximo, fecha_inicio, codigo_acceso } = req.body;
+    const { nombre, cupoMaximo, codigo_acceso } = req.body;
     const currentUserId = req.authUser.user?.userId;
     const globalRole = req.authUser.user?.role;
 
@@ -317,12 +307,6 @@ async function update(req: Request, res: Response, next: NextFunction) {
         }
         torneo.cupo_maximo = cupoMaximo;
     }
-    if (fecha_inicio) {
-        if (torneo.estado !== EstadoTorneo.ESPERA) {
-            throw ErrorFactory.badRequest('No puedes cambiar la fecha de un torneo ya iniciado.');
-        }
-        torneo.fecha_inicio = new Date(fecha_inicio);
-    }
     if (codigo_acceso) {
         if (!esSuperAdmin) {
             throw ErrorFactory.forbidden('Solo el administrador del sistema puede cambiar el código de acceso manualmente.');
@@ -355,6 +339,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
  */
 async function remove(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const torneoId = Number(req.params.id);
     
     await em.transactional(async (transactionalEm) => {
@@ -385,6 +370,7 @@ async function remove(req: Request, res: Response, next: NextFunction) {
 
 async function validateAccessCode(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const { codigo_acceso } = req.body; 
     const currentUserId = req.authUser.user?.userId;
 
@@ -429,6 +415,7 @@ async function validateAccessCode(req: Request, res: Response, next: NextFunctio
 
 async function getMisTorneos(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const currentUserId = req.authUser.user?.userId;
     const { estado } = req.query;
 
@@ -478,6 +465,7 @@ async function getMisTorneos(req: Request, res: Response, next: NextFunction) {
 
 async function getTorneoUsuario(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const torneoId = Number(req.params.id);
     const currentUserId = req.authUser.user?.userId;
 
@@ -555,6 +543,7 @@ async function getTorneoUsuario(req: Request, res: Response, next: NextFunction)
 
 async function joinTorneo(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const result = await TorneoService.join(em, req.body.codigo_acceso, req.body.nombre_equipo, req.authUser.user?.userId!);
     res.status(201).json(result);
   } catch (error: any) {
@@ -568,6 +557,7 @@ async function joinTorneo(req: Request, res: Response, next: NextFunction) {
 
 async function leave(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const result = await TorneoService.leaveTorneo(em, Number(req.params.id), req.authUser.user?.userId!);
     res.status(200).json(result);
   } catch (error: any) {
@@ -581,6 +571,7 @@ async function leave(req: Request, res: Response, next: NextFunction) {
 
 async function iniciarTorneo(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const torneoId = Number(req.params.id);
     const userId = req.authUser.user?.userId!;
     const result = await TorneoService.start(em, torneoId, userId);
@@ -596,6 +587,7 @@ async function iniciarTorneo(req: Request, res: Response, next: NextFunction) {
 
 async function expulsar(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const torneoId = Number(req.params.id);
     const targetUserId = Number(req.params.userId); 
     

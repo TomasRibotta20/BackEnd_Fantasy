@@ -8,14 +8,14 @@ import { FilterQuery, FindOptions, QueryOrder } from '@mikro-orm/core';
  * @returns Una promesa que se resuelve en un objeto con los jugadores y metadatos de paginación.
  */
 export async function findAndPaginate({
-  name, 
-  position, 
+  nombre, 
+  posicion, 
   club, 
   page = 1, 
   limit = 20
 }: { 
-  name?: string; 
-  position?: string; 
+  nombre?: string; 
+  posicion?: string; 
   club?: string; 
   page?: number; 
   limit?: number; 
@@ -23,20 +23,20 @@ export async function findAndPaginate({
   const em = orm.em.fork();
   
   const where: FilterQuery<Player> = {};
-  if (name) {
+  if (nombre) {
     where.$or = [
-      { nombre: { $re: `(?i).*${name}.*` } },
-      { primer_nombre: { $re: `(?i).*${name}.*` } },
-      { apellido: { $re: `(?i).*${name}.*` } },
+      { nombre: { $re: `(?i).*${nombre}.*` } },
+      { primer_nombre: { $re: `(?i).*${nombre}.*` } },
+      { apellido: { $re: `(?i).*${nombre}.*` } },
     ];
   }
 
-  if (position) {
-    const positionFilter = !isNaN(Number(position)) 
-      ? { id: Number(position) } 
-      : { description: { $re: `(?i).*${position}.*` } };
+  if (posicion) {
+    const posicionFilter = !isNaN(Number(posicion)) 
+      ? { id: Number(posicion) } 
+      : { description: { $re: `(?i).*${posicion}.*` } };
     
-    where.posicion = positionFilter;
+    where.posicion = posicionFilter;
   }
 
   if (club) {

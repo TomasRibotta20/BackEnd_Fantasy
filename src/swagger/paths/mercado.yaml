@@ -1,0 +1,245 @@
+/mercado/abrir:
+  post:
+    summary: Abre un nuevo mercado para un torneo (solo administrador)
+    description: Crea y abre un nuevo mercado diario seleccionando 10 jugadores aleatorios disponibles del pool del torneo.
+    tags: [Mercado]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - torneoId
+            properties:
+              torneoId:
+                type: integer
+                example: 1
+                description: ID del torneo para el cual se abrirá el mercado
+    responses:
+      201:
+        description: Mercado abierto exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Mercado abierto exitosamente'
+                data:
+                  type: object
+                  properties:
+                    mercado:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        numero_mercado:
+                          type: integer
+                          example: 5
+                        fecha_apertura:
+                          type: string
+                          format: date-time
+                        estado:
+                          type: string
+                          enum: [ABIERTO, CERRADO, CANCELADO]
+                          example: 'ABIERTO'
+                        hubo_reset_pool:
+                          type: boolean
+                          example: false
+                          description: Indica si se reseteó el pool de jugadores disponibles
+                    jugadores:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          nombre:
+                            type: string
+                          posicion:
+                            type: string
+                          club:
+                            type: string
+                          precio_actual:
+                            type: number
+      400:
+        description: No hay jugadores libres en el torneo o el torneo no está activo.
+      404:
+        description: Torneo no encontrado.
+      409:
+        description: Ya existe un mercado abierto para este torneo.
+      500:
+        description: Error del servidor.
+
+/mercado/{mercadoId}/cerrar:
+  post:
+    summary: Cierra un mercado y resuelve las pujas (solo administrador)
+    description: Cierra el mercado especificado, procesa todas las pujas pendientes asignando jugadores a los ganadores y abre automáticamente un nuevo mercado.
+    tags: [Mercado]
+    parameters:
+      - in: path
+        name: mercadoId
+        required: true
+        schema:
+          type: integer
+        description: ID del mercado a cerrar
+        example: 1
+    responses:
+      200:
+        description: Mercado cerrado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Mercado cerrado exitosamente'
+                mercado_cerrado:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    numero_mercado:
+                      type: integer
+                    estado:
+                      type: string
+                      enum: [CERRADO]
+                    fecha_cierre:
+                      type: string
+                      format: date-time
+                estadisticas:
+                  type: object
+                  properties:
+                    vendidos:
+                      type: integer
+                      example: 8
+                      description: Cantidad de jugadores vendidos
+                    sinVenta:
+                      type: integer
+                      example: 2
+                      description: Cantidad de jugadores sin pujas o sin venta
+                    rechazadosCupo:
+                      type: integer
+                      example: 3
+                      description: Cantidad de pujas rechazadas por límite de cupo
+                    dineroMovido:
+                      type: integer
+                      example: 45000000
+                      description: Total de dinero transaccionado
+                nuevo_mercado:
+                  type: object
+                  nullable: true
+                  properties:
+                    id:
+                      type: integer
+                    numero_mercado:
+                      type: integer
+                    fecha_apertura:
+                      type: string
+                      format: date-time
+                    estado:
+                      type: string
+                    hubo_reset_pool:
+                      type: boolean
+      400:
+        description: El mercado ya está cerrado o cancelado, o el torneoId es inválido.
+      404:
+        description: Mercado no encontrado.
+      500:
+        description: Error del servidor.
+
+/mercado/activo/torneo/{torneoId}:
+  get:
+    summary: Obtiene el mercado activo de un torneo
+    description: Recupera la información del mercado actualmente abierto para un torneo específico, incluyendo los jugadores disponibles y cantidad de pujas.
+    tags: [Mercado]
+    parameters:
+      - in: path
+        name: torneoId
+        required: true
+        schema:
+          type: integer
+        description: ID del torneo
+        example: 1
+    responses:
+      200:
+        description: Mercado activo recuperado exitosamente o no hay mercado activo.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  description: Cuando hay mercado activo
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        numero_mercado:
+                          type: integer
+                          example: 5
+                        fecha_apertura:
+                          type: string
+                          format: date-time
+                        estado:
+                          type: string
+                          enum: [ABIERTO]
+                          example: 'ABIERTO'
+                        items:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                                example: 1
+                              jugador:
+                                type: object
+                                properties:
+                                  id:
+                                    type: integer
+                                  nombre:
+                                    type: string
+                                    example: 'L. Messi'
+                                  nombreCompleto:
+                                    type: string
+                                    example: 'Lionel Messi'
+                                  posicion:
+                                    type: string
+                                    example: 'Delantero'
+                                  club:
+                                    type: string
+                                    example: 'Inter Miami'
+                                  clubLogo:
+                                    type: string
+                                    example: 'https://example.com/logo.png'
+                                  foto:
+                                    type: string
+                                    example: 'https://example.com/player.jpg'
+                                  precio_actual:
+                                    type: number
+                                    example: 15000000
+                              cantidad_pujas:
+                                type: integer
+                                example: 3
+                                description: Número de pujas realizadas para este jugador
+                - type: object
+                  description: Cuando no hay mercado activo
+                  properties:
+                    message:
+                      type: string
+                      example: 'No hay mercado activo en este momento'
+                    data:
+                      type: null
+      403:
+        description: No tienes acceso a este torneo.
+      404:
+        description: Torneo no encontrado o no participas en él.
+      500:
+        description: Error del servidor.

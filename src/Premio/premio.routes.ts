@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { findAll, findByTier, findByTipo, findOne, add, update, remove } from './premio.controller.js';
+import { findAll, findByTier, findByTipo, findOne, update, remove } from './premio.controller.js';
 import { validate, validateParams } from '../shared/zod/validate.js';
 import { 
   createPremioSchema, 
@@ -17,7 +17,6 @@ premioRouter.get('/tier/:tier', requireAdmin, validateParams(tierParamsSchema), 
 premioRouter.get('/tipo/:tipo', requireAdmin, validateParams(tipoParamsSchema), findByTipo);
 premioRouter.get('/:id', requireAdmin, validateParams(idPremioParamsSchema), findOne);
 
-premioRouter.post('/', requireAdmin, validate(createPremioSchema), add);
 premioRouter.put('/:id', requireAdmin, validateParams(idPremioParamsSchema), validate(updatePremioSchema), update);
 premioRouter.patch('/:id', requireAdmin, validateParams(idPremioParamsSchema), validate(updatePremioSchema), update);
 premioRouter.delete('/:id', requireAdmin, validateParams(idPremioParamsSchema), remove);

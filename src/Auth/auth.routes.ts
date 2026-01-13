@@ -1,13 +1,5 @@
 import { Router } from 'express';
-import {
-  login,
-  logout,
-  register,
-  authLimiter,
-  forgotPassword,
-  refreshToken,
-  createNewPassword,
-} from './auth.controller.js';
+import { login, logout, register, authLimiter, forgotPassword, refreshToken, createNewPassword } from './auth.controller.js';
 import { validate } from '../shared/zod/validate.js';
 import { forgotPasswordSchema, newPasswordSchema, loginSchema, registerSchema } from './auth.schema.js';
 

@@ -1,227 +1,513 @@
 /players:
   get:
-    summary: Obtiene todos los jugadores
-    description: Lista jugadores con filtros opcionales.
+    summary: Obtiene jugadores con filtrado y paginación
+    description: Recupera una lista de jugadores con opciones de filtrado por nombre, posición y club. Soporta paginación para manejar grandes cantidades de datos. Los resultados se ordenan alfabéticamente por nombre.
     tags: [Players]
     parameters:
       - in: query
-        name: clubId
-        schema: { type: integer }
-        required: false
-        description: Filtra por ID interno de club.
+        name: nombre
+        schema:
+          type: string
+        description: Busca jugadores por nombre, primer nombre o apellido (búsqueda case-insensitive)
+        example: 'Messi'
       - in: query
-        name: positionId
-        schema: { type: integer }
-        required: false
-        description: Filtra por ID interno de posición.
+        name: posicion
+        schema:
+          type: string
+        description: Filtrar por posición (puede ser ID numérico o descripción)
+        example: 'Attacker'
+      - in: query
+        name: club
+        schema:
+          type: string
+        description: Filtrar por club (puede ser ID numérico o nombre)
+        example: 'Barcelona'
+      - in: query
+        name: page
+        schema:
+          type: integer
+          default: 1
+        description: Número de página
+        example: 1
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          default: 20
+        description: Cantidad de jugadores por página
+        example: 20
     responses:
       200:
-        description: Lista de jugadores.
+        description: Jugadores obtenidos exitosamente.
         content:
           application/json:
             schema:
               type: object
               properties:
-                message: { type: string, example: 'Found all players' }
-                count: { type: integer, example: 28 }
                 data:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Player'
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      nombre:
+                        type: string
+                        example: 'L. Messi'
+                      primer_nombre:
+                        type: string
+                        nullable: true
+                        example: 'Lionel'
+                      apellido:
+                        type: string
+                        nullable: true
+                        example: 'Messi'
+                      edad:
+                        type: integer
+                        nullable: true
+                        example: 36
+                      numero:
+                        type: integer
+                        nullable: true
+                        example: 10
+                      foto:
+                        type: string
+                        nullable: true
+                        example: 'https://media.api-sports.io/football/players/154.png'
+                      precio_actual:
+                        type: number
+                        nullable: true
+                        example: 15000000
+                        description: Precio actual del jugador en el mercado
+                      posicion:
+                        type: object
+                        nullable: true
+                        properties:
+                          id:
+                            type: integer
+                            example: 4
+                          descripcion:
+                            type: string
+                            example: 'Attacker'
+                      club:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 5
+                          nombre:
+                            type: string
+                            example: 'Inter Miami'
+                          logo:
+                            type: string
+                            example: 'https://media.api-sports.io/football/teams/1600.png'
+                meta:
+                  type: object
+                  properties:
+                    totalItems:
+                      type: integer
+                      example: 500
+                      description: Total de jugadores que coinciden con los filtros
+                    currentPage:
+                      type: integer
+                      example: 1
+                      description: Página actual
+                    itemsPerPage:
+                      type: integer
+                      example: 20
+                      description: Cantidad de jugadores por página
+                    totalPages:
+                      type: integer
+                      example: 25
+                      description: Total de páginas disponibles
       500:
         description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error al obtener jugadores'
   post:
-    summary: Crea un nuevo jugador
+    summary: Crea un nuevo jugador (solo administrador)
+    description: Agrega un nuevo jugador a la base de datos asociado a un club y opcionalmente a una posición.
     tags: [Players]
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/PlayerCreate'
+            type: object
+            required:
+              - nombre
+              - clubId
+            properties:
+              nombre:
+                type: string
+                example: 'L. Messi'
+                description: Nombre del jugador
+              primer_nombre:
+                type: string
+                nullable: true
+                example: 'Lionel'
+              apellido:
+                type: string
+                nullable: true
+                example: 'Messi'
+              edad:
+                type: integer
+                nullable: true
+                example: 36
+              numero:
+                type: integer
+                nullable: true
+                example: 10
+              foto:
+                type: string
+                nullable: true
+                example: 'https://media.api-sports.io/football/players/154.png'
+              precio_actual:
+                type: number
+                nullable: true
+                example: 15000000
+              clubId:
+                type: integer
+                example: 5
+                description: ID del club al que pertenece el jugador
+              posicionId:
+                type: integer
+                nullable: true
+                example: 4
+                description: ID de la posición del jugador
     responses:
       201:
-        description: Jugador creado.
+        description: Jugador creado exitosamente.
         content:
           application/json:
             schema:
               type: object
               properties:
-                message: { type: string, example: 'Player created' }
-                data: { $ref: '#/components/schemas/Player' }
-      400:
-        description: Datos inválidos.
+                message:
+                  type: string
+                  example: 'Player created'
+                data:
+                  $ref: '#/components/schemas/Player'
+      404:
+        description: Club o posición no encontrado.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  examples:
+                    club:
+                      value: 'Club with ID 5 not found'
+                    posicion:
+                      value: 'Position with ID 4 not found'
       409:
-        description: Duplicado.
+        description: Ya existe un jugador con ese nombre.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Player with that name already exists'
       500:
         description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error creating player'
 
 /players/{id}:
   get:
-    summary: Obtiene un jugador por ID interno
+    summary: Obtiene un jugador por su ID
+    description: Recupera los detalles completos de un jugador específico utilizando su identificador único.
     tags: [Players]
     parameters:
       - in: path
         name: id
         required: true
-        schema: { type: integer }
+        schema:
+          type: integer
+        description: ID del jugador a recuperar
         example: 1
     responses:
       200:
-        description: Jugador encontrado.
+        description: Jugador encontrado exitosamente.
         content:
           application/json:
             schema:
               type: object
               properties:
-                message: { type: string, example: 'Player found' }
-                data: { $ref: '#/components/schemas/Player' }
+                message:
+                  type: string
+                  example: 'found Player'
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    nombre:
+                      type: string
+                      example: 'L. Messi'
+                    primer_nombre:
+                      type: string
+                      nullable: true
+                      example: 'Lionel'
+                    apellido:
+                      type: string
+                      nullable: true
+                      example: 'Messi'
+                    edad:
+                      type: integer
+                      nullable: true
+                      example: 36
+                    numero:
+                      type: integer
+                      nullable: true
+                      example: 10
+                    foto:
+                      type: string
+                      nullable: true
+                      example: 'https://media.api-sports.io/football/players/154.png'
+                    precio_actual:
+                      type: number
+                      nullable: true
+                      example: 15000000
+                    posicion:
+                      type: object
+                      nullable: true
+                      properties:
+                        id:
+                          type: integer
+                        descripcion:
+                          type: string
+                    club:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        nombre:
+                          type: string
+                        logo:
+                          type: string
       404:
-        description: No encontrado.
+        description: Jugador no encontrado.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Player with ID 1 not found'
       500:
-        description: Error.
+        description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error finding player'
   put:
-    summary: Reemplaza completamente un jugador
+    summary: Actualiza completamente un jugador (solo administrador)
+    description: Actualiza todos los campos de un jugador específico por su ID, incluyendo su club y posición.
     tags: [Players]
     parameters:
       - in: path
         name: id
         required: true
-        schema: { type: integer }
+        schema:
+          type: integer
+        description: ID del jugador a actualizar
+        example: 1
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/PlayerUpdate'
+            type: object
+            properties:
+              nombre:
+                type: string
+                example: 'L. Messi'
+              primer_nombre:
+                type: string
+                nullable: true
+                example: 'Lionel'
+              apellido:
+                type: string
+                nullable: true
+                example: 'Messi'
+              edad:
+                type: integer
+                nullable: true
+                example: 37
+              numero:
+                type: integer
+                nullable: true
+                example: 10
+              foto:
+                type: string
+                nullable: true
+              precio_actual:
+                type: number
+                nullable: true
+              clubId:
+                type: integer
+                example: 5
+              posicionId:
+                type: integer
+                nullable: true
+                example: 4
+                description: Puede ser null para remover la posición
     responses:
       200:
-        description: Actualizado.
-      400: { description: Datos inválidos. }
-      404: { description: No encontrado. }
-      409: { description: Duplicado. }
-      500: { description: Error. }
-  patch:
-    summary: Actualiza parcialmente un jugador
-    tags: [Players]
-    parameters:
-      - in: path
-        name: id
-        required: true
-        schema: { type: integer }
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/PlayerPatch'
-    responses:
-      200:
-        description: Actualizado parcialmente.
+        description: Jugador actualizado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Player updated'
+                data:
+                  $ref: '#/components/schemas/Player'
       404:
-        description: No encontrado.
-      409:
-        description: Duplicado.
+        description: Jugador, club o posición no encontrado.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  examples:
+                    jugador:
+                      value: 'Player with ID 1 not found'
+                    club:
+                      value: 'Club with ID 5 not found'
+                    posicion:
+                      value: 'Position with ID 4 not found'
       500:
-        description: Error.
-  delete:
-    summary: Elimina un jugador
+        description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error updating player'
+  patch:
+    summary: Actualiza parcialmente un jugador (solo administrador)
+    description: Actualiza uno o más campos específicos de un jugador por su ID.
     tags: [Players]
     parameters:
       - in: path
         name: id
         required: true
-        schema: { type: integer }
+        schema:
+          type: integer
+        description: ID del jugador a actualizar
+        example: 1
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              nombre:
+                type: string
+              primer_nombre:
+                type: string
+                nullable: true
+              apellido:
+                type: string
+                nullable: true
+              edad:
+                type: integer
+                nullable: true
+              numero:
+                type: integer
+                nullable: true
+              foto:
+                type: string
+                nullable: true
+              precio_actual:
+                type: number
+                nullable: true
+              clubId:
+                type: integer
+              posicionId:
+                type: integer
+                nullable: true
     responses:
-      200: { description: Eliminado. }
-      500: { description: Error. }
-
-/api/players:
-    get:
-      tags: [Players]
-      summary: Obtiene una lista filtrada y paginada de jugadores
-      description: >
-        Devuelve jugadores que coinciden con los criterios de filtrado.
-        Útil para el mercado de fichajes o para buscar jugadores específicos.
-      security:
-        - cookieAuth: []
-        - bearerAuth: []
-      parameters:
-        - in: query
-          name: name
-          schema:
-            type: string
-          description: Nombre o parte del nombre del jugador a buscar
-          example: Enzo
-        - in: query
-          name: position
-          schema:
-            type: string
-          description: ID de la posición o nombre/descripción de la posición (ej. Goalkeeper, Defender)
-          example: Midfielder
-        - in: query
-          name: club
-          schema:
-            type: string
-          description: ID del club o nombre del club (ej. River, Boca)
-          example: River
-        - in: query
-          name: page
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          description: Número de página para paginación
-          example: 1
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Cantidad de elementos por página
-          example: 20
-      responses:
-        '200':
-          description: Lista de jugadores filtrados y paginados
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Player'
-                  meta:
-                    type: object
-                    properties:
-                      totalItems:
-                        type: integer
-                        description: Cantidad total de jugadores que coinciden con los filtros
-                        example: 120
-                      currentPage:
-                        type: integer
-                        description: Página actual
-                        example: 1
-                      itemsPerPage:
-                        type: integer
-                        description: Cantidad de elementos por página
-                        example: 20
-                      totalPages:
-                        type: integer
-                        description: Número total de páginas
-                        example: 6
-        '401':
-          description: Usuario no autenticado
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Error del servidor
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+      200:
+        description: Jugador actualizado parcialmente exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Player updated'
+                data:
+                  $ref: '#/components/schemas/Player'
+      404:
+        description: Jugador, club o posición no encontrado.
+      500:
+        description: Error del servidor.
+  delete:
+    summary: Elimina un jugador (solo administrador)
+    description: Elimina un jugador específico de la base de datos utilizando su identificador único.
+    tags: [Players]
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        description: ID del jugador a eliminar
+        example: 1
+    responses:
+      200:
+        description: Jugador eliminado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Player removed'
+                data:
+                  type: object
+      500:
+        description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error removing player'

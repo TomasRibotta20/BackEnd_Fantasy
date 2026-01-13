@@ -7,8 +7,6 @@ import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
 import { clubes } from '../Club/club.entity.js';
 import { Position } from '../Position/position.entity.js';
 
-const em = orm.em;
-
 /**
  * Recupera todos los jugadores de la base de datos
  * @param req El objeto de solicitud de Express (no utilizado en este endpoint, pero se mantiene para la firma).
@@ -17,6 +15,7 @@ const em = orm.em;
  */
 async function findAll(req: Request, res: Response, next: NextFunction){
     try{
+        const em = orm.em
         const players = await em.find(Player, {}, {orderBy: {id: 'ASC'}});
         res.status(200).json({message: 'found all Players', data: players})
     }catch (error:any) {
@@ -33,6 +32,7 @@ async function findAll(req: Request, res: Response, next: NextFunction){
 async function findOne(req: Request, res: Response, next: NextFunction){
     const id = Number.parseInt(req.params.id);
     try{
+        const em = orm.em
         const player = await em.findOneOrFail(Player, {id});
         res.status(200).json({message: 'found Player', data: player});
     } catch (error:any) {
@@ -52,19 +52,20 @@ async function findOne(req: Request, res: Response, next: NextFunction){
 
 async function add(req: Request, res: Response, next: NextFunction){
     try{
-        const { clubId, positionId, ...playerData } = req.body;
+        const em = orm.em
+        const { clubId, posicionId, ...playerData } = req.body;
         const club = await em.findOneOrFail(clubes, { id: clubId });
-        let position = null;
-        if (positionId) {
-            position = await em.findOne(Position, { id: positionId });
-            if (!position) {
-                throw ErrorFactory.notFound(`Position with ID ${positionId} not found`);
+        let posicion = null;
+        if (posicionId) {
+            posicion = await em.findOne(Position, { id: posicionId });
+            if (!posicion) {
+                throw ErrorFactory.notFound(`Position with ID ${posicionId} not found`);
             }
         }
         const player = em.create(Player, {
             ...playerData,
             club,
-            position
+            posicion
         });
         await em.persistAndFlush(player);
         res.status(201).json({message: 'Player created', data: player});
@@ -87,6 +88,7 @@ async function add(req: Request, res: Response, next: NextFunction){
  */
 async function remove(req: Request, res: Response, next: NextFunction){
     try{
+        const em = orm.em
         const id = Number.parseInt(req.params.id);
         const player = em.getReference(Player, id);
         await em.removeAndFlush(player);
@@ -105,8 +107,9 @@ async function remove(req: Request, res: Response, next: NextFunction){
 async function update(req: Request, res: Response, next: NextFunction){
     const id = Number(req.params.id);
     try{
+        const em = orm.em
         const player = await em.findOneOrFail(Player, {id});
-        const { clubId, positionId, ...playerData } = req.body;
+        const { clubId, posicionId, ...playerData } = req.body;
         if (clubId) {
             const club = await em.findOne(clubes, { id: clubId });
             if (!club) {
@@ -114,14 +117,14 @@ async function update(req: Request, res: Response, next: NextFunction){
             }
             playerData.club = club;
         }
-        if (positionId) {
-            const position = await em.findOne(Position, { id: positionId });
-            if (!position) {
-                throw ErrorFactory.notFound(`Position with ID ${positionId} not found`);
+        if (posicionId) {
+            const posicion = await em.findOne(Position, { id: posicionId });
+            if (!posicion) {
+                throw ErrorFactory.notFound(`Position with ID ${posicionId} not found`);
             }
-            playerData.position = position;
-        } else if (positionId === null) {
-            playerData.position = null;
+            playerData.posicion = posicion;
+        } else if (posicionId === null) {
+            playerData.posicion = null;
         }
         em.assign(player, playerData);
         await em.flush();
@@ -145,15 +148,15 @@ async function update(req: Request, res: Response, next: NextFunction){
  */
  async function getPlayers(req: Request, res: Response, next: NextFunction) {
   try {
-    const name = req.query.name as string;
-    const position = req.query.position as string;
+    const nombre = req.query.nombre as string;
+    const posicion = req.query.posicion as string;
     const club = req.query.club as string;
     const page = req.query.page ? parseInt(req.query.page as string) : undefined;
     const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
 
     const result = await findAndPaginate({
-      name,
-      position,
+      nombre,
+      posicion,
       club,
       page,
       limit

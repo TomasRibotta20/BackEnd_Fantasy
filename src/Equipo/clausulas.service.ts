@@ -1,11 +1,10 @@
-import { orm } from '../shared/db/orm.js';
 import { EquipoJugador } from './equipoJugador.entity.js';
 import { Equipo } from './equipo.entity.js';
 import { GameConfig } from '../Config/gameConfig.entity.js';
 import { Transaccion, TipoTransaccion } from './transaccion.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 import { sendClausulaEjecutadaEmail, sendClausulaExitosaEmail } from '../shared/mailer/emailTemplates.js';
-import { Player } from '../Player/player.entity.js';
+import { EntityManager } from '@mikro-orm/mysql';
 
 const JUGADORES_MAXIMOS_POR_EQUIPO = 15;
 export interface BlindajeResultante {
@@ -25,13 +24,14 @@ export interface BlindajeResultante {
  * Aumenta la cláusula de un jugador propio gastando presupuesto
  */
 export async function blindarJugador(
+  em: EntityManager,
   equipoId: number,
   jugadorId: number,
   montoIncremento: number,
   userId: number
 ): Promise<BlindajeResultante> {
   
-  return await orm.em.transactional(async (em) => {
+  return await em.transactional(async (em) => {
     const gameConfig = await em.findOne(GameConfig, 1);
     if (!gameConfig) {
       throw ErrorFactory.internal('Configuración del juego no encontrada');
@@ -114,12 +114,13 @@ export interface ClausulaResultado {
  * Ejecuta la cláusula de un jugador rival, transfiriéndolo a tu equipo
  */
 export async function ejecutarClausula(
+  em: EntityManager,
   compradorEquipoId: number,
   jugadorId: number,
   compradorUserId: number
 ): Promise<ClausulaResultado> {
   
-  return await orm.em.transactional(async (em) => {
+  return await em.transactional(async (em) => {
     
     const gameConfig = await em.findOne(GameConfig, 1);
     if (!gameConfig) {

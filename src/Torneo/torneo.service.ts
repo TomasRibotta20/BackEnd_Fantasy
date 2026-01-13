@@ -119,24 +119,28 @@ static async leaveTorneo(em: EntityManager, torneoId: number, userId: number) {
         await transactionalEm.nativeDelete(TorneoUsuario, { id: miInscripcion.id }); //Posiblemente sea redundante hacer esto ya que al borrar el equipo se borra en cascada la inscripción
       }
     } else {
-      if (miInscripcion.equipo) {
+      if (otrosParticipantesCount === 0 && miInscripcion.equipo) {
+        const equipoId = miInscripcion.equipo.id;
+        await transactionalEm.nativeDelete(Equipo, { id: equipoId });
+        await transactionalEm.nativeDelete(Torneo, { id: torneoId });
+      } else if (miInscripcion.equipo) {
         const equipoId = miInscripcion.equipo.id;
         await transactionalEm.nativeDelete(EquipoJugador, { equipo: equipoId });
-      }
-      if (miInscripcion.rol === 'creador') {
-        const sucesor = await transactionalEm.findOne(TorneoUsuario, {
-          torneo: torneoId,
-          usuario: { $ne: userId },
-          expulsado: false
-        }, {
-          orderBy: { fecha_inscripcion: 'ASC' }
-        });
+        if (miInscripcion.rol === 'creador') {
+          const sucesor = await transactionalEm.findOne(TorneoUsuario, {
+            torneo: torneoId,
+            usuario: { $ne: userId },
+            expulsado: false
+          }, {
+            orderBy: { fecha_inscripcion: 'ASC' }
+          });
 
-        if (sucesor) {
-          sucesor.rol = 'creador';
+          if (sucesor) {
+            sucesor.rol = 'creador';
+          }
         }
+        miInscripcion.expulsado = true;
       }
-      miInscripcion.expulsado = true;
     }
   });
 
@@ -169,18 +173,15 @@ static async start(em: EntityManager, torneoId: number, userId: number) {
         for (const inscripcion of inscripcionesActivas) {
             const equipoId = inscripcion.equipo?.id;
             if (equipoId) {
-                await poblarEquipoAleatoriamente(equipoId, transactionalEm);
+                await poblarEquipoAleatoriamente(transactionalEm, equipoId);
             }
         }
 
         console.log('Inicializando sistema de mercado...');
-        await inicializarJugadoresTorneo(torneoId, transactionalEm);
+        await inicializarJugadoresTorneo(transactionalEm, torneoId);
 
         const torneoRef = transactionalEm.getReference(Torneo, torneoId);
         torneoRef.estado = EstadoTorneo.ACTIVO;
-        if (!torneoRef.fecha_inicio) {
-          torneoRef.fecha_inicio = new Date();
-        }
 
         console.log('Abriendo primer mercado...');
         mercadoInicial = await abrirMercado(torneoId, transactionalEm);

@@ -6,8 +6,8 @@ import { createJornadaSchema, updateJornadaSchema, findAllJornadaQuerySchema, id
 import { requireAuth, requireAdmin } from '../Auth/auth.requires.js';
 const jornadaRouter = Router();
 
-jornadaRouter.get('/:jornadaId/torneo/:torneoId/ranking', requireAuth/*, validateParams(rankingJornadaTorneoParamsSchema)*/, getRankingTorneoJornada)
-jornadaRouter.get('/',requireAuth, validateQuery(findAllJornadaQuerySchema), findAll);
+jornadaRouter.get('/:jornadaId/torneo/:torneoId/ranking', requireAuth, validateParams(rankingJornadaTorneoParamsSchema), getRankingTorneoJornada)
+jornadaRouter.get('/', requireAuth, validateQuery(findAllJornadaQuerySchema), findAll);
 jornadaRouter.get('/:id', requireAuth, validateParams(idJornadaParamsSchema), findOne);
 jornadaRouter.post('/', requireAdmin, validate(createJornadaSchema), add);
 jornadaRouter.put('/:id', requireAdmin, validateParams(idJornadaParamsSchema), validate(updateJornadaSchema), update);

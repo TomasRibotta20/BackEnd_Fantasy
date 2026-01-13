@@ -354,7 +354,7 @@ const options: swaggerJsdoc.Options = {
   },
   // YAML de paths
   apis: [
-    path.join(__dirname, 'swagger', 'paths', '*.yaml'),
+    path.join(__dirname, '..', 'src', 'swagger', 'paths', '*.yaml'),
   ],
 };
 

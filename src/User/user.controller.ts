@@ -5,8 +5,6 @@ import { orm } from '../shared/db/orm.js';
 import bcrypt from 'bcrypt';
 import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
 
-const em = orm.em;
-
 /**
  * Recupera el perfil del usuario autenticado.
  * @param req El objeto de solicitud de Express (no utilizado en este endpoint, pero se mantiene para la firma).
@@ -16,6 +14,7 @@ const em = orm.em;
 async function getMyProfile(req: Request, res: Response, next: NextFunction) {
   const { user } = req.authUser;
   try {
+    const em = orm.em;
     const userFromDb = await em.findOne(Users, { id: user!.userId });
     if (!userFromDb) {
       throw ErrorFactory.notFound('Usuario no encontrado');
@@ -43,6 +42,7 @@ async function updateMyName(req: Request, res: Response, next: NextFunction) {
   const userId = req.authUser.user!.userId;
   const { username } = req.body;
   try {
+    const em = orm.em;
     const user = await em.findOne(Users, { id: userId });
     if (!user) {
       throw ErrorFactory.notFound('Usuario no encontrado');
@@ -70,6 +70,7 @@ async function updateMyName(req: Request, res: Response, next: NextFunction) {
  */
 async function findAll(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const users = await em.find(Users, {}, { orderBy: { id: 'ASC' } });
     res.status(200).json({ message: 'found all users', data: users });
   } catch (error: any) {
@@ -85,6 +86,7 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
 async function findOne(req: Request, res: Response, next: NextFunction) {
   const id = Number.parseInt(req.params.id);
   try {
+    const em = orm.em;
     const user = await em.findOneOrFail(Users, { id });
     res.status(200).json({ message: 'found user', data: user });
   } catch (error: any) {
@@ -107,6 +109,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
   const hashedPassword = await bcrypt.hash(password, 10);
   req.body.password = hashedPassword;
   try {
+    const em = orm.em;
     const user = em.create(Users, req.body);
     await em.flush();
     res.status(201).json({ message: 'User created successfully', data: user });
@@ -125,6 +128,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
  * @returns Una respuesta HTTP 200 con un mensaje de éxito, o un error HTTP 500, 409, 404 si falla.
  */
 async function update(req: Request, res: Response, next: NextFunction) {
+  const em = orm.em;
   const id = Number.parseInt(req.params.id);
   const { password } = req.body;
   if (password) {
@@ -159,6 +163,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
  */
 async function remove(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const id = Number.parseInt(req.params.id);
     const user = em.getReference(Users, id);
     await em.removeAndFlush(user);

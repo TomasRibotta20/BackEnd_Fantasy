@@ -1,113 +1,499 @@
 /jornadas:
   get:
-    summary: Lista jornadas
-    description: Permite filtrar por temporada, etapa y liga.
+    summary: Obtiene todas las jornadas
+    description: Recupera una lista de todas las jornadas registradas en la base de datos con opciones de filtrado por temporada, etapa y liga.
     tags: [Jornadas]
     parameters:
       - in: query
         name: temporada
-        schema: { type: integer }
-        required: false
+        schema:
+          type: integer
+        description: Filtrar por temporada
+        example: 2024
       - in: query
         name: etapa
-        schema: { type: string }
-        required: false
+        schema:
+          type: string
+        description: Filtrar por etapa (ej. Regular Season, Playoffs)
+        example: 'Regular Season'
       - in: query
         name: liga_id
-        schema: { type: integer }
-        required: false
+        schema:
+          type: integer
+        description: Filtrar por ID de liga
+        example: 253
     responses:
       200:
-        description: Jornadas listadas.
+        description: Jornadas obtenidas exitosamente.
         content:
           application/json:
             schema:
               type: object
               properties:
-                message: { type: string, example: 'Jornadas obtenidas' }
-                count: { type: integer, example: 25 }
+                message:
+                  type: string
+                  example: 'Jornadas obtenidas'
+                count:
+                  type: integer
+                  example: 38
+                  description: Cantidad total de jornadas encontradas
                 data:
                   type: array
-                  items: { $ref: '#/components/schemas/Jornada' }
-      500: { description: Error. }
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      nombre:
+                        type: string
+                        example: 'Regular Season - 1'
+                      temporada:
+                        type: integer
+                        example: 2024
+                      etapa:
+                        type: string
+                        nullable: true
+                        example: 'Regular Season'
+                      liga_id:
+                        type: integer
+                        nullable: true
+                        example: 253
+                      fecha_inicio:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: '2024-08-15T00:00:00Z'
+                      fecha_fin:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: '2024-08-18T23:59:59Z'
+      500:
+        description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error obteniendo jornadas'
   post:
-    summary: Crea una jornada
+    summary: Crea una nueva jornada (solo administrador)
+    description: Crea un nuevo registro de jornada en la base de datos con información de temporada, etapa y fechas.
     tags: [Jornadas]
     requestBody:
       required: true
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/JornadaCreate' }
+          schema:
+            type: object
+            required:
+              - nombre
+              - temporada
+            properties:
+              nombre:
+                type: string
+                example: 'Regular Season - 1'
+                description: Nombre único de la jornada
+              temporada:
+                type: integer
+                example: 2024
+                description: Año de la temporada
+              etapa:
+                type: string
+                nullable: true
+                example: 'Regular Season'
+                description: Etapa del torneo
+              liga_id:
+                type: integer
+                nullable: true
+                example: 253
+                description: ID de la liga en la API externa
+              fecha_inicio:
+                type: string
+                format: date-time
+                nullable: true
+                example: '2024-08-15T00:00:00Z'
+                description: Fecha de inicio de la jornada
+              fecha_fin:
+                type: string
+                format: date-time
+                nullable: true
+                example: '2024-08-18T23:59:59Z'
+                description: Fecha de finalización de la jornada
     responses:
       201:
-        description: Jornada creada.
+        description: Jornada creada exitosamente.
         content:
           application/json:
             schema:
               type: object
               properties:
-                message: { type: string, example: 'Jornada creada' }
-                data: { $ref: '#/components/schemas/Jornada' }
-      409: { description: Nombre duplicado. }
-      400: { description: Datos inválidos. }
-      500: { description: Error. }
+                message:
+                  type: string
+                  example: 'Jornada creada'
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    nombre:
+                      type: string
+                      example: 'Regular Season - 1'
+                    temporada:
+                      type: integer
+                      example: 2024
+                    etapa:
+                      type: string
+                      nullable: true
+                      example: 'Regular Season'
+                    liga_id:
+                      type: integer
+                      nullable: true
+                      example: 253
+                    fecha_inicio:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    fecha_fin:
+                      type: string
+                      format: date-time
+                      nullable: true
+      409:
+        description: Ya existe una jornada con ese nombre.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Ya existe una jornada con ese nombre'
+      500:
+        description: Error del servidor.
 
 /jornadas/{id}:
   get:
-    summary: Obtiene una jornada por ID
+    summary: Obtiene una jornada por su ID
+    description: Recupera los detalles de una jornada específica utilizando su identificador único.
     tags: [Jornadas]
     parameters:
       - in: path
         name: id
         required: true
-        schema: { type: integer }
+        schema:
+          type: integer
+        description: ID de la jornada a recuperar
+        example: 1
     responses:
-      200: { description: Jornada encontrada. }
-      404: { description: No encontrada. }
-      500: { description: Error. }
+      200:
+        description: Jornada encontrada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Jornada encontrada'
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 1
+                    nombre:
+                      type: string
+                      example: 'Regular Season - 1'
+                    temporada:
+                      type: integer
+                      example: 2024
+                    etapa:
+                      type: string
+                      nullable: true
+                      example: 'Regular Season'
+                    liga_id:
+                      type: integer
+                      nullable: true
+                      example: 253
+                    fecha_inicio:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    fecha_fin:
+                      type: string
+                      format: date-time
+                      nullable: true
+      404:
+        description: Jornada no encontrada.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Jornada con ID 1 no encontrada'
+      500:
+        description: Error del servidor.
   put:
-    summary: Reemplaza una jornada
+    summary: Actualiza completamente una jornada (solo administrador)
+    description: Actualiza todos los campos de una jornada específica por su ID.
     tags: [Jornadas]
     parameters:
       - in: path
         name: id
         required: true
-        schema: { type: integer }
+        schema:
+          type: integer
+        description: ID de la jornada a actualizar
+        example: 1
     requestBody:
       required: true
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/JornadaUpdate' }
+          schema:
+            type: object
+            required:
+              - nombre
+              - temporada
+            properties:
+              nombre:
+                type: string
+                example: 'Regular Season - 1'
+              temporada:
+                type: integer
+                example: 2024
+              etapa:
+                type: string
+                nullable: true
+                example: 'Regular Season'
+              liga_id:
+                type: integer
+                nullable: true
+                example: 253
+              fecha_inicio:
+                type: string
+                format: date-time
+                nullable: true
+              fecha_fin:
+                type: string
+                format: date-time
+                nullable: true
     responses:
-      200: { description: Jornada actualizada. }
-      404: { description: No encontrada. }
-      500: { description: Error. }
+      200:
+        description: Jornada actualizada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Jornada actualizada'
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    nombre:
+                      type: string
+                    temporada:
+                      type: integer
+                    etapa:
+                      type: string
+                      nullable: true
+                    liga_id:
+                      type: integer
+                      nullable: true
+                    fecha_inicio:
+                      type: string
+                      format: date-time
+                      nullable: true
+                    fecha_fin:
+                      type: string
+                      format: date-time
+                      nullable: true
+      404:
+        description: Jornada no encontrada.
+      500:
+        description: Error del servidor.
   patch:
-    summary: Actualiza parcialmente una jornada
+    summary: Actualiza parcialmente una jornada (solo administrador)
+    description: Actualiza uno o más campos específicos de una jornada por su ID.
     tags: [Jornadas]
     parameters:
       - in: path
         name: id
         required: true
-        schema: { type: integer }
+        schema:
+          type: integer
+        description: ID de la jornada a actualizar
+        example: 1
     requestBody:
       required: true
       content:
         application/json:
-          schema: { $ref: '#/components/schemas/JornadaPatch' }
+          schema:
+            type: object
+            properties:
+              nombre:
+                type: string
+                example: 'Regular Season - 1'
+              temporada:
+                type: integer
+                example: 2024
+              etapa:
+                type: string
+                nullable: true
+                example: 'Regular Season'
+              liga_id:
+                type: integer
+                nullable: true
+                example: 253
+              fecha_inicio:
+                type: string
+                format: date-time
+                nullable: true
+              fecha_fin:
+                type: string
+                format: date-time
+                nullable: true
     responses:
-      200: { description: Actualizada. }
-      404: { description: No encontrada. }
-      500: { description: Error. }
+      200:
+        description: Jornada actualizada parcialmente exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Jornada actualizada'
+                data:
+                  type: object
+      404:
+        description: Jornada no encontrada.
+      500:
+        description: Error del servidor.
   delete:
-    summary: Elimina una jornada
+    summary: Elimina una jornada (solo administrador)
+    description: Elimina una jornada específica de la base de datos utilizando su identificador único.
     tags: [Jornadas]
     parameters:
       - in: path
         name: id
         required: true
-        schema: { type: integer }
+        schema:
+          type: integer
+        description: ID de la jornada a eliminar
+        example: 1
     responses:
-      200: { description: Jornada eliminada. }
-      404: { description: No encontrada. }
-      500: { description: Error. }
+      200:
+        description: Jornada eliminada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Jornada eliminada'
+      500:
+        description: Error del servidor.
+
+/jornadas/{jornadaId}/torneo/{torneoId}/ranking:
+  get:
+    summary: Obtiene el ranking de equipos de un torneo en una jornada específica
+    description: Recupera la clasificación ordenada de todos los equipos participantes en un torneo para una jornada particular, mostrando puntajes acumulados y de la jornada. Solo accesible para participantes del torneo.
+    tags: [Jornadas]
+    parameters:
+      - in: path
+        name: jornadaId
+        required: true
+        schema:
+          type: integer
+        description: ID de la jornada
+        example: 10
+      - in: path
+        name: torneoId
+        required: true
+        schema:
+          type: integer
+        description: ID del torneo
+        example: 1
+    responses:
+      200:
+        description: Ranking recuperado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Ranking obtenido'
+                data:
+                  type: object
+                  properties:
+                    jornada:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 10
+                        nombre:
+                          type: string
+                          example: 'Regular Season - 10'
+                    torneo:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        nombre:
+                          type: string
+                          example: 'Liga de Campeones 2024'
+                    ranking:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          posicion:
+                            type: integer
+                            example: 1
+                            description: Posición en el ranking
+                          equipoId:
+                            type: integer
+                            example: 5
+                          equipoNombre:
+                            type: string
+                            example: 'Los Invencibles'
+                          usuarioId:
+                            type: integer
+                            example: 10
+                          usuarioNombre:
+                            type: string
+                            example: 'johndoe'
+                          puntaje_acumulado:
+                            type: number
+                            example: 850.5
+                            description: Suma total de puntajes hasta esta jornada
+                          puntaje_jornada:
+                            type: number
+                            nullable: true
+                            example: 85.5
+                            description: Puntaje obtenido en esta jornada específica
+                          es_mi_equipo:
+                            type: boolean
+                            example: false
+                            description: Indica si el equipo pertenece al usuario autenticado
+      403:
+        description: No participas en este torneo o estás expulsado.
+      404:
+        description: Torneo o jornada no encontrada.
+      500:
+        description: Error del servidor.

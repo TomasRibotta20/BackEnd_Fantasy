@@ -1,0 +1,207 @@
+/clausulas/{equipoId}/jugadores/{jugadorId}/blindar:
+  post:
+    summary: Blinda un jugador aumentando su cláusula de rescisión
+    description: Permite al propietario de un equipo aumentar la cláusula de rescisión de uno de sus jugadores gastando presupuesto. El costo se calcula según el ratio de blindaje configurado en el sistema. Esto protege al jugador de compras hostiles por parte de otros equipos.
+    tags: [Cláusulas]
+    parameters:
+      - in: path
+        name: equipoId
+        required: true
+        schema:
+          type: integer
+        description: ID del equipo propietario del jugador
+        example: 1
+      - in: path
+        name: jugadorId
+        required: true
+        schema:
+          type: integer
+        description: ID del jugador a blindar
+        example: 45
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - monto_incremento
+            properties:
+              monto_incremento:
+                type: number
+                example: 5000000
+                description: Monto en el que se incrementará la cláusula del jugador. El costo en presupuesto se calcula dividiendo este monto por el ratio de blindaje configurado.
+    responses:
+      200:
+        description: Jugador blindado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: 'Jugador blindado exitosamente'
+                data:
+                  type: object
+                  properties:
+                    jugador:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 45
+                        nombre:
+                          type: string
+                          example: 'L. Messi'
+                        precio_actual:
+                          type: number
+                          example: 15000000
+                          description: Precio de mercado actual del jugador
+                    costo_presupuesto:
+                      type: number
+                      example: 1000000
+                      description: Cantidad de presupuesto gastado en el blindaje (monto_incremento / ratio_blindaje)
+                    incremento_clausula:
+                      type: number
+                      example: 5000000
+                      description: Monto que aumentó la cláusula
+                    clausula_anterior:
+                      type: number
+                      example: 15000000
+                      description: Valor de la cláusula antes del blindaje
+                    clausula_nueva:
+                      type: number
+                      example: 20000000
+                      description: Nuevo valor de la cláusula después del blindaje
+                    presupuesto_restante:
+                      type: number
+                      example: 44000000
+                      description: Presupuesto disponible del equipo después del blindaje
+      400:
+        description: Presupuesto insuficiente o datos inválidos.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Presupuesto insuficiente. Necesitas $1,000,000 pero solo tienes $500,000'
+      403:
+        description: No tienes permisos para blindar jugadores de este equipo.
+      404:
+        description: El jugador no pertenece a tu equipo o el equipo no existe.
+      500:
+        description: Error del servidor o configuración del juego no encontrada.
+
+/clausulas/{equipoId}/jugadores/{jugadorId}/ejecutar-clausula:
+  post:
+    summary: Ejecuta la cláusula de rescisión de un jugador rival
+    description: Permite comprar un jugador de otro equipo pagando su cláusula de rescisión. El jugador debe estar fuera del período de protección (configurable en días). La transacción es irreversible y el jugador queda protegido en tu equipo durante los días configurados. Se envían notificaciones por email a ambas partes.
+    tags: [Cláusulas]
+    parameters:
+      - in: path
+        name: equipoId
+        required: true
+        schema:
+          type: integer
+        description: ID de tu equipo (comprador)
+        example: 1
+      - in: path
+        name: jugadorId
+        required: true
+        schema:
+          type: integer
+        description: ID del jugador cuya cláusula deseas ejecutar
+        example: 45
+    responses:
+      200:
+        description: Cláusula ejecutada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: '¡Clausulazo exitoso! L. Messi ahora es parte de tu equipo'
+                data:
+                  type: object
+                  properties:
+                    mensaje:
+                      type: string
+                      example: '¡Clausulazo exitoso! L. Messi ahora es parte de tu equipo'
+                    jugador:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 45
+                        nombre:
+                          type: string
+                          example: 'L. Messi'
+                        posicion:
+                          type: string
+                          example: 'Delantero'
+                        precio_mercado:
+                          type: number
+                          example: 15000000
+                          description: Precio de mercado base del jugador
+                        clausula_pagada:
+                          type: number
+                          example: 20000000
+                          description: Monto total pagado (puede ser mayor al precio de mercado si fue blindado)
+                    equipo_anterior:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 5
+                        nombre:
+                          type: string
+                          example: 'Los Invencibles'
+                        usuario_email:
+                          type: string
+                          example: 'vendedor@example.com'
+                    presupuesto_restante:
+                      type: number
+                      example: 30000000
+                      description: Presupuesto disponible de tu equipo después de la compra
+                    protegido_hasta:
+                      type: string
+                      format: date-time
+                      example: '2026-01-20T10:30:00Z'
+                      description: Fecha hasta la cual el jugador estará protegido en tu equipo (no puede ser comprado por otros)
+      400:
+        description: Error en la ejecución de la cláusula.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  examples:
+                    presupuesto_insuficiente:
+                      value: 'Presupuesto insuficiente. Necesitas $20,000,000 pero tienes $15,000,000'
+                    equipo_completo:
+                      value: 'Tu equipo está completo (15 jugadores)'
+                    jugador_protegido:
+                      value: 'Este jugador está protegido por 3 día(s) más'
+                    jugador_propio:
+                      value: 'No puedes ejecutar la cláusula de tu propio jugador'
+                    sin_posicion:
+                      value: 'El jugador no tiene posición definida'
+      403:
+        description: No tienes permisos para ejecutar cláusulas con este equipo o estás expulsado del torneo.
+      404:
+        description: El jugador no está disponible en este torneo, tu equipo no existe, o el jugador no pertenece a ningún equipo.
+      500:
+        description: Error del servidor o configuración del juego no encontrada.

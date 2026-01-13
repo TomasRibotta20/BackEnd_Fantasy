@@ -12,8 +12,8 @@ import { validate, validateParams, validateQuery } from '../shared/zod/validate.
 import { createPlayerSchema, updatePlayerSchema, findAllPlayersQuerySchema, idPlayerParamsSchema } from './player.schema.js';
 
 export const playerRouter = Router();
-playerRouter.get('/', requireAuth, getPlayers);
-playerRouter.get('/', requireAuth, validateQuery(findAllPlayersQuerySchema), findAll);
+playerRouter.get('/', requireAuth, validateQuery(findAllPlayersQuerySchema), getPlayers);
+playerRouter.get('/', requireAuth, findAll);
 playerRouter.get('/:id', requireAuth, validateParams(idPlayerParamsSchema), findOne);
 playerRouter.post('/', requireAdmin, validate(createPlayerSchema), add);
 playerRouter.put('/:id', requireAdmin, validateParams(idPlayerParamsSchema), validate(updatePlayerSchema), update);

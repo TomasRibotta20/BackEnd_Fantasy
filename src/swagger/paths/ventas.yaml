@@ -1,0 +1,608 @@
+/ventas/ofertar:
+  post:
+    summary: Crea o actualiza una oferta de compra por un jugador
+    description: Permite al usuario crear una nueva oferta de compra por un jugador de otro equipo o actualizar una oferta existente. El monto se bloquea del presupuesto.
+    tags: [Ventas]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - equipoJugador_id
+              - monto_ofertado
+            properties:
+              equipoJugador_id:
+                type: integer
+                example: 5
+                description: ID de la relación equipo-jugador (el jugador que se desea comprar)
+              monto_ofertado:
+                type: number
+                example: 8000000
+                description: Monto ofrecido (debe ser igual o mayor al precio actual del jugador)
+              mensaje_oferente:
+                type: string
+                example: 'Me interesa mucho este jugador para mi delantera'
+                description: Mensaje opcional del oferente al vendedor
+    responses:
+      201:
+        description: Oferta creada o actualizada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Oferta creada exitosamente'
+                data:
+                  type: object
+                  properties:
+                    oferta:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        monto_ofertado:
+                          type: number
+                          example: 8000000
+                        estado:
+                          type: string
+                          enum: [PENDIENTE, ACEPTADA, RECHAZADA, CANCELADA, VENCIDA]
+                          example: 'PENDIENTE'
+                        fecha_creacion:
+                          type: string
+                          format: date-time
+                        fecha_vencimiento:
+                          type: string
+                          format: date-time
+                          description: 48 horas desde la creación
+                        mensaje_oferente:
+                          type: string
+                    presupuesto:
+                      type: object
+                      properties:
+                        total:
+                          type: number
+                          example: 50000000
+                        bloqueado:
+                          type: number
+                          example: 15000000
+                        disponible:
+                          type: number
+                          example: 35000000
+      400:
+        description: Datos inválidos, monto menor al precio actual del jugador, o presupuesto insuficiente.
+      403:
+        description: No puedes ofertar por tu propio jugador o has sido expulsado del torneo.
+      404:
+        description: Jugador no encontrado o no tienes equipo activo en este torneo.
+      500:
+        description: Error del servidor.
+
+/ventas/mis-ofertas-enviadas:
+  get:
+    summary: Obtiene las ofertas enviadas por el usuario
+    description: Recupera todas las ofertas de compra realizadas por el usuario con opciones de filtrado y paginación.
+    tags: [Ventas]
+    parameters:
+      - in: query
+        name: torneoId
+        required: true
+        schema:
+          type: integer
+        description: ID del torneo
+        example: 1
+      - in: query
+        name: estado
+        schema:
+          type: string
+          enum: [PENDIENTE, ACEPTADA, RECHAZADA, CANCELADA, VENCIDA]
+        description: Filtrar por estado de la oferta
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          default: 20
+        description: Cantidad de resultados por página
+      - in: query
+        name: offset
+        schema:
+          type: integer
+          default: 0
+        description: Desplazamiento para paginación
+    responses:
+      200:
+        description: Ofertas enviadas recuperadas exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Ofertas enviadas obtenidas exitosamente'
+                data:
+                  type: object
+                  properties:
+                    ofertas:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          estado:
+                            type: string
+                            enum: [PENDIENTE, ACEPTADA, RECHAZADA, CANCELADA, VENCIDA]
+                          monto_ofertado:
+                            type: number
+                          fecha_creacion:
+                            type: string
+                            format: date-time
+                          fecha_vencimiento:
+                            type: string
+                            format: date-time
+                          horas_restantes:
+                            type: integer
+                            nullable: true
+                            description: Horas restantes si está pendiente
+                          mensaje_oferente:
+                            type: string
+                          mensaje_respuesta:
+                            type: string
+                            nullable: true
+                          torneo:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              nombre:
+                                type: string
+                          jugador:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              nombre:
+                                type: string
+                              foto:
+                                type: string
+                              posicion:
+                                type: string
+                              club:
+                                type: string
+                              precio_actual:
+                                type: number
+                          vendedor:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              nombre:
+                                type: string
+                              usuario:
+                                type: string
+                    total:
+                      type: integer
+                      example: 15
+                    limit:
+                      type: integer
+                      example: 20
+                    offset:
+                      type: integer
+                      example: 0
+      403:
+        description: No tienes un equipo activo en este torneo o has sido expulsado.
+      404:
+        description: No participas en el torneo.
+      500:
+        description: Error del servidor.
+
+/ventas/mis-ofertas-recibidas:
+  get:
+    summary: Obtiene las ofertas recibidas por el usuario
+    description: Recupera todas las ofertas de compra recibidas por los jugadores del equipo del usuario con opciones de filtrado y paginación.
+    tags: [Ventas]
+    parameters:
+      - in: query
+        name: torneoId
+        required: true
+        schema:
+          type: integer
+        description: ID del torneo
+        example: 1
+      - in: query
+        name: estado
+        schema:
+          type: string
+          enum: [PENDIENTE, ACEPTADA, RECHAZADA, CANCELADA, VENCIDA]
+        description: Filtrar por estado de la oferta
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          default: 20
+        description: Cantidad de resultados por página
+      - in: query
+        name: offset
+        schema:
+          type: integer
+          default: 0
+        description: Desplazamiento para paginación
+    responses:
+      200:
+        description: Ofertas recibidas recuperadas exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Ofertas recibidas obtenidas exitosamente'
+                data:
+                  type: object
+                  properties:
+                    ofertas:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                          estado:
+                            type: string
+                            enum: [PENDIENTE, ACEPTADA, RECHAZADA, CANCELADA, VENCIDA]
+                          monto_ofertado:
+                            type: number
+                          fecha_creacion:
+                            type: string
+                            format: date-time
+                          fecha_vencimiento:
+                            type: string
+                            format: date-time
+                          horas_restantes:
+                            type: integer
+                            nullable: true
+                          mensaje_oferente:
+                            type: string
+                          mensaje_respuesta:
+                            type: string
+                            nullable: true
+                          torneo:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              nombre:
+                                type: string
+                          jugador:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              nombre:
+                                type: string
+                              foto:
+                                type: string
+                              posicion:
+                                type: string
+                              club:
+                                type: string
+                              precio_actual:
+                                type: number
+                          oferente:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              nombre:
+                                type: string
+                              usuario:
+                                type: string
+                    total:
+                      type: integer
+                    limit:
+                      type: integer
+                    offset:
+                      type: integer
+      403:
+        description: No tienes un equipo activo en este torneo o has sido expulsado.
+      404:
+        description: No participas en el torneo.
+      500:
+        description: Error del servidor.
+
+/ventas/{ofertaId}:
+  get:
+    summary: Obtiene el detalle completo de una oferta
+    description: Recupera la información detallada de una oferta específica. Solo accesible por el oferente o el vendedor.
+    tags: [Ventas]
+    parameters:
+      - in: path
+        name: ofertaId
+        required: true
+        schema:
+          type: integer
+        description: ID de la oferta
+        example: 1
+    responses:
+      200:
+        description: Detalle de oferta recuperado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Detalle de oferta obtenido exitosamente'
+                data:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    estado:
+                      type: string
+                      enum: [PENDIENTE, ACEPTADA, RECHAZADA, CANCELADA, VENCIDA]
+                    monto_ofertado:
+                      type: number
+                    fecha_creacion:
+                      type: string
+                      format: date-time
+                    fecha_vencimiento:
+                      type: string
+                      format: date-time
+                    horas_restantes:
+                      type: integer
+                      nullable: true
+                    mensaje_oferente:
+                      type: string
+                    mensaje_respuesta:
+                      type: string
+                      nullable: true
+                    torneo:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        nombre:
+                          type: string
+                    jugador:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        nombre:
+                          type: string
+                        foto:
+                          type: string
+                        posicion:
+                          type: string
+                        club:
+                          type: string
+                        precio_actual:
+                          type: number
+                    oferente:
+                      type: object
+                      description: Solo si eres el vendedor
+                      properties:
+                        id:
+                          type: integer
+                        nombre:
+                          type: string
+                        usuario:
+                          type: string
+                    vendedor:
+                      type: object
+                      description: Solo si eres el oferente
+                      properties:
+                        id:
+                          type: integer
+                        nombre:
+                          type: string
+                        usuario:
+                          type: string
+      403:
+        description: No tienes permiso para ver esta oferta.
+      404:
+        description: Oferta no encontrada.
+      500:
+        description: Error del servidor.
+
+/ventas/{ofertaId}/aceptar:
+  post:
+    summary: Acepta una oferta de compra recibida
+    description: Permite al vendedor aceptar una oferta, transfiriendo el jugador al comprador y el dinero al vendedor. Rechaza automáticamente otras ofertas por el mismo jugador.
+    tags: [Ventas]
+    parameters:
+      - in: path
+        name: ofertaId
+        required: true
+        schema:
+          type: integer
+        description: ID de la oferta a aceptar
+        example: 1
+    responses:
+      200:
+        description: Oferta aceptada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Oferta aceptada exitosamente'
+                data:
+                  type: object
+                  properties:
+                    transferencia:
+                      type: object
+                      properties:
+                        jugador:
+                          type: string
+                          example: 'L. Messi'
+                        de:
+                          type: string
+                          example: 'Los Invencibles'
+                        a:
+                          type: string
+                          example: 'Los Campeones'
+                        monto:
+                          type: number
+                          example: 8000000
+                    presupuesto:
+                      type: object
+                      properties:
+                        total:
+                          type: number
+                          example: 58000000
+                        bloqueado:
+                          type: number
+                          example: 0
+                        disponible:
+                          type: number
+                          example: 58000000
+      400:
+        description: La oferta ya fue procesada, venció, el comprador no tiene cupo o presupuesto suficiente.
+      403:
+        description: No tienes permiso para aceptar esta oferta.
+      404:
+        description: Oferta no encontrada.
+      500:
+        description: Error del servidor.
+
+/ventas/{ofertaId}/rechazar:
+  post:
+    summary: Rechaza una oferta de compra recibida
+    description: Permite al vendedor rechazar una oferta pendiente, liberando el presupuesto bloqueado del oferente.
+    tags: [Ventas]
+    parameters:
+      - in: path
+        name: ofertaId
+        required: true
+        schema:
+          type: integer
+        description: ID de la oferta a rechazar
+        example: 1
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              mensaje_respuesta:
+                type: string
+                example: 'Gracias por tu oferta, pero no puedo vender este jugador en este momento'
+                description: Mensaje opcional del vendedor al oferente
+    responses:
+      200:
+        description: Oferta rechazada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Oferta rechazada exitosamente'
+                data:
+                  type: object
+                  properties:
+                    presupuesto_oferente:
+                      type: object
+                      description: Presupuesto del oferente después de liberar el monto
+                      properties:
+                        total:
+                          type: number
+                        bloqueado:
+                          type: number
+                        disponible:
+                          type: number
+      400:
+        description: La oferta ya fue procesada.
+      403:
+        description: No tienes permiso para rechazar esta oferta.
+      404:
+        description: Oferta no encontrada.
+      500:
+        description: Error del servidor.
+
+/ventas/{ofertaId}/cancelar:
+  delete:
+    summary: Cancela una oferta enviada
+    description: Permite al oferente cancelar su propia oferta pendiente, liberando el presupuesto bloqueado.
+    tags: [Ventas]
+    parameters:
+      - in: path
+        name: ofertaId
+        required: true
+        schema:
+          type: integer
+        description: ID de la oferta a cancelar
+        example: 1
+    responses:
+      200:
+        description: Oferta cancelada exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Oferta cancelada exitosamente'
+                data:
+                  type: object
+                  properties:
+                    presupuesto:
+                      type: object
+                      properties:
+                        total:
+                          type: number
+                          example: 50000000
+                        bloqueado:
+                          type: number
+                          example: 7000000
+                        disponible:
+                          type: number
+                          example: 43000000
+      400:
+        description: La oferta ya fue procesada.
+      403:
+        description: No tienes permiso para cancelar esta oferta.
+      404:
+        description: Oferta no encontrada.
+      500:
+        description: Error del servidor.
+
+/ventas/sistema/procesar-vencidas:
+  post:
+    summary: Procesa todas las ofertas vencidas (solo administrador)
+    description: Endpoint del sistema para procesar automáticamente ofertas cuyo tiempo de 48 horas ha expirado, liberando presupuestos bloqueados. Ideal para ejecutarse con un cron job.
+    tags: [Ventas]
+    responses:
+      200:
+        description: Ofertas vencidas procesadas exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Se procesaron 5 ofertas vencidas'
+                data:
+                  type: object
+                  properties:
+                    cantidad:
+                      type: integer
+                      example: 5
+                      description: Número de ofertas vencidas procesadas
+      500:
+        description: Error del servidor.

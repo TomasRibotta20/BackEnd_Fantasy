@@ -4,7 +4,6 @@ import { orm } from '../shared/db/orm.js';
 import { Jornada } from './Jornada.entity.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 
-const em = orm.em;
 /**
  * Recupera todas las jornadas de la base de datos
  * @param req El objeto de solicitud de Express (no utilizado en este endpoint, pero se mantiene para la firma).
@@ -13,6 +12,7 @@ const em = orm.em;
  */
 async function findAll(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const { temporada, etapa, liga_id } = req.query;
     const where: any = {};
     if (temporada) where.temporada = Number(temporada);
@@ -42,6 +42,7 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
 async function findOne(req: Request, res: Response, next: NextFunction) {
   const id = Number(req.params.id);
   try {
+    const em = orm.em;
     const jornada = await em.findOneOrFail(Jornada, { id });
     res.status(200).json({ message: 'Jornada encontrada', data: jornada });
   } catch (error: any) {
@@ -61,6 +62,7 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
  */
 async function add(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const { nombre, temporada, etapa, liga_id, fecha_inicio, fecha_fin } = req.body;
     const jornada = em.create(Jornada, {
       nombre,
@@ -90,8 +92,8 @@ async function add(req: Request, res: Response, next: NextFunction) {
 async function update(req: Request, res: Response, next: NextFunction) {
   const id = Number(req.params.id);
   try {
+    const em = orm.em;
     const jornada = await em.findOneOrFail(Jornada, id);
-
     const { nombre, temporada, etapa, liga_id, fecha_inicio, fecha_fin } = req.body;
 
     if (nombre !== undefined) jornada.nombre = nombre;
@@ -118,6 +120,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
  */
 async function remove(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const id = Number(req.params.id);
     const jornada = em.getReference(Jornada, id );
     await em.removeAndFlush(jornada);

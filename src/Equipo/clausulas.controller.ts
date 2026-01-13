@@ -1,17 +1,18 @@
-import e, { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { blindarJugador, ejecutarClausula } from './clausulas.service.js';
 import { AppError, ErrorFactory } from '../shared/errors/errors.factory.js';
-
+import { orm } from '../shared/db/orm.js';
 /**
  * Controller para blindar un jugador (subir su cláusula)
  */
 export async function blindarJugadorController(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const equipoId = Number(req.params.equipoId);
     const jugadorId = Number(req.params.jugadorId);
     const { monto_incremento } = req.body;
     const userId = req.authUser.user?.userId!;
-    const resultado = await blindarJugador(equipoId, jugadorId, monto_incremento, userId);
+    const resultado = await blindarJugador(em, equipoId, jugadorId, monto_incremento, userId);
     res.status(200).json({
       success: true,
       message: 'Jugador blindado exitosamente',
@@ -31,11 +32,12 @@ export async function blindarJugadorController(req: Request, res: Response, next
  */
 export async function ejecutarClausulaController(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const equipoId = Number(req.params.equipoId);
     const jugadorId = Number(req.params.jugadorId);
     const userId = req.authUser.user?.userId!;
 
-    const resultado = await ejecutarClausula(equipoId, jugadorId, userId);
+    const resultado = await ejecutarClausula(em, equipoId, jugadorId, userId);
 
     res.status(200).json({
       success: true,

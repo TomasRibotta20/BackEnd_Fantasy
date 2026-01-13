@@ -1,7 +1,7 @@
 /clubs:
   get:
     summary: Obtiene todos los clubes
-    description: Recupera una lista completa de todos los clubes registrados en la base de datos.
+    description: Recupera una lista completa de todos los clubes registrados en la base de datos, ordenados por ID de forma ascendente.
     tags: [Clubs]
     responses:
       200:
@@ -27,17 +27,33 @@
               properties:
                 message:
                   type: string
-                  example: 'Error interno del servidor'
+                  example: 'Error al obtener los clubes'
   post:
-    summary: Crea un nuevo club
-    description: Crea un nuevo registro de club en la base de datos.
+    summary: Crea un nuevo club (solo administrador)
+    description: Agrega un nuevo club a la base de datos. El nombre del club debe ser único.
     tags: [Clubs]
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Club'
+            type: object
+            required:
+              - nombre
+              - api_football_id
+            properties:
+              nombre:
+                type: string
+                example: 'Manchester City'
+                description: Nombre único del club
+              logo:
+                type: string
+                example: 'https://example.com/logo.png'
+                description: URL del logo del club
+              api_football_id:
+                type: integer
+                example: 50
+                description: ID del club en la API de Football
     responses:
       201:
         description: Club creado exitosamente.
@@ -54,7 +70,15 @@
       400:
         description: Datos de entrada inválidos.
       409:
-        description: Ya existe un club con esa descripción.
+        description: Ya existe un club con ese nombre.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Ya existe un club con esa descripción'
       500:
         description: Error del servidor.
 
@@ -69,8 +93,7 @@
         required: true
         schema:
           type: integer
-          format: int64
-        description: ID numérico del club a recuperar.
+        description: ID del club a recuperar
         example: 1
     responses:
       200:
@@ -87,11 +110,19 @@
                   $ref: '#/components/schemas/Club'
       404:
         description: Club no encontrado.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Club con ID 1 no encontrado'
       500:
         description: Error del servidor.
   put:
-    summary: Actualiza un club existente
-    description: Actualiza completamente la información de un club específico por su ID.
+    summary: Actualiza completamente un club (solo administrador)
+    description: Actualiza todos los campos de un club específico por su ID.
     tags: [Clubs]
     parameters:
       - in: path
@@ -99,15 +130,27 @@
         required: true
         schema:
           type: integer
-          format: int64
-        description: ID numérico del club a actualizar.
+        description: ID del club a actualizar
         example: 1
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Club'
+            type: object
+            required:
+              - nombre
+              - api_football_id
+            properties:
+              nombre:
+                type: string
+                example: 'Manchester City FC'
+              logo:
+                type: string
+                example: 'https://example.com/new-logo.png'
+              api_football_id:
+                type: integer
+                example: 50
     responses:
       200:
         description: Club actualizado exitosamente.
@@ -119,17 +162,35 @@
                 message:
                   type: string
                   example: 'club updated'
+                data:
+                  $ref: '#/components/schemas/Club'
       400:
         description: Datos de entrada inválidos.
       404:
         description: Club no encontrado.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Club con ID 1 no encontrado'
       409:
-        description: Conflicto al actualizar el club.
+        description: Ya existe un club con ese nombre.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Ya existe un club con esa descripción'
       500:
         description: Error del servidor.
   patch:
-    summary: Actualiza parcialmente un club existente
-    description: Realiza una actualización parcial de la información de un club específico por su ID.
+    summary: Actualiza parcialmente un club (solo administrador)
+    description: Actualiza uno o más campos específicos de un club por su ID.
     tags: [Clubs]
     parameters:
       - in: path
@@ -137,15 +198,24 @@
         required: true
         schema:
           type: integer
-          format: int64
-        description: ID numérico del club a actualizar.
+        description: ID del club a actualizar
         example: 1
     requestBody:
       required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Club'
+            type: object
+            properties:
+              nombre:
+                type: string
+                example: 'Manchester City FC'
+              logo:
+                type: string
+                example: 'https://example.com/new-logo.png'
+              api_football_id:
+                type: integer
+                example: 50
     responses:
       200:
         description: Club actualizado parcialmente exitosamente.
@@ -157,16 +227,18 @@
                 message:
                   type: string
                   example: 'club updated'
+                data:
+                  $ref: '#/components/schemas/Club'
       400:
         description: Datos de entrada inválidos.
       404:
         description: Club no encontrado.
       409:
-        description: Conflicto al actualizar el club.
+        description: Ya existe un club con ese nombre.
       500:
         description: Error del servidor.
   delete:
-    summary: Elimina un club por su ID
+    summary: Elimina un club (solo administrador)
     description: Elimina un club específico de la base de datos utilizando su identificador único.
     tags: [Clubs]
     parameters:
@@ -175,8 +247,7 @@
         required: true
         schema:
           type: integer
-          format: int64
-        description: ID numérico del club a eliminar.
+        description: ID del club a eliminar
         example: 1
     responses:
       200:
@@ -191,3 +262,11 @@
                   example: 'club deleted'
       500:
         description: Error del servidor.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Error al eliminar el club'

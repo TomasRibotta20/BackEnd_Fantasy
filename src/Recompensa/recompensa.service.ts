@@ -200,12 +200,7 @@ function seleccionarRangoPorPeso(distribucion: RangoPrecio[]): RangoPrecio {
   return distribucion[0];
 }
 
-async function procesarSaldo(
-  em: EntityManager,
-  recompensa: Recompensa,
-  premioConfig: Saldo,
-  usuarioId: number
-) {
+async function procesarSaldo(em: EntityManager, recompensa: Recompensa, premioConfig: Saldo, usuarioId: number) {
   const monto = premioConfig.monto;
   const torneoId = recompensa.torneo_usuario.torneo.id!;
   
@@ -224,12 +219,7 @@ async function procesarSaldo(
   };
 }
 
-async function procesarRuleta(
-  em: EntityManager,
-  recompensa: Recompensa,
-  premioConfig: Ruleta,
-  usuarioId: number
-) {
+async function procesarRuleta(em: EntityManager, recompensa: Recompensa, premioConfig: Ruleta, usuarioId: number) {
   const torneoId = recompensa.torneo_usuario.torneo.id!;
   const cantidad = await em.count(EquipoJugador, { 
     equipo: { torneo_usuario: { usuario: usuarioId, torneo: torneoId } } 
@@ -321,12 +311,7 @@ async function procesarRuleta(
   };
 }
 
-async function procesarPlayerPick(
-  em: EntityManager,
-  recompensa: Recompensa,
-  premioConfig: PlayerPick,
-  usuarioId: number
-) {
+async function procesarPlayerPick(em: EntityManager, recompensa: Recompensa, premioConfig: PlayerPick, usuarioId: number) {
   const torneoId = recompensa.torneo_usuario.torneo.id!;
   const cantidadObjetivo = premioConfig.configuracion.cantidadOpciones || 3;
   const opcionesEncontradas: number[] = [];
@@ -407,11 +392,7 @@ async function procesarPicksExpiradosDelUsuario(em: EntityManager, usuarioId: nu
   await em.flush();
 }
 
-async function procesarPickExpirado(
-  em: EntityManager,
-  recompensa: Recompensa,
-  usuarioId: number
-) {
+async function procesarPickExpirado(em: EntityManager, recompensa: Recompensa, usuarioId: number) {
   const torneoId = recompensa.torneo_usuario.torneo.id!;
   const tier = calcularTierPorPosicion(recompensa.posicion_jornada);
 

@@ -1,0 +1,297 @@
+/precios/preview/{clubId}:
+  get:
+    summary: Obtiene precios sugeridos por IA para un club (sin guardar)
+    description: Calcula los precios sugeridos por inteligencia artificial para todos los jugadores de un club específico. Esta operación NO guarda los precios en la base de datos, solo los muestra como preview.
+    tags: [Historial Precio]
+    parameters:
+      - in: path
+        name: clubId
+        required: true
+        schema:
+          type: integer
+        description: ID del club
+        example: 1
+    responses:
+      200:
+        description: Precios calculados exitosamente (no guardados).
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                mensaje:
+                  type: string
+                  example: 'Precios calculados exitosamente (NO guardados en BD)'
+                data:
+                  type: object
+                  properties:
+                    club:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        nombre:
+                          type: string
+                          example: 'Manchester City'
+                    estadisticas:
+                      type: object
+                      properties:
+                        total_jugadores:
+                          type: integer
+                          example: 25
+                          description: Total de jugadores en el club
+                        jugadores_con_precio:
+                          type: integer
+                          example: 25
+                          description: Jugadores que recibieron precio sugerido
+                        precio_promedio:
+                          type: integer
+                          example: 5000000
+                          description: Precio promedio sugerido
+                        precio_maximo:
+                          type: integer
+                          example: 15000000
+                          description: Precio más alto sugerido
+                        precio_minimo:
+                          type: integer
+                          example: 1000000
+                          description: Precio más bajo sugerido
+                    jugadores:
+                      type: array
+                      description: Lista ordenada de jugadores por precio sugerido (descendente)
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          nombre:
+                            type: string
+                            example: 'E. Haaland'
+                          posicion:
+                            type: string
+                            example: 'Delantero'
+                          edad:
+                            type: integer
+                            example: 23
+                          precio_sugerido:
+                            type: integer
+                            nullable: true
+                            example: 15000000
+                            description: Precio calculado por IA
+                          precio_actual:
+                            type: integer
+                            nullable: true
+                            example: 12000000
+                            description: Precio actual en la base de datos
+      404:
+        description: Club no encontrado o sin jugadores.
+      500:
+        description: Error del servidor o error de la API de IA.
+
+/precios/calcular/{clubId}:
+  post:
+    summary: Calcula y guarda los precios de un club
+    description: Calcula los precios sugeridos por IA para todos los jugadores de un club y los guarda en la base de datos, actualizando el precio_actual de cada jugador y creando registros en el historial de precios.
+    tags: [Historial Precio]
+    parameters:
+      - in: path
+        name: clubId
+        required: true
+        schema:
+          type: integer
+        description: ID del club
+        example: 1
+    responses:
+      200:
+        description: Precios calculados y guardados exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                mensaje:
+                  type: string
+                  example: 'Precios calculados y guardados exitosamente'
+                data:
+                  type: object
+                  properties:
+                    club:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        nombre:
+                          type: string
+                    estadisticas:
+                      type: object
+                      properties:
+                        total_jugadores:
+                          type: integer
+                        jugadores_con_precio:
+                          type: integer
+                        precio_promedio:
+                          type: integer
+                        precio_maximo:
+                          type: integer
+                        precio_minimo:
+                          type: integer
+                    resultado_guardado:
+                      type: object
+                      properties:
+                        precios_creados:
+                          type: integer
+                          example: 15
+                          description: Jugadores que recibieron precio por primera vez
+                        precios_actualizados:
+                          type: integer
+                          example: 10
+                          description: Jugadores con precio actualizado
+                        errores:
+                          type: integer
+                          example: 0
+                          description: Cantidad de errores durante el proceso
+                        total_procesado:
+                          type: integer
+                          example: 25
+                          description: Total de jugadores procesados exitosamente
+      404:
+        description: Club no encontrado o sin jugadores.
+      500:
+        description: Error del servidor o error guardando en base de datos.
+
+/precios/calcular-todos:
+  post:
+    summary: Calcula y guarda precios para todos los clubes
+    description: Ejecuta el cálculo de precios por IA para TODOS los clubes de la liga, guardando los resultados en la base de datos. Proceso extenso que puede tardar varios minutos.
+    tags: [Historial Precio]
+    responses:
+      200:
+        description: Proceso completado para todos los clubes.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                mensaje:
+                  type: string
+                  example: 'Proceso completado'
+                data:
+                  type: object
+                  properties:
+                    total_clubes:
+                      type: integer
+                      example: 20
+                      description: Total de clubes procesados
+                    clubes_exitosos:
+                      type: integer
+                      example: 18
+                      description: Clubes procesados correctamente
+                    clubes_con_error:
+                      type: integer
+                      example: 2
+                      description: Clubes que generaron error
+                    detalle:
+                      type: array
+                      description: Detalle del resultado por cada club
+                      items:
+                        type: object
+                        properties:
+                          club:
+                            type: string
+                            example: 'Manchester City'
+                          exitoso:
+                            type: boolean
+                            example: true
+                          precios_creados:
+                            type: integer
+                            example: 15
+                          precios_actualizados:
+                            type: integer
+                            example: 10
+                          errores:
+                            type: integer
+                            example: 0
+                          total_procesado:
+                            type: integer
+                            example: 25
+                          error:
+                            type: string
+                            nullable: true
+                            description: Mensaje de error si exitoso es false
+      500:
+        description: Error del servidor durante el proceso masivo.
+
+/precios/actualizar-por-rendimiento/{jornadaId}:
+  post:
+    summary: Actualiza precios según rendimiento en la jornada
+    description: Actualiza los precios de todos los jugadores basándose en su rendimiento (puntaje) en la jornada especificada. Aplica ajustes base, análisis de tendencias de las últimas 3 jornadas, y crea registros en el historial de precios. Los jugadores sin estadísticas o no convocados mantienen su precio sin cambios.
+    tags: [Historial Precio]
+    parameters:
+      - in: path
+        name: jornadaId
+        required: true
+        schema:
+          type: integer
+        description: ID de la jornada
+        example: 10
+    responses:
+      200:
+        description: Precios actualizados por rendimiento exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                mensaje:
+                  type: string
+                  example: 'Precios actualizados por rendimiento'
+                data:
+                  type: object
+                  properties:
+                    total_jugadores_procesados:
+                      type: integer
+                      example: 250
+                      description: Total de jugadores evaluados
+                    precios_actualizados:
+                      type: integer
+                      example: 180
+                      description: Jugadores con cambio de precio (ajuste ≠ 0%)
+                    precios_sin_cambio:
+                      type: integer
+                      example: 30
+                      description: Jugadores con ajuste de 0%
+                    precios_sin_datos:
+                      type: integer
+                      example: 20
+                      description: Jugadores en partidos sin estadísticas disponibles
+                    jugadores_no_convocados:
+                      type: integer
+                      example: 15
+                      description: Jugadores que no jugaron en la jornada
+                    errores:
+                      type: integer
+                      example: 5
+                      description: Errores durante el procesamiento
+                    mensaje:
+                      type: string
+                      nullable: true
+                      example: 'Los precios ya fueron procesados para esta jornada'
+                      description: Mensaje adicional si ya se procesó la jornada
+      404:
+        description: Jornada no encontrada.
+      500:
+        description: Error del servidor durante la actualización de precios.

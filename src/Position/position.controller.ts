@@ -4,8 +4,6 @@ import { Position } from './position.entity.js';
 import { orm } from '../shared/db/orm.js';
 import { ErrorFactory } from '../shared/errors/errors.factory.js';
 
-const em = orm.em;
-
 /**
  * Recupera todas las posiciones de la base de datos.
  * @param req El objeto de solicitud de Express (no utilizado en este endpoint, pero se mantiene para la firma).
@@ -14,6 +12,7 @@ const em = orm.em;
  */
 async function findAll(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const positions = await em.find(Position, {}, { orderBy: { id: 'ASC' } });
     res.status(200).json({ message: 'found all positions', data: positions });
   } catch (error: any) {
@@ -30,6 +29,7 @@ async function findAll(req: Request, res: Response, next: NextFunction) {
 async function findOne(req: Request, res: Response, next: NextFunction) {
   const id = Number.parseInt(req.params.id);
   try {
+    const em = orm.em;
     const position = await em.findOneOrFail(Position, { id });
     res.status(200).json({ message: 'found position', data: position });
   } catch (error: any) {
@@ -48,9 +48,10 @@ async function findOne(req: Request, res: Response, next: NextFunction) {
  */
 async function add(req: Request, res: Response, next: NextFunction) {
   try {
-    const position = em.create(Position, req.body);
+    const em = orm.em;
+    const posicion = em.create(Position, req.body);
     await em.flush();
-    res.status(201).json({ message: 'New position succesfuly created', data: position });
+    res.status(201).json({ message: 'New position succesfuly created', data: posicion });
   } catch (error: any) {
     if (error.code === 'ER_DUP_ENTRY' || error.errno === 1062) {
       return next(ErrorFactory.duplicate('Ya existe una posición con esa descripción'));
@@ -68,6 +69,7 @@ async function add(req: Request, res: Response, next: NextFunction) {
 async function update(req: Request, res: Response, next: NextFunction) {
   const id = Number.parseInt(req.params.id);
   try {
+    const em = orm.em;
     const positionToUpdate = await em.findOneOrFail(Position, { id });
     em.assign(positionToUpdate, req.body);
     await em.flush();
@@ -91,6 +93,7 @@ async function update(req: Request, res: Response, next: NextFunction) {
  */
 async function remove(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const id = Number.parseInt(req.params.id);
     const position = em.getReference(Position, id);
     await em.removeAndFlush(position);

@@ -15,8 +15,6 @@ import { procesarPicksExpiradosDelUsuario, addSaldoLocal, ficharJugadorLocal } f
 import { TorneoUsuario } from '../Torneo/torneoUsuario.entity.js';
 import { EstadoTorneo } from '../Torneo/torneo.entity.js';
 
-const em = orm.em;
-
 /**
  * Calcula el tier de premio según la posición en la jornada
  * @param posicion - Posición del usuario en la jornada
@@ -31,6 +29,7 @@ export function calcularTierPorPosicion(posicion: number): Tier {
 
 async function getPendientes(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const usuarioId = req.authUser.user?.userId!;
     await procesarPicksExpiradosDelUsuario(em, usuarioId);
     const pendientes = await em.find(Recompensa, {
@@ -67,6 +66,7 @@ async function getPendientes(req: Request, res: Response, next: NextFunction) {
 
 async function getPendientesPorTorneo(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const usuarioId = req.authUser.user?.userId!;
     const torneoId = Number(req.params.torneoId);
     const torneoUsuario = await em.findOne(TorneoUsuario, {
@@ -122,6 +122,7 @@ async function getPendientesPorTorneo(req: Request, res: Response, next: NextFun
 
 async function getHistorialRecompensasPorTorneo(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const usuarioId = req.authUser.user?.userId!;
     const torneoId = Number(req.params.torneoId);
     const torneoUsuario = await em.findOne(TorneoUsuario, {
@@ -185,6 +186,7 @@ async function getHistorialRecompensasPorTorneo(req: Request, res: Response, nex
 
 async function getOpcionesRecompensa(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const id = Number(req.params.id);
     const recompensa = await em.findOne(Recompensa, id, {
       populate: ['torneo_usuario.usuario']
@@ -247,6 +249,7 @@ async function getOpcionesRecompensa(req: Request, res: Response, next: NextFunc
 
 async function elegirPremio(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const recompensaId = Number(req.body.recompensaId);
     const premioId = Number(req.body.premioId);
     const usuarioId = req.authUser.user?.userId!;
@@ -294,6 +297,7 @@ async function elegirPremio(req: Request, res: Response, next: NextFunction) {
 
 async function confirmarPick(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const recompensaId = Number(req.body.recompensaId);
     const jugadorId = Number(req.body.jugadorId);
     const usuarioId = req.authUser.user?.userId!;

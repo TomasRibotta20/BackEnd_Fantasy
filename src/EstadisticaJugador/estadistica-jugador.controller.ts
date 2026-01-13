@@ -5,8 +5,8 @@ import { ErrorFactory } from '../shared/errors/errors.factory.js';
 
 export async function actualizarEstadisticasJornada(req: Request, res: Response, next: Function) {  
   try {
+    const em = orm.em;
     const jornadaId = Number(req.params.jornadaId);
-    const em = orm.em.fork();
     const partidosProcesados = await EstadisticaJugadorService.actualizarEstadisticasJornada(em, jornadaId);
     res.status(200).json({
       message: `Estadísticas actualizadas correctamente para ${partidosProcesados} partidos de la jornada ${jornadaId}`
@@ -22,8 +22,8 @@ export async function actualizarEstadisticasJornada(req: Request, res: Response,
 
 export async function getPuntajesPorJornada(req: Request, res: Response, next: Function) {
   try {
+    const em = orm.em;
     const jornadaId = Number(req.params.jornadaId);
-    const em = orm.em.fork();
     const estadisticas = await EstadisticaJugadorService.getPuntajesPorJornada(em, jornadaId);
     
     res.status(200).json({
@@ -42,9 +42,9 @@ export async function getPuntajesPorJornada(req: Request, res: Response, next: F
 
 export async function getPuntajeJugadorPorJornada(req: Request, res: Response, next: Function) {
   try {
+    const em = orm.em;
     const jornadaId = Number(req.params.jornadaId);
     const jugadorId = Number(req.params.jugadorId);
-    const em = orm.em.fork();
     const estadistica = await EstadisticaJugadorService.getPuntajeJugadorPorJornada(em, jugadorId, jornadaId); 
     if (!estadistica) {
       throw ErrorFactory.notFound('No se encontró estadística para el jugador en la jornada especificada');

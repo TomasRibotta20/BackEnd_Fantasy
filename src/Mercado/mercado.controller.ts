@@ -9,14 +9,17 @@ import { ErrorFactory } from '../shared/errors/errors.factory.js';
 import { orm } from '../shared/db/orm.js';
 import { MercadoDiario } from './mercadoDiario.entity.js';
 
+
 /**
  * Inicializa los jugadores de un torneo (Admin)
  */
 export async function inicializarJugadores(req: Request, res: Response, next: NextFunction) {
   try {
+    //Puede que no sirva mas esta funcion. Ya que todo se hace al iniciar un torneo.
+    const em = orm.em;
     const { torneoId } = req.body;
-    const resultado = await inicializarJugadoresTorneo(torneoId);
-
+    const resultado = await inicializarJugadoresTorneo(em, torneoId);
+    await em.flush();
     res.status(200).json({
       message: 'Jugadores inicializados exitosamente',
       data: resultado
@@ -55,8 +58,8 @@ export async function abrirMercado(req: Request, res: Response, next: NextFuncti
  */
 export async function cerrarMercado(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const mercadoId = Number(req.params.mercadoId);
-    const em = orm.em.fork();
     const mercado = await em.findOne(MercadoDiario, Number(mercadoId));
     if (!mercado) {
       throw ErrorFactory.notFound('Mercado no encontrado');
@@ -93,9 +96,10 @@ export async function cerrarMercado(req: Request, res: Response, next: NextFunct
  */
 export async function obtenerMercadoActivo(req: Request, res: Response, next: NextFunction) {
   try {
+    const em = orm.em;
     const torneoId = Number(req.params.torneoId);
     const userId = req.authUser.user?.userId!;
-    const mercado = await obtenerMercadoActivoService(torneoId,userId);
+    const mercado = await obtenerMercadoActivoService(em, torneoId, userId);
     
     if (!mercado) {
       return res.status(200).json({

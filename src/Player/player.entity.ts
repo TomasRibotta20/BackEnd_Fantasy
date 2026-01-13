@@ -2,7 +2,7 @@ import { Entity, Property, ManyToOne, Unique, OneToMany, Collection } from '@mik
 import { BaseEntity } from '../shared/db/baseEntity.entity.js';
 import { clubes } from '../Club/club.entity.js';
 import { Position } from '../Position/position.entity.js';
-import { EquipoJugador } from '../Equipo/equipoJugador.entity.js'; // Importar Equipo
+import { EquipoJugador } from '../Equipo/equipoJugador.entity.js';
 import type { EstadisticaJugador } from '../EstadisticaJugador/estadistica-jugador.entity.js';
 @Entity({ tableName: 'Jugadores' })
 export class Player extends BaseEntity {

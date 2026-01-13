@@ -1,18 +1,18 @@
 import { z } from 'zod';
 
 export const createPlayerSchema = z.object({
-  apiId: z.number().int().positive('El ID de API debe ser un número positivo'),
-  name: z.string().min(1, 'El nombre no puede estar vacío').nullable().optional(),
-  firstname: z.string().min(1, 'El nombre no puede estar vacío').nullable().optional(),
-  lastname: z.string().min(1, 'El apellido no puede estar vacío').nullable().optional(),
-  age: z.number().int().min(15, 'La edad mínima es 15').max(50, 'La edad máxima es 50').nullable().optional(),
-  nationality: z.string().min(2, 'La nacionalidad debe tener al menos 2 caracteres').nullable().optional(),
-  height: z.string().regex(/^\d+cm$|^\d+'\d+"$/, 'Altura debe ser formato: 180cm o 6\'0"').nullable().optional(),
-  weight: z.string().regex(/^\d+kg$/, 'Peso debe ser formato: 70kg').nullable().optional(),
-  photo: z.string().url('Debe ser una URL válida').nullable().optional(),
-  jerseyNumber: z.number().int().min(1, 'El número debe ser mayor a 0').max(99, 'El número debe ser menor a 100').nullable().optional(),
+  id_api: z.number().int().positive('El ID de API debe ser un número positivo'),
+  nombre: z.string().min(1, 'El nombre no puede estar vacío').nullable().optional(),
+  primer_nombre: z.string().min(1, 'El nombre no puede estar vacío').nullable().optional(),
+  apellido: z.string().min(1, 'El apellido no puede estar vacío').nullable().optional(),
+  edad: z.number().int().min(15, 'La edad mínima es 15').max(50, 'La edad máxima es 50').nullable().optional(),
+  nacionalidad: z.string().min(2, 'La nacionalidad debe tener al menos 2 caracteres').nullable().optional(),
+  altura: z.string().regex(/^\d+cm$|^\d+'\d+"$/, 'Altura debe ser formato: 180cm o 6\'0"').nullable().optional(),
+  peso: z.string().regex(/^\d+kg$/, 'Peso debe ser formato: 70kg').nullable().optional(),
+  foto: z.string().url('Debe ser una URL válida').nullable().optional(),
+  numero_camiseta: z.number().int().min(1, 'El número debe ser mayor a 0').max(99, 'El número debe ser menor a 100').nullable().optional(),
   clubId: z.number().int().positive('El ID del club debe ser un número positivo'),
-  positionId: z.number().int().positive('El ID de la posición debe ser un número positivo').nullable().optional(),
+  posicionId: z.number().int().positive('El ID de la posición debe ser un número positivo').nullable().optional(),
 });
 
 export const updatePlayerSchema = createPlayerSchema.partial()
@@ -21,8 +21,8 @@ export const updatePlayerSchema = createPlayerSchema.partial()
   });
 
 export const findAllPlayersQuerySchema = z.object({
-  name: z.string().min(1, 'El nombre no puede estar vacío').optional(),
-  position: z.string().min(1, 'La posición no puede estar vacía').optional(),
+  nombre: z.string().min(1, 'El nombre no puede estar vacío').optional(),
+  posicion: z.string().min(1, 'La posición no puede estar vacía').optional(),
   club: z.string().min(1, 'El club no puede estar vacío').optional(),
   page: z.string().regex(/^\d+$/, 'La página debe ser un número válido').optional(),
   limit: z.string().regex(/^\d+$/, 'El límite debe ser un número válido').optional(),
