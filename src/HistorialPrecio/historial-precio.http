@@ -7,3 +7,6 @@ POST http://localhost:3000/api/precios/calcular/2
 
 ### Calcular TODOS los clubes (Tarda bastante y no llega con las peticiones por el limite hay que hacerlo dos dias separados)
 POST http://localhost:3000/api/precios/calcular-todos
+
+### Obtener historial de precios de un jugador
+GET http://localhost:3000/api/precios/jugador/2

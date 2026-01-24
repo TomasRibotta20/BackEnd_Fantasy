@@ -61,3 +61,22 @@ export async function getPuntajeJugadorPorJornada(req: Request, res: Response, n
     }
   }
 }
+
+export async function getHistorialEstadisticasJugador(req: Request, res: Response, next: Function) {
+  try {
+    const em = orm.em;
+    const jugadorId = Number(req.params.jugadorId);
+    const resultado = await EstadisticaJugadorService.getHistorialEstadisticasJugador(em, jugadorId);
+    
+    res.status(200).json({
+      message: `Historial de estadísticas del jugador ${jugadorId}`,
+      data: resultado
+    });
+  } catch (error: any) {
+    if (error instanceof Error) {
+      next(error);
+    } else {
+      next(ErrorFactory.internal('Error al obtener el historial de estadísticas del jugador'));
+    }
+  }
+}

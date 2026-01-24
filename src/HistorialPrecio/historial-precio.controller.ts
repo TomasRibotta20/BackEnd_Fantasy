@@ -103,4 +103,29 @@ export class HistorialPrecioController {
       }
     }
   }
+
+   /**
+   * GET /api/precios/jugador/:jugadorId
+   * Obtiene el historial de precios de un jugador para gráfico de mercado
+   */
+  static async getHistorialPreciosJugador(req: Request, res: Response, next: NextFunction) {
+    try {
+      const em = orm.em;
+      const jugadorId = Number(req.params.jugadorId);
+      const resultado = await HistorialPrecioService.getHistorialPreciosJugador(em, jugadorId);
+
+      res.json({
+        success: true,
+        message: 'Historial de precios del jugador',
+        data: resultado
+      });
+
+    } catch (error: any) {
+      if (error instanceof AppError) {
+        next(error);
+      } else {
+        next(ErrorFactory.internal('Error obteniendo historial de precios del jugador'));
+      }
+    }
+  }
 }

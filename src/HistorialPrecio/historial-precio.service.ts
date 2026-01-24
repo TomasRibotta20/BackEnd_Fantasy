@@ -593,4 +593,71 @@ private static obtenerPartidoDelJugador(
     const PRECIO_MINIMO = 500000;
     return Math.max(precio, PRECIO_MINIMO);
   }
+
+  /**
+   * Obtiene el historial de precios de un jugador a lo largo de todas las jornadas hasta la fecha
+   *
+   */
+  static async getHistorialPreciosJugador(em: EntityManager, jugadorId: number) {
+    const jugador = await em.findOne(Player, { id: jugadorId });
+    if (!jugador) {
+      throw ErrorFactory.notFound(`Jugador con ID ${jugadorId} no encontrado`);
+    }
+
+    const historial = await em.find(
+      HistorialPrecio,
+      { jugador: jugadorId },
+      {
+        populate: ['jornada'],
+        orderBy: { fecha: 'ASC' }
+      }
+    );
+
+    // Calcular variaciones porcentuales
+    const historialConVariacion = historial.map((registro, index) => {
+      const precioAnterior = index > 0 ? historial[index - 1].precio : registro.precio;
+      const variacion = index > 0 
+        ? Math.round(((registro.precio - precioAnterior) / precioAnterior) * 100 * 10) / 10
+        : 0;
+
+      return {
+        jornadaId: registro.jornada?.id || null,
+        jornadaNombre: registro.jornada?.nombre || 'Inicial',
+        precio: registro.precio,
+        fecha: registro.fecha,
+        variacionPorcentual: variacion,
+        variacionAbsoluta: registro.precio - precioAnterior,
+        motivo: registro.motivo,
+        observaciones: registro.observaciones
+      };
+    });
+
+    // Estadísticas del historial de precios
+    const precios = historial.map(h => h.precio);
+    const estadisticasPrecio = {
+      precioActual: jugador.precio_actual || 0,
+      precioInicial: precios.length > 0 ? precios[0] : 0,
+      precioMaximo: precios.length > 0 ? Math.max(...precios) : 0,
+      precioMinimo: precios.length > 0 ? Math.min(...precios) : 0,
+      variacionTotal: precios.length > 1 
+        ? Math.round(((precios[precios.length - 1] - precios[0]) / precios[0]) * 100 * 10) / 10
+        : 0,
+      variacionAbsolutaTotal: precios.length > 1 
+        ? precios[precios.length - 1] - precios[0]
+        : 0
+    };
+
+    return {
+      jugador: {
+        id: jugador.id,
+        nombre: jugador.nombre,
+        foto: jugador.foto,
+        precioActual: jugador.precio_actual
+      },
+      historial: historialConVariacion,
+      estadisticas: estadisticasPrecio
+    };
+  }
+
+
 }

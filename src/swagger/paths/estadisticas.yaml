@@ -253,3 +253,156 @@
         description: No se encontró estadística para el jugador en la jornada especificada.
       500:
         description: Error del servidor.
+        
+/estadisticas/jugador/{jugadorId}/historial:
+  get:
+    summary: Obtiene el historial completo de estadísticas de un jugador
+    description: |
+      Recupera todas las estadísticas del jugador a lo largo de las jornadas.
+      Ideal para mostrar:
+      - Gráfico de barras con puntos por jornada (estilo Fantasy La Liga)
+      - Tabla detallada de rendimiento histórico
+      - Resumen con promedios y totales
+    tags: [Estadísticas]
+    parameters:
+      - in: path
+        name: jugadorId
+        required: true
+        schema:
+          type: integer
+        description: ID del jugador
+        example: 123
+    responses:
+      200:
+        description: Historial de estadísticas del jugador recuperado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: 'Historial de estadísticas del jugador 123'
+                data:
+                  type: object
+                  properties:
+                    historialPuntos:
+                      type: array
+                      description: Datos para gráfico de barras de puntos por jornada
+                      items:
+                        type: object
+                        properties:
+                          jornadaId:
+                            type: integer
+                            example: 1
+                          jornadaNombre:
+                            type: string
+                            example: '2nd Phase - 1'
+                          puntos:
+                            type: number
+                            format: float
+                            example: 12.5
+                          fecha:
+                            type: string
+                            format: date-time
+                            example: '2025-08-15T20:00:00.000Z'
+                          rival:
+                            type: string
+                            example: 'Boca Juniors'
+                            nullable: true
+                          esLocal:
+                            type: boolean
+                            example: true
+                    estadisticasDetalladas:
+                      type: array
+                      description: Estadísticas completas por jornada para tabla expandible
+                      items:
+                        type: object
+                        properties:
+                          jornadaId:
+                            type: integer
+                            example: 1
+                          jornadaNombre:
+                            type: string
+                            example: '2nd Phase - 1'
+                          fecha:
+                            type: string
+                            format: date-time
+                          minutos:
+                            type: integer
+                            example: 90
+                          goles:
+                            type: integer
+                            example: 2
+                          asistencias:
+                            type: integer
+                            example: 1
+                          tarjetasAmarillas:
+                            type: integer
+                            example: 0
+                          tarjetasRojas:
+                            type: integer
+                            example: 0
+                          porteriaACero:
+                            type: boolean
+                            example: false
+                          rating:
+                            type: number
+                            format: float
+                            example: 8.5
+                          puntajeTotal:
+                            type: number
+                            format: float
+                            example: 12.5
+                    resumen:
+                      type: object
+                      description: Estadísticas agregadas y promedios
+                      properties:
+                        totalJornadas:
+                          type: integer
+                          example: 10
+                          description: Cantidad de jornadas jugadas
+                        totalPuntos:
+                          type: number
+                          format: float
+                          example: 85.5
+                          description: Suma total de puntos
+                        promedioPuntos:
+                          type: number
+                          format: float
+                          example: 8.6
+                          description: Promedio de puntos por jornada
+                        totalGoles:
+                          type: integer
+                          example: 5
+                        totalAsistencias:
+                          type: integer
+                          example: 3
+                        totalTarjetasAmarillas:
+                          type: integer
+                          example: 2
+                        totalTarjetasRojas:
+                          type: integer
+                          example: 0
+                        totalPorteriasACero:
+                          type: integer
+                          example: 2
+                          description: Solo relevante para porteros/defensas
+                        promedioRating:
+                          type: number
+                          format: float
+                          example: 7.2
+                        mejorPuntaje:
+                          type: number
+                          format: float
+                          example: 15.5
+                          description: Puntaje más alto obtenido
+                        peorPuntaje:
+                          type: number
+                          format: float
+                          example: 3.2
+                          description: Puntaje más bajo obtenido
+      404:
+        description: Jugador no encontrado.
+      500:
+        description: Error del servidor.

@@ -295,3 +295,128 @@
         description: Jornada no encontrada.
       500:
         description: Error del servidor durante la actualización de precios.
+
+/precios/jugador/{jugadorId}:
+  get:
+    summary: Obtiene el historial de precios de un jugador
+    description: |
+      Recupera el historial completo de precios del jugador a lo largo de las jornadas.
+      Ideal para mostrar:
+      - Gráfico de línea tipo mercado/bolsa de valores
+      - Variaciones porcentuales y absolutas
+      - Estadísticas de precio (máximo, mínimo, variación total)
+    tags: [Historial Precio]
+    parameters:
+      - in: path
+        name: jugadorId
+        required: true
+        schema:
+          type: integer
+        description: ID del jugador
+        example: 123
+    responses:
+      200:
+        description: Historial de precios del jugador recuperado exitosamente.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: 'Historial de precios del jugador'
+                data:
+                  type: object
+                  properties:
+                    jugador:
+                      type: object
+                      description: Información básica del jugador
+                      properties:
+                        id:
+                          type: integer
+                          example: 123
+                        nombre:
+                          type: string
+                          example: 'L. Messi'
+                        foto:
+                          type: string
+                          example: 'https://media.api-sports.io/football/players/154.png'
+                          nullable: true
+                        precioActual:
+                          type: integer
+                          example: 16000000
+                    historial:
+                      type: array
+                      description: Historial de precios ordenado cronológicamente
+                      items:
+                        type: object
+                        properties:
+                          jornadaId:
+                            type: integer
+                            example: 1
+                            nullable: true
+                            description: null para precio inicial
+                          jornadaNombre:
+                            type: string
+                            example: '2nd Phase - 1'
+                            description: 'Inicial'
+                          precio:
+                            type: integer
+                            example: 15500000
+                          fecha:
+                            type: string
+                            format: date-time
+                            example: '2025-08-15T20:00:00.000Z'
+                          variacionPorcentual:
+                            type: number
+                            format: float
+                            example: 3.3
+                            description: Variación porcentual respecto al precio anterior
+                          variacionAbsoluta:
+                            type: integer
+                            example: 500000
+                            description: Diferencia en valor respecto al precio anterior
+                          motivo:
+                            type: string
+                            enum: [INICIAL, RENDIMIENTO, MANUAL]
+                            example: 'RENDIMIENTO'
+                          observaciones:
+                            type: string
+                            example: 'Puntaje: 12.5 pts | Ajuste base: +10% | Tendencias: +4% | Total: +14%'
+                            nullable: true
+                    estadisticas:
+                      type: object
+                      description: Estadísticas agregadas del historial de precios
+                      properties:
+                        precioActual:
+                          type: integer
+                          example: 16000000
+                          description: Precio actual del jugador
+                        precioInicial:
+                          type: integer
+                          example: 15000000
+                          description: Primer precio registrado
+                        precioMaximo:
+                          type: integer
+                          example: 16500000
+                          description: Precio más alto alcanzado
+                        precioMinimo:
+                          type: integer
+                          example: 14000000
+                          description: Precio más bajo alcanzado
+                        variacionTotal:
+                          type: number
+                          format: float
+                          example: 6.7
+                          description: Variación porcentual desde el precio inicial hasta el actual
+                        variacionAbsolutaTotal:
+                          type: integer
+                          example: 1000000
+                          description: Diferencia absoluta desde el precio inicial hasta el actual
+      404:
+        description: Jugador no encontrado.
+      500:
+        description: Error del servidor.

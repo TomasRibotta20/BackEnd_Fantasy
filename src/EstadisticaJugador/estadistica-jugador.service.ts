@@ -182,4 +182,74 @@ export class EstadisticaJugadorService {
     });
     return estadistica;
   }
+
+  /**
+   * Obtiene el historial completo de estadísticas de un jugador
+   * 
+   */
+  static async getHistorialEstadisticasJugador(em: EntityManager, jugadorId: number) {
+    const estadisticas = await em.find(
+      EstadisticaJugador,
+      { jugador: jugadorId },
+      {
+        populate: ['partido', 'partido.jornada', 'partido.local', 'partido.visitante'],
+        orderBy: { partido: { jornada: { id: 'ASC' } } }
+      }
+    );
+
+    // Datos formateados para el posible gráfico de barras al mostrar puntos
+    const historialPuntos = estadisticas.map(est => ({
+      jornadaId: est.partido.jornada?.id,
+      jornadaNombre: est.partido.jornada?.nombre,
+      puntos: est.puntaje_total,
+      fecha: est.partido.fecha,
+      rival: est.partido.local?.id === est.jugador?.id 
+        ? est.partido.visitante?.nombre 
+        : est.partido.local?.nombre,
+      esLocal: est.partido.local?.id === est.jugador?.id
+    }));
+
+    // Estadísticas detalladas por jornada (para tabla expandible)
+    const estadisticasDetalladas = estadisticas.map(est => ({
+      jornadaId: est.partido.jornada?.id,
+      jornadaNombre: est.partido.jornada?.nombre,
+      fecha: est.partido.fecha,
+      minutos: est.minutos || 0,
+      goles: est.goles || 0,
+      asistencias: est.asistencias || 0,
+      tarjetasAmarillas: est.tarjetas_amarillas || 0,
+      tarjetasRojas: est.tarjetas_rojas || 0,
+      porteriaACero: est.porterias_a_cero || false,
+      rating: est.rating || 0,
+      puntajeTotal: est.puntaje_total
+    }));
+
+    // Calcular resumen/promedios
+    const totalJornadas = estadisticas.length;
+    const resumen = {
+      totalJornadas,
+      totalPuntos: estadisticas.reduce((sum, e) => sum + e.puntaje_total, 0),
+      promedioPuntos: totalJornadas > 0 
+        ? Math.round((estadisticas.reduce((sum, e) => sum + e.puntaje_total, 0) / totalJornadas) * 10) / 10
+        : 0,
+      totalGoles: estadisticas.reduce((sum, e) => sum + (e.goles || 0), 0),
+      totalAsistencias: estadisticas.reduce((sum, e) => sum + (e.asistencias || 0), 0),
+      totalTarjetasAmarillas: estadisticas.reduce((sum, e) => sum + (e.tarjetas_amarillas || 0), 0),
+      totalTarjetasRojas: estadisticas.reduce((sum, e) => sum + (e.tarjetas_rojas || 0), 0),
+      totalPorteriasACero: estadisticas.filter(e => e.porterias_a_cero).length,
+      promedioRating: totalJornadas > 0
+        ? Math.round((estadisticas.reduce((sum, e) => sum + (e.rating || 0), 0) / totalJornadas) * 10) / 10
+        : 0,
+      mejorPuntaje: totalJornadas > 0 ? Math.max(...estadisticas.map(e => e.puntaje_total)) : 0,
+      peorPuntaje: totalJornadas > 0 ? Math.min(...estadisticas.map(e => e.puntaje_total)) : 0
+    };
+
+    return {
+      historialPuntos,
+      estadisticasDetalladas,
+      resumen
+    };
+  }
 }
+
+

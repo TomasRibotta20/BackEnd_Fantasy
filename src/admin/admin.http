@@ -9,7 +9,7 @@
 GET {{baseUrl}}/api/admin/config
 
 ### Procesar jornada (ejemplo: jornada ID 1)
-POST {{baseUrl}}/api/admin/jornadas/1/procesar
+POST {{baseUrl}}/api/admin/jornadas/2/procesar
 Content-Type: application/json
 
 {
