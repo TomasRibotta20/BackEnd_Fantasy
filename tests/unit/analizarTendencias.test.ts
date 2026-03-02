@@ -1,4 +1,5 @@
-import { describe, it, expect, jest } from '@jest/globals';
+import { describe, it, expect, jest, afterAll } from '@jest/globals';
+import { orm } from '../../src/shared/db/orm.js';
 import { HistorialPrecioService } from '../../src/HistorialPrecio/historial-precio.service.js';
 import { EntityManager } from '@mikro-orm/core';
 import { EstadisticaJugador } from '../../src/EstadisticaJugador/estadistica-jugador.entity.js';
@@ -340,5 +341,10 @@ describe('HistorialPrecioService - analizarTendencias', () => {
 
     expect(resultado.modificadorTotal).toBe(4);
     expect(resultado.detalles).toContain('Tendencia ascendente +4%');
+  });
+  afterAll(async () => {
+    if (await orm.isConnected()) {
+      await orm.close();
+    }
   });
 });
