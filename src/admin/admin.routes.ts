@@ -20,5 +20,8 @@ adminRouter.post('/jornadas/:jornadaId/recalcular', adminController.recalcularPu
 
 //Seed de base de datos
 adminRouter.post('/seed', validate(seedDatabaseSchema), adminController.seedDatabase)
+//Automatización
+adminRouter.post('/automation/toggle', (req, res, next) => adminController.toggleAutomation(req, res, next))
+adminRouter.get('/automation/status', (req, res, next) => adminController.getAutomationStatus(req, res, next))
 
 

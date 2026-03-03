@@ -1,21 +1,22 @@
 import { NextFunction, Request, Response } from 'express'
 import { orm } from '../shared/db/orm.js'
-import { GameConfig } from '../Config/gameConfig.entity.js'
+import { GameConfig, AutomationState } from '../Config/gameConfig.entity.js'
 import { Jornada } from '../Fixture/Jornada.entity.js'
 import { EquipoSnapshotService } from '../Equipo/equipoSnapshot.service.js'
-import { EstadisticaJugadorService } from '../EstadisticaJugador/estadistica-jugador.service.js'
 import { EquipoJornada } from '../Equipo/equipoJornada.entity.js'
 import {ErrorFactory} from "../shared/errors/errors.factory.js";
 import { HistorialPrecioService } from '../HistorialPrecio/historial-precio.service.js';
 import { generarRecompensasFinJornada } from '../Recompensa/recompensa.service.js'
 import { SeedService } from './admin.seed.service.js'
+import { JornadaProcessingService } from '../Automation/jornadaProcessing.service.js'
+import { automationService } from '../Automation/automation.service.js'
 class AdminController {
   /**
    * Método auxiliar para obtener o crear la configuración
    */
   private async getOrCreateConfig(em: any): Promise<GameConfig> {
     let config = await em.findOne(GameConfig, 1, { populate: ['jornada_activa'] })
-    
+
     if (!config) {
       config = em.create(GameConfig, {
         modificaciones_habilitadas: true,
@@ -27,7 +28,7 @@ class AdminController {
       })
       await em.persistAndFlush(config);
     }
-    
+
     return config
   }
 
@@ -39,7 +40,7 @@ class AdminController {
     try {
       console.log('=== INICIO updateConfig ===')
       console.log('Body recibido:', req.body)
-      const { 
+      const {
         jornadaId,
         modificacionesHabilitadas,
         cupoMaximoTorneos,
@@ -176,114 +177,41 @@ class AdminController {
 async procesarJornada(req: Request, res: Response, next: NextFunction) {
   const jornadaId = Number(req.params.jornadaId)
   const { activarJornada = true } = req.body
-  
+
   try {
-    // Ejecutar todo dentro de una transacción
-    await orm.em.transactional(async (em) => {
-      // 1. Verificar que las modificaciones estén deshabilitadas
+    const resultado = await orm.em.transactional(async (em) => {
+      // Verificar que las modificaciones estén deshabilitadas
       const config = await em.findOne(GameConfig, 1)
       if (!config || config.modificaciones_habilitadas) {
         throw ErrorFactory.validationAppError('Debes deshabilitar las modificaciones antes de procesar la jornada')
       }
 
-      // 2. Verificar que la jornada exista
-      const jornada = await em.findOne(Jornada, jornadaId)
-      if (!jornada) {
-        throw ErrorFactory.notFound('Jornada no encontrada')
-      }
-
-      console.log(`\n=== PROCESANDO JORNADA ${jornada.nombre} ===\n`)
-
-      // 3. Crear snapshots de todos los equipos
-      console.log('PASO 1: Creando snapshots de equipos...')
-      const snapshotService = new EquipoSnapshotService(em)
-      const snapshotsCreados = await snapshotService.crearSnapshotsJornada(jornadaId)
-      console.log(`Snapshots creados: ${snapshotsCreados}`)
-
-      // 4. Obtener datos de la API externa
-      console.log('\nPASO 2: Obteniendo estadísticas de la API externa...')
-      await EstadisticaJugadorService.actualizarEstadisticasJornada(em, jornadaId)
-      console.log('Estadísticas actualizadas')
-
-      // 5. Calcular puntajes para todos los equipos
-      console.log('\nPASO 3: Calculando puntajes de equipos...')
-      let puntajesCalculados = false
-      if (snapshotsCreados > 0) {
-        await snapshotService.calcularPuntajesJornada(jornadaId)
-        puntajesCalculados = true
-        console.log('Puntajes calculados exitosamente')
-      } else {
-        console.log('No hay equipos para calcular puntajes, omitiendo...')
-      }
-
-      // 6. Actualizar precios de jugadores según rendimiento
-      console.log('\nPASO 4: Actualizando precios de jugadores...')
-      const resultadoPrecios = await HistorialPrecioService.actualizarPreciosPorRendimiento(em, jornadaId)
-      console.log(`Precios actualizados: ${resultadoPrecios.precios_actualizados}`)
-
-      // 7. Generar recompensas de la jornada
-      console.log('\nPASO 5: Generando recompensas...')
-      await generarRecompensasFinJornada(em, jornadaId)
-      console.log('Recompensas generadas')
-
-      // 8. Activar jornada siguiente (si se solicitó)
-      let jornadaActivada = false
-      let mensajeActivacion = ''
-      
-      if (activarJornada) {
-        console.log('\nPASO 6: Activando jornada siguiente...')
-        const jornadaSiguiente = await em.findOne(Jornada, { id: jornadaId + 1 })
-        
-        if (!jornadaSiguiente) {
-          console.log('No existe una jornada siguiente')
-          mensajeActivacion = 'No existe jornada siguiente'
-        } else {
-          config.jornada_activa = jornadaSiguiente
-          config.ultima_modificacion = new Date()
-          jornadaActivada = true
-          mensajeActivacion = `Jornada "${jornadaSiguiente.nombre}" activada`
-          console.log(` ${mensajeActivacion}`)
-        }
-      }
-
-      console.log('\n=== JORNADA PROCESADA EXITOSAMENTE ===\n')
-
-      // Si llegamos aquí, todo fue exitoso y la transacción se commitea automáticamente
-      return {
-        jornada,
-        snapshotsCreados,
-        puntajesCalculados,
-        resultadoPrecios,
-        jornadaActivada,
-        mensajeActivacion
-      }
+      return await JornadaProcessingService.procesarJornada(em, jornadaId, { activarSiguiente: activarJornada })
     })
-    .then((resultado) => {
-      // Respuesta exitosa fuera de la transacción
-      res.json({
-        success: true,
-        message: `Jornada ${resultado.jornada.nombre} procesada exitosamente`,
-        data: {
-          jornadaNombre: resultado.jornada.nombre,
-          snapshotsCreados: resultado.snapshotsCreados > 0,
-          puntajesCalculados: resultado.puntajesCalculados,
-          preciosActualizados: resultado.resultadoPrecios.precios_actualizados,
-          jornadaActivada: resultado.jornadaActivada,
-          mensaje: resultado.mensajeActivacion || undefined
-        },
-      })
+
+    res.json({
+      success: true,
+      message: `Jornada ${resultado.jornada.nombre} procesada exitosamente`,
+      data: {
+        jornadaNombre: resultado.jornada.nombre,
+        snapshotsCreados: resultado.snapshotsCreados > 0,
+        puntajesCalculados: resultado.puntajesCalculados,
+        preciosActualizados: resultado.resultadoPrecios.precios_actualizados,
+        jornadaActivada: resultado.jornadaActivada,
+        mensaje: resultado.mensajeActivacion || undefined
+      },
     })
-    
+
   } catch (error: any) {
     console.error('\nERROR AL PROCESAR JORNADA:', error.message)
-    
-    // Manejar errores específicos
+
     if (error.statusCode) {
       return next(error)
     }
     return next(ErrorFactory.internal("Error al procesar jornada"))
   }
 }
+
   async recalcularPuntajesJornada(req: Request, res: Response,next : NextFunction) {
   const jornadaId = Number(req.params.jornadaId)
   const em = orm.em.fork()
@@ -347,6 +275,136 @@ async procesarJornada(req: Request, res: Response, next: NextFunction) {
         return next(error);
       }
       return next(ErrorFactory.internal('Error al sembrar la base de datos'));
+    }
+  }
+  async toggleAutomation(req: Request, res: Response, next: NextFunction) {
+    try {
+      const {
+        modo_automatico,
+        cron_intervalo_minutos,
+        mercado_duracion_horas,
+      } = req.body
+
+      if (typeof modo_automatico !== 'boolean') {
+        return next(ErrorFactory.badRequest('modo_automatico debe ser un booleano'))
+      }
+
+      // Validar parámetros opcionales
+      if (cron_intervalo_minutos !== undefined) {
+        if (cron_intervalo_minutos < 1 || cron_intervalo_minutos > 60) {
+          return next(ErrorFactory.badRequest('cron_intervalo_minutos debe estar entre 1 y 60'))
+        }
+      }
+      if (mercado_duracion_horas !== undefined) {
+        if (mercado_duracion_horas < 0.5 || mercado_duracion_horas > 48) {
+          return next(ErrorFactory.badRequest('mercado_duracion_horas debe estar entre 0.5 y 48'))
+        }
+      }
+
+      const em = orm.em.fork()
+      const config = await this.getOrCreateConfig(em)
+
+      if (modo_automatico && !config.jornada_activa) {
+        return next(ErrorFactory.badRequest('Debes configurar una jornada activa antes de activar el modo automático'))
+      }
+
+      config.modo_automatico = modo_automatico
+
+      if (cron_intervalo_minutos !== undefined) {
+        config.cron_intervalo_minutos = cron_intervalo_minutos
+      }
+      if (mercado_duracion_horas !== undefined) {
+        config.mercado_duracion_horas = mercado_duracion_horas
+      }
+
+      if (modo_automatico) {
+        // Calcular offset: la fecha_inicio de la jornada activa = ahora
+        const jornada = config.jornada_activa!
+        if (jornada.fecha_inicio) {
+          config.fecha_referencia_real = new Date()
+          config.fecha_referencia_historica = jornada.fecha_inicio
+          console.log(`[Admin] Offset calculado: ${jornada.fecha_inicio.toISOString()} → ${config.fecha_referencia_real.toISOString()}`)
+        }
+        automationService.start(config.cron_intervalo_minutos)
+        console.log(`[Admin] Modo automático ACTIVADO - intervalo: ${config.cron_intervalo_minutos} min`)
+      } else {
+        automationService.stop()
+        // Resetear estado si estaba en PREP
+        if (config.automation_state === AutomationState.PREP) {
+          config.modificaciones_habilitadas = true
+        }
+        config.automation_state = AutomationState.IDLE
+        config.fecha_referencia_real = undefined
+        config.fecha_referencia_historica = undefined
+        console.log('[Admin] Modo automático DESACTIVADO')
+      }
+
+      config.ultima_modificacion = new Date()
+      await em.persistAndFlush(config)
+
+      res.json({
+        success: true,
+        message: modo_automatico ? 'Modo automático activado' : 'Modo automático desactivado',
+        data: {
+          modo_automatico: config.modo_automatico,
+          automation_state: config.automation_state,
+          cron_intervalo_minutos: config.cron_intervalo_minutos,
+          mercado_duracion_horas: config.mercado_duracion_horas,
+          fecha_referencia_real: config.fecha_referencia_real,
+          fecha_referencia_historica: config.fecha_referencia_historica,
+          cron_activo: automationService.isActive(),
+        }
+      })
+    } catch (error: any) {
+      console.error('Error en toggleAutomation:', error.message)
+      next(ErrorFactory.internal('Error al cambiar modo de automatización'))
+    }
+  }
+
+  async getAutomationStatus(req: Request, res: Response, next: NextFunction) {
+    try {
+      const em = orm.em.fork()
+      const config = await em.findOne(GameConfig, 1, { populate: ['jornada_activa'] })
+
+      if (!config) {
+        return next(ErrorFactory.notFound('No hay configuración establecida'))
+      }
+
+      // Calcular fechas mapeadas de la jornada activa para debug
+      let jornada_mapeada = null
+      if (config.jornada_activa && config.fecha_referencia_real && config.fecha_referencia_historica) {
+        const offsetMs = config.fecha_referencia_real.getTime() - config.fecha_referencia_historica.getTime()
+        const j = config.jornada_activa
+        jornada_mapeada = {
+          fecha_inicio_original: j.fecha_inicio,
+          fecha_fin_original: j.fecha_fin,
+          fecha_inicio_mapeada: j.fecha_inicio ? new Date(j.fecha_inicio.getTime() + offsetMs) : null,
+          fecha_fin_mapeada: j.fecha_fin ? new Date(j.fecha_fin.getTime() + offsetMs) : null,
+        }
+      }
+
+      res.json({
+        success: true,
+        data: {
+          modo_automatico: config.modo_automatico,
+          automation_state: config.automation_state,
+          cron_intervalo_minutos: config.cron_intervalo_minutos,
+          mercado_duracion_horas: config.mercado_duracion_horas,
+          ultimo_procesamiento_auto: config.ultimo_procesamiento_auto,
+          fecha_referencia_real: config.fecha_referencia_real,
+          fecha_referencia_historica: config.fecha_referencia_historica,
+          modificaciones_habilitadas: config.modificaciones_habilitadas,
+          cron_activo: automationService.isActive(),
+          jornada_activa: config.jornada_activa ? {
+            id: config.jornada_activa.id,
+            nombre: config.jornada_activa.nombre,
+          } : null,
+          jornada_mapeada,
+          hora_actual: new Date(),
+        }
+      })
+    } catch (error: any) {
+      next(ErrorFactory.internal('Error al obtener estado de automatización'))
     }
   }
 }
