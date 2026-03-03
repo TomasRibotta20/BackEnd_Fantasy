@@ -8,6 +8,7 @@ import { EquipoJornada } from '../Equipo/equipoJornada.entity.js'
 import {ErrorFactory} from "../shared/errors/errors.factory.js";
 import { HistorialPrecioService } from '../HistorialPrecio/historial-precio.service.js';
 import { generarRecompensasFinJornada } from '../Recompensa/recompensa.service.js'
+import { SeedService } from './admin.seed.service.js'
 class AdminController {
   /**
    * Método auxiliar para obtener o crear la configuración
@@ -322,6 +323,32 @@ async procesarJornada(req: Request, res: Response, next: NextFunction) {
     return next(ErrorFactory.internal("Error desconocido al recalcular puntajes"))
   }
 }
+  async seedDatabase(req: Request, res: Response, next: NextFunction) {
+    const { leagueId, season } = req.body;
+
+    try {
+      console.log(`\n=== INICIO SEED DATABASE (league: ${leagueId}, season: ${season}) ===\n`);
+      const em = orm.em;
+      const result = await em.transactional(async (em) => {
+        const seedService = new SeedService(em);
+        return seedService.execute(leagueId, season);
+      });
+
+      console.log('\n=== SEED DATABASE COMPLETADO ===\n');
+
+      res.json({
+        success: true,
+        message: `Base de datos sembrada exitosamente para liga ${leagueId}, temporada ${season}`,
+        data: result,
+      });
+    } catch (error: any) {
+      console.error('\nERROR EN SEED DATABASE:', error.message);
+      if (error.statusCode) {
+        return next(error);
+      }
+      return next(ErrorFactory.internal('Error al sembrar la base de datos'));
+    }
+  }
 }
 
 

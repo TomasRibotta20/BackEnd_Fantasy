@@ -27,3 +27,16 @@ Content-Type: application/json
   "modificacionesHabilitadas": false
 }
 
+### ====================================
+### SEED DE BASE DE DATOS
+### ====================================
+
+### Seed completo de base de datos (liga AFA = 128, temporada 2021)
+POST {{baseUrl}}/api/admin/seed
+Content-Type: application/json
+
+{
+  "leagueId": 128,
+  "season": 2021
+}
+
