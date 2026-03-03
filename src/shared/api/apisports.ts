@@ -161,6 +161,11 @@ export type FixtureItem = {
   };
 };
 
+export async function getAllFixtures(leagueId: number, season: number) {
+  const data = await apiGet<FixtureItem>('/fixtures', { league: leagueId, season });
+  return data.response;
+}
+
 export async function getFixturesSecondPhase(leagueId: number, season: number) {
   // Intento directo por stage
   const byStage = await apiGet<FixtureItem>('/fixtures', {

@@ -160,9 +160,9 @@ describe('Integration Test - Flujo completo de Torneo', () => {
 
     // Obtener ambos equipos con jugadores
     const equipos = await em.find(Equipo, {
-      torneoUsuario: { torneo: torneoId }
+      torneo_usuario: { torneo: torneoId }
     }, {
-      populate: ['jugadores', 'jugadores.jugador', 'jugadores.jugador.position', 'torneoUsuario']
+      populate: ['jugadores', 'jugadores.jugador', 'jugadores.jugador.posicion', 'torneo_usuario']
     });
 
     expect(equipos).toHaveLength(2);
@@ -185,7 +185,7 @@ describe('Integration Test - Flujo completo de Torneo', () => {
       // Contar titulares por posición
       const conteoPosiciones = titulares.reduce((acc, ej) => {
         const jugador = ej.jugador as any as Player;
-        const posicion = jugador.position?.description;
+        const posicion = jugador.posicion?.descripcion;
         acc[posicion||""] = (acc[posicion||""] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
@@ -197,7 +197,7 @@ describe('Integration Test - Flujo completo de Torneo', () => {
       expect(conteoPosiciones['Attacker']).toBe(3);
 
       // Verificar que cada suplente es de una posición diferente
-      const posicionesSuplentes = suplentes.map(ej => (ej.jugador as any as Player).position?.description);
+      const posicionesSuplentes = suplentes.map(ej => (ej.jugador as any as Player).posicion?.descripcion);
       const posicionesUnicas = new Set(posicionesSuplentes);
       expect(posicionesUnicas.size).toBe(4); // 1 por cada posición
 
@@ -247,8 +247,8 @@ async function seedMinimalData(orm: MikroORM): Promise<void> {
   let gameConfig = await em.findOne(GameConfig, { id: 1 });
   if (!gameConfig) {
     gameConfig = new GameConfig();
-    gameConfig.cupoMaximoTorneos = 5;
-    gameConfig.modificacionesHabilitadas = true;
+    gameConfig.cupo_maximo_torneos = 5;
+    gameConfig.modificaciones_habilitadas = true;
     em.persist(gameConfig);
     await em.flush();
   }
@@ -258,10 +258,10 @@ async function seedMinimalData(orm: MikroORM): Promise<void> {
   const positionEntities: Position[] = [];
   
   for (const desc of positionsData) {
-    let pos = await em.findOne(Position, { description: desc });
+    let pos = await em.findOne(Position, { descripcion: desc });
     if (!pos) {
       pos = new Position();
-      pos.description = desc;
+      pos.descripcion = desc;
       em.persist(pos);
     }
     positionEntities.push(pos);
@@ -298,61 +298,73 @@ async function seedMinimalData(orm: MikroORM): Promise<void> {
   let apiIdCounter = 888001;
   
   const jugadoresData = [
-    // GOALKEEPERS (4 jugadores)
-    { name: 'TEST_GK_Estrella', position: 'Goalkeeper', precio: 9000000 },
-    { name: 'TEST_GK_Bueno', position: 'Goalkeeper', precio: 5000000 },
-    { name: 'TEST_GK_Barato_1', position: 'Goalkeeper', precio: 1000000 },
-    { name: 'TEST_GK_Barato_2', position: 'Goalkeeper', precio: 1000000 },
+    // GOALKEEPERS (8 jugadores)
+    { name: 'TEST_GK_1', position: 'Goalkeeper', precio: 9000000 },
+    { name: 'TEST_GK_2', position: 'Goalkeeper', precio: 8000000 },
+    { name: 'TEST_GK_3', position: 'Goalkeeper', precio: 5000000 },
+    { name: 'TEST_GK_4', position: 'Goalkeeper', precio: 4500000 },
+    { name: 'TEST_GK_5', position: 'Goalkeeper', precio: 4000000 },
+    { name: 'TEST_GK_6', position: 'Goalkeeper', precio: 3500000 },
+    { name: 'TEST_GK_7', position: 'Goalkeeper', precio: 1000000 },
+    { name: 'TEST_GK_8', position: 'Goalkeeper', precio: 800000 },
 
-    // DEFENDERS (12 jugadores)
-    { name: 'TEST_DEF_Estrella_1', position: 'Defender', precio: 10000000 },
-    { name: 'TEST_DEF_Estrella_2', position: 'Defender', precio: 8500000 },
-    { name: 'TEST_DEF_Medio_1', position: 'Defender', precio: 5000000 },
-    { name: 'TEST_DEF_Medio_2', position: 'Defender', precio: 4500000 },
-    { name: 'TEST_DEF_Medio_3', position: 'Defender', precio: 4000000 },
-    { name: 'TEST_DEF_Medio_4', position: 'Defender', precio: 3500000 },
-    { name: 'TEST_DEF_Medio_5', position: 'Defender', precio: 3000000 },
-    { name: 'TEST_DEF_Medio_6', position: 'Defender', precio: 3000000 },
-    { name: 'TEST_DEF_Barato_1', position: 'Defender', precio: 1000000 },
-    { name: 'TEST_DEF_Barato_2', position: 'Defender', precio: 1000000 },
-    { name: 'TEST_DEF_Barato_3', position: 'Defender', precio: 800000 },
-    { name: 'TEST_DEF_Barato_4', position: 'Defender', precio: 800000 },
+    // DEFENDERS (16 jugadores - stock pesado para abastecer la 4-3-3 a ambos equipos)
+    { name: 'TEST_DEF_1', position: 'Defender', precio: 10000000 },
+    { name: 'TEST_DEF_2', position: 'Defender', precio: 9000000 },
+    { name: 'TEST_DEF_3', position: 'Defender', precio: 6000000 },
+    { name: 'TEST_DEF_4', position: 'Defender', precio: 5500000 },
+    { name: 'TEST_DEF_5', position: 'Defender', precio: 5000000 },
+    { name: 'TEST_DEF_6', position: 'Defender', precio: 4500000 },
+    { name: 'TEST_DEF_7', position: 'Defender', precio: 4500000 },
+    { name: 'TEST_DEF_8', position: 'Defender', precio: 4000000 },
+    { name: 'TEST_DEF_9', position: 'Defender', precio: 4000000 },
+    { name: 'TEST_DEF_10', position: 'Defender', precio: 3500000 },
+    { name: 'TEST_DEF_11', position: 'Defender', precio: 3500000 },
+    { name: 'TEST_DEF_12', position: 'Defender', precio: 3000000 },
+    { name: 'TEST_DEF_13', position: 'Defender', precio: 1500000 },
+    { name: 'TEST_DEF_14', position: 'Defender', precio: 1000000 },
+    { name: 'TEST_DEF_15', position: 'Defender', precio: 800000 },
+    { name: 'TEST_DEF_16', position: 'Defender', precio: 800000 },
 
-    // MIDFIELDERS (10 jugadores)
-    { name: 'TEST_MID_Estrella_1', position: 'Midfielder', precio: 12000000 },
-    { name: 'TEST_MID_Estrella_2', position: 'Midfielder', precio: 9000000 },
-    { name: 'TEST_MID_Medio_1', position: 'Midfielder', precio: 6000000 },
-    { name: 'TEST_MID_Medio_2', position: 'Midfielder', precio: 5500000 },
-    { name: 'TEST_MID_Medio_3', position: 'Midfielder', precio: 5000000 },
-    { name: 'TEST_MID_Medio_4', position: 'Midfielder', precio: 4500000 },
-    { name: 'TEST_MID_Barato_1', position: 'Midfielder', precio: 1500000 },
-    { name: 'TEST_MID_Barato_2', position: 'Midfielder', precio: 1500000 },
-    { name: 'TEST_MID_Barato_3', position: 'Midfielder', precio: 1000000 },
-    { name: 'TEST_MID_Barato_4', position: 'Midfielder', precio: 1000000 },
+    // MIDFIELDERS (12 jugadores)
+    { name: 'TEST_MID_1', position: 'Midfielder', precio: 12000000 },
+    { name: 'TEST_MID_2', position: 'Midfielder', precio: 9000000 },
+    { name: 'TEST_MID_3', position: 'Midfielder', precio: 7000000 },
+    { name: 'TEST_MID_4', position: 'Midfielder', precio: 6000000 },
+    { name: 'TEST_MID_5', position: 'Midfielder', precio: 5500000 },
+    { name: 'TEST_MID_6', position: 'Midfielder', precio: 5000000 },
+    { name: 'TEST_MID_7', position: 'Midfielder', precio: 4500000 },
+    { name: 'TEST_MID_8', position: 'Midfielder', precio: 4000000 },
+    { name: 'TEST_MID_9', position: 'Midfielder', precio: 3500000 },
+    { name: 'TEST_MID_10', position: 'Midfielder', precio: 1500000 },
+    { name: 'TEST_MID_11', position: 'Midfielder', precio: 1000000 },
+    { name: 'TEST_MID_12', position: 'Midfielder', precio: 800000 },
 
-    // ATTACKERS (10 jugadores)
-    { name: 'TEST_ATT_Estrella_1', position: 'Attacker', precio: 15000000 },
-    { name: 'TEST_ATT_Estrella_2', position: 'Attacker', precio: 11000000 },
-    { name: 'TEST_ATT_Medio_1', position: 'Attacker', precio: 7000000 },
-    { name: 'TEST_ATT_Medio_2', position: 'Attacker', precio: 6500000 },
-    { name: 'TEST_ATT_Medio_3', position: 'Attacker', precio: 6000000 },
-    { name: 'TEST_ATT_Medio_4', position: 'Attacker', precio: 5500000 },
-    { name: 'TEST_ATT_Barato_1', position: 'Attacker', precio: 1500000 },
-    { name: 'TEST_ATT_Barato_2', position: 'Attacker', precio: 1500000 },
-    { name: 'TEST_ATT_Barato_3', position: 'Attacker', precio: 1200000 },
-    { name: 'TEST_ATT_Barato_4', position: 'Attacker', precio: 1200000 }
+    // ATTACKERS (12 jugadores)
+    { name: 'TEST_ATT_1', position: 'Attacker', precio: 15000000 },
+    { name: 'TEST_ATT_2', position: 'Attacker', precio: 11000000 },
+    { name: 'TEST_ATT_3', position: 'Attacker', precio: 8000000 },
+    { name: 'TEST_ATT_4', position: 'Attacker', precio: 7000000 },
+    { name: 'TEST_ATT_5', position: 'Attacker', precio: 6500000 },
+    { name: 'TEST_ATT_6', position: 'Attacker', precio: 6000000 },
+    { name: 'TEST_ATT_7', position: 'Attacker', precio: 5500000 },
+    { name: 'TEST_ATT_8', position: 'Attacker', precio: 4500000 },
+    { name: 'TEST_ATT_9', position: 'Attacker', precio: 4000000 },
+    { name: 'TEST_ATT_10', position: 'Attacker', precio: 1500000 },
+    { name: 'TEST_ATT_11', position: 'Attacker', precio: 1200000 },
+    { name: 'TEST_ATT_12', position: 'Attacker', precio: 800000 }
   ];
 
   for (const jugadorData of jugadoresData) {
-    const existente = await em.findOne(Player, { name: jugadorData.name });
+    const existente = await em.findOne(Player, { nombre: jugadorData.name });
     if (!existente) {
       const player = new Player();
-      player.name = jugadorData.name;
-      player.apiId = apiIdCounter++;
-      player.position = positionEntities.find(p => p.description === jugadorData.position)!;
+      player.nombre = jugadorData.name;
+      player.id_api = apiIdCounter++;
+      player.posicion = positionEntities.find(p => p.descripcion === jugadorData.position)!;
       player.club = clubEntities[Math.floor(Math.random() * clubEntities.length)];
       player.precio_actual = jugadorData.precio;
-      player.photo = 'player.png';
+      player.foto = 'player.png';
       em.persist(player);
     }
   }

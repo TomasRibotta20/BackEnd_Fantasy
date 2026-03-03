@@ -19,18 +19,19 @@ import { SqlHighlighter } from '@mikro-orm/sql-highlighter';
 //        glob: '!(*.d).{js,ts}',
 //      },
 //    });
+const isTest = process.env.NODE_ENV === 'test';
 
 const dbConfig: Options<MySqlDriver> = {
   entities: ['dist/**/*.entity.js'],
   entitiesTs: ['src/**/*.entity.ts'],
-  dbName: 'fantasydatabase',
+  dbName: isTest ? 'fantasydatabase_test' : 'fantasydatabase',
   user: 'dsw',
   password: 'dsw',
   host: 'localhost',
   port: 3307,
   driver: MySqlDriver,
   highlighter: new SqlHighlighter(),
-  debug: true,
+  debug: !isTest,
   seeder: {
     path: './dist/Seeders',
     pathTs: './src/Seeders',
