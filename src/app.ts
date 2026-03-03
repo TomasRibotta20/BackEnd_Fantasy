@@ -29,6 +29,7 @@ import { globalErrorHandler } from './shared/errors/errors.handler.js';
 import { ErrorFactory } from './shared/errors/errors.factory.js';
 import { premioRouter } from './Premio/premio.routes.js';
 import { recompensaRouter } from './Recompensa/recompensa.routes.js';
+import { automationService } from './Automation/automation.service.js'
 
 const corsOptions = {
   origin: 'http://localhost:5173',
@@ -129,6 +130,23 @@ app.use((req, _, next) => {
 
 
 app.use(globalErrorHandler);
+
+// Inicializar automatización si estaba activa
+const initAutomation = async () => {
+  try {
+    const em = orm.em.fork()
+    const { GameConfig } = await import('./Config/gameConfig.entity.js')
+    const config = await em.findOne(GameConfig, 1)
+    if (config?.modo_automatico) {
+      automationService.start(config.cron_intervalo_minutos)
+      console.log(`[Startup] Modo automático restaurado - intervalo: ${config.cron_intervalo_minutos} min`)
+    }
+  } catch (error: any) {
+    console.error('[Startup] Error al inicializar automatización:', error.message)
+  }
+}
+
+initAutomation()
 
 app.listen(3000, () => {});
 //Swagger UI disponible en http://localhost:3000/api-docs

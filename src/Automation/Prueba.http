@@ -1,0 +1,11 @@
+POST  http://localhost:3000/api/admin/automation/toggle
+content
+Content-Type: application/json
+
+{ "modo_automatico": true, "cron_intervalo_minutos": 1 }
+
+
+
+
+
+GET http://localhost:3000/api/admin/automation/status

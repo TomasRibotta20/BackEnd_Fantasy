@@ -16,4 +16,8 @@ adminRouter.get('/config', adminController.getConfig)
 adminRouter.post('/jornadas/:jornadaId/procesar', adminController.procesarJornada)
 adminRouter.post('/jornadas/:jornadaId/recalcular', adminController.recalcularPuntajesJornada)
 
+//Automatización
+adminRouter.post('/automation/toggle', (req, res, next) => adminController.toggleAutomation(req, res, next))
+adminRouter.get('/automation/status', (req, res, next) => adminController.getAutomationStatus(req, res, next))
+
 
