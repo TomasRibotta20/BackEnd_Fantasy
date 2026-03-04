@@ -413,16 +413,18 @@ export async function cerrarMercado(mercadoId: number) {
 /**
  * Obtiene el mercado activo de un torneo
  */
-export async function obtenerMercadoActivo(em: EntityManager, torneoId: number, userId: number) {
-  // 1. Verificar que el usuario participa en el torneo
-  const participacion = await em.findOne(TorneoUsuario, {
-    torneo: torneoId,
-    usuario: userId,
-    expulsado: false
-  });
+export async function obtenerMercadoActivo(em: EntityManager, torneoId: number, userId: number, userRole?: string) {
+  // 1. Si no es admin, verificar que el usuario participa en el torneo
+  if (userRole !== 'admin') {
+    const participacion = await em.findOne(TorneoUsuario, {
+      torneo: torneoId,
+      usuario: userId,
+      expulsado: false
+    });
 
-  if (!participacion) {
-    throw ErrorFactory.forbidden('No tienes acceso a este torneo');
+    if (!participacion) {
+      throw ErrorFactory.forbidden('No tienes acceso a este torneo');
+    }
   }
   // 2. Buscar si hay un mercado activo
   const mercado = await em.findOne(
