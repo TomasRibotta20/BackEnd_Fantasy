@@ -77,12 +77,18 @@ La aplicación integra la IA de Groq para generar análisis y tendencias automat
     ```bash
     pnpm install
     ```
-3. Ejecutar en modo desarrollo:
+3. Levantar el motor de Base de Datos:
+    Dentro del repositorio de backend, en una carpeta llamada db, encontrarás un archivo .txt llamado docker run. Es recomendable ejecutarlo en Docker para crear el contenedor necesario en el puerto configurado       en el código del proyecto.
+    (Otra opción es usar tu propia instancia de MySQL y cambiar las credenciales de conexión dentro del proyecto en la dirección: src/shared/db/orm.ts).
+
+4. Generar tablas y cargar datos base:
+    Con la base de datos encendida, ejecuta el siguiente comando para generar las tablas necesarias:
+    ```bash
+    pnpm run db:update
+    ```
+    Luego, en la misma carpeta db, encontrarás el archivo .sql con el nombre db_DSW_AD.sql. Ejecuta este archivo en MySQL Workbench (o tu cliente preferido), ya que en él están precargados los datos          necesarios para el correcto funcionamiento de la aplicación.
+   
+5. Ejecutar en modo desarrollo:
     ```bash
     pnpm start:dev
     ```
-2. Agrega las siguientes variables a tu `.env`:
-   ```env
-   APISPORTS_KEY=Pega_AQUI_TU_CLAVE
-   AFA_LEAGUE_ID=128
-   AFA_SEASON=2021
