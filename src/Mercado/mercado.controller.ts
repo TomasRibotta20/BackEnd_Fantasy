@@ -99,7 +99,8 @@ export async function obtenerMercadoActivo(req: Request, res: Response, next: Ne
     const em = orm.em;
     const torneoId = Number(req.params.torneoId);
     const userId = req.authUser.user?.userId!;
-    const mercado = await obtenerMercadoActivoService(em, torneoId, userId);
+    const userRole = req.authUser.user?.role;
+    const mercado = await obtenerMercadoActivoService(em, torneoId, userId, userRole);
     
     if (!mercado) {
       return res.status(200).json({
