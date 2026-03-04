@@ -11,6 +11,7 @@ export async function sendOfertaRecibidaEmail(
   equipoOferente: string,
   usuarioOferente: string,
   torneoNombre: string,
+  torneoId: number,
   mensaje?: string,
   esActualizacion: boolean = false
 ) {
@@ -136,6 +137,7 @@ export async function sendOfertaRechazadaEmail(
   equipoVendedor: string,
   usuarioVendedor: string,
   torneoNombre: string,
+  torneoId: number,
   mensajeRechazo?: string
 ) {
   const subject = `[${torneoNombre}]  Tu oferta por ${jugadorNombre} fue rechazada`;
@@ -159,7 +161,7 @@ export async function sendOfertaRechazadaEmail(
       <p>Puedes intentar con otro jugador o hacer una nueva oferta más adelante.</p>
       
       <p style="margin-top: 30px;">
-        <a href="http://localhost:5173/mercado" 
+        <a href="http://localhost:5173/mercado/activo/torneo/${torneoId}" 
            style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
           Buscar Jugadores
         </a>
@@ -196,7 +198,8 @@ export async function sendOfertaVencidaEmail(
   username: string,
   jugadorNombre: string,
   monto: number,
-  torneoNombre: string
+  torneoNombre: string,
+  torneoId: number
 ) {
   const subject = `[${torneoNombre}]  Tu oferta por ${jugadorNombre} ha vencido`;
 
@@ -216,7 +219,7 @@ export async function sendOfertaVencidaEmail(
       <p>Puedes hacer una nueva oferta si el jugador sigue disponible.</p>
       
       <p style="margin-top: 30px;">
-        <a href="http://localhost:5173/mercado" 
+        <a href="http://localhost:5173/mercado/activo/torneo/${torneoId}" 
            style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
           Buscar Jugadores
         </a>
@@ -257,6 +260,7 @@ export async function sendClausulaEjecutadaEmail(
   equipoComprador: string,
   usuarioComprador: string,
   torneoNombre: string,
+  torneoId: number,
   presupuestoNuevo: number
 ) {
   const subject = `[${torneoNombre}]  ¡Te han ejecutado una cláusula!`;
@@ -283,7 +287,7 @@ export async function sendClausulaEjecutadaEmail(
       <p>El dinero de la cláusula ya está disponible en tu presupuesto. ¡Aprovecha para fichar nuevos talentos!</p>
       
       <p style="margin-top: 30px;">
-        <a href="http://localhost:5173/mercado" 
+        <a href="http://localhost:5173/mercado/activo/torneo/${torneoId}" 
            style="background: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
            Buscar Jugadores
         </a>

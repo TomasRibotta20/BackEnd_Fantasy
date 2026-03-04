@@ -123,6 +123,7 @@ export async function crearOferta(
       equipoOferente.nombre,
       equipoOferente.torneo_usuario.usuario.username,
       equipoVendedor.torneo_usuario.torneo.nombre,
+      equipoVendedor.torneo_usuario.torneo.id!,
       mensajeOferente,
       true // es actualización
     );
@@ -161,6 +162,7 @@ export async function crearOferta(
     equipoOferente.nombre,
     equipoOferente.torneo_usuario.usuario.username,
     equipoVendedor.torneo_usuario.torneo.nombre,
+    equipoVendedor.torneo_usuario.torneo.id!,
     mensajeOferente
   );
 
@@ -353,6 +355,7 @@ export async function rechazarOferta(
     oferta.vendedor.nombre,
     oferta.vendedor.torneo_usuario.usuario.username,
     oferta.vendedor.torneo_usuario.torneo.nombre,
+    oferta.oferente.torneo_usuario.torneo.id!,
     mensajeRespuesta
   );
 
@@ -613,6 +616,7 @@ async function rechazarOfertasAutomaticas(
       'Sistema',
       'Sistema',
       oferta.oferente.torneo_usuario.torneo.nombre,
+      oferta.oferente.torneo_usuario.torneo.id!,
       'El jugador fue vendido a otro equipo'
     );
   }
@@ -656,7 +660,8 @@ export async function procesarOfertasVencidas(em?: EntityManager) {
       oferta.oferente.torneo_usuario.usuario.username,
       jugador.nombre || 'Jugador',
       oferta.monto_ofertado, 
-      oferta.oferente.torneo_usuario.torneo.nombre
+      oferta.oferente.torneo_usuario.torneo.nombre,
+      oferta.oferente.torneo_usuario.torneo.id!,
     );
 
     contadorVencidas++;
