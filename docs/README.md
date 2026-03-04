@@ -1,94 +1,39 @@
-# BackEnd_Fantasy
+# Documentación: BackEnd Fantasy
 
-Este es el repositorio para el backend del trabajo de desarrollo de software
+Este directorio contiene toda la documentación técnica, manuales de integración y evidencia de calidad generada para la API REST del proyecto. Cumpliendo con los estándares de la materia, esta documentación abarca tres áreas fundamentales:
 
-## Documentación
+---
 
-Toda la documentación técnica del proyecto, manuales de la API (Swagger), estructura del código (TypeDoc) y evidencia de pruebas (Testing) se encuentra en nuestro directorio de **[documentación](/docs/README.md)**.
+## 1. Documentación de la API REST (Swagger)
 
+La documentación interactiva para los consumidores de la API (como el equipo de Frontend) ha sido generada utilizando **Swagger UI** (`swagger-jsdoc`). En ella se detallan todos los endpoints disponibles, métodos HTTP, parámetros requeridos, esquemas de validación y modelos de respuesta.
 
-## Requisitos Previos
+**Para explorar la API interactivamente:**
+1. Ejecute el servidor localmente (`pnpm start:dev`).
+2. Ingrese desde su navegador a: `http://localhost:3000/api-docs`
 
-| Requisito           | Descripción / Valor Necesario   |
-|---------------------|-------------------------------|
-| Node.js             | v22.16.0                      |
-| Gestor de Paquetes  | pnpm v10.11.0                 |
-| Git                 | Instalado                     |
-| Base de Datos       | MySQL o compatible            |
+**Vista Previa:**
+![Captura de Swagger](./assets/swagger-preview.png)
 
-## Configuración de Variables de Entorno
+---
 
-Configurar variables de entorno: Duplique el archivo `.env.example` y renómbrelo a `.env`. Luego, rellene cada variable que se especifica dentro del archivo.
+## 2. Estructura del Código Fuente (TypeDoc)
 
-### Base de datos
+La lógica de negocio interna, los servicios, controladores, esquemas de Zod y entidades de MikroORM han sido rigurosamente documentados utilizando el estándar de comentarios **TSDoc**. 
 
-Para las variables de la base de datos se debe tener en cuenta que la base de datos se creará automáticamente al ejecutar el proyecto si el usuario tiene las credenciales correctas. Es decir, solo hace falta definir previamente el nombre de la base de datos y un usuario con persimos para que la app pueda usarlo y conectarse a la base de datos.
+A partir de estos comentarios, se generó un sitio web estático navegable utilizando TypeDoc, el cual permite explorar la jerarquía de clases y las firmas de los métodos.
 
-```env
-    DB_HOST=localhost # Host del servidor MySQL.
-    DB_PORT=3307 # Puerto de MySQL (ajustar si es 3306).
-    DB_USER=dws # Usuario con permisos.
-    DB_PASSWORD=dsw # Contraseña del usuario.
-    DB_NAME=fantasydatabase # Nombre de la base de datos a conectar.
-```
-### JWT
+**[Explorar la Documentación del Código](./index.html)** *(Nota: Para poder navegar por este sitio, es necesario haber descargado el repositorio y abrir el archivo `index.html` de esta misma carpeta en un navegador web).*
 
-Se debe definir una clave para cada uno de los tokens de autenticación que existen en la app. También se recomienda que la clave posea más de 50 caracteres y que sea bastante segura. Se recomienda que la clave sea distinta para cada token.
-    
-```env
-    SECRET_JWT_KEY=CLAVE_SECRETA_ACCESS_TOKEN_AQUI # Para tokens de acceso.
-    SECRET_RESETJWT_KEY=CLAVE_SECRETA_RESET_TOKEN_AQUI # Para tokens de reseteo de contraseña.
-    SECRET_REFRESHJWT_KEY=CLAVE_SECRETA_REFRESH_TOKEN_AQUI # Para tokens de refresco
-```
-### API-Sports (Datos de Partidos Reales)
-La aplicación utiliza una API externa para obtener las estadísticas de los jugadores en la vida real.
-1. Regístrate en [API-Football](https://www.api-football.com/) y obtén tu clave gratuita.
-2. Agrega las siguientes variables a tu `.env`:
+---
 
-```env
-   APISPORTS_KEY=Pega_AQUI_TU_CLAVE # API key de api-sports.io.
-   AFA_LEAGUE_ID=128
-   AFA_SEASON=2021
-```
-### Correo
+## 3. Evidencia de Pruebas Automatizadas (Testing)
 
-La app posee un sistema de envío de mails para recuperar la contraseña de un usuario. Para ello se requiere una cuenta que envíe esos mails a los usuarios. Entonces se debe poner un nombre de gmail de una cuenta existente y una contraseña de aplicación. Esta contraseña debe ser creada por el propietario del mail. Con esta clave es posible acceder a la cuenta de gmail para enviar los mails a los usuarios. En el siguiente link hay un video explicativo de como crear esta contraseña: https://www.youtube.com/watch?v=HV2wcj6oLhs
-    
-```env 
-    GMAIL_USER=tu_usuario_de_gmail
-    GMAIL_PASS=tu_clave_de_aplicacion_gmail
-```
-Es importante aclarar que no es necesario crear la contraseña de aplicacion si no se desea. Si este es el caso entonces la app puede funcionar igualmente. Se deberá usar la consola para poder ver el envio de mails al momento de solicitar recuperar la contraseña.
+El proyecto cuenta con una suite de pruebas automatizadas desarrollada con **Jest**. Se implementaron:
+* **Pruebas Unitarias:** Para validar los esquemas de Zod, la lógica de autenticación y los cálculos matemáticos aislados.
+* **Pruebas de Integración:** Para validar el flujo completo de los torneos, el sistema de Draft de jugadores, y el mercado de transferencias simulando peticiones HTTP reales sobre una base de datos aislada configurada para pruebas.
 
-### Groq (Inteligencia Artificial)
-La aplicación integra la IA de Groq para generar análisis y tendencias automatizadas sobre el rendimiento de los jugadores. Puedes obtener tu clave API gratuita creando una cuenta en la consola de desarrolladores de Groq.
+**Cobertura de Código (Coverage) y Resultados:**
+Al ejecutar el comando `pnpm run test:coverage`, la suite de pruebas superó todos los escenarios esperados y arrojó el siguiente informe de cobertura, destacando un 100% de eficacia en la validación de esquemas de autenticación y entidades compartidas:
 
-```env 
-    GROQ_API_KEY=tu_api_key_de_groq
-```
-## Pasos de Ejecución
-
-1. Clonar el repositorio:
-    ```bash
-    git clone link-del-repo-backend
-    cd nombre-del-repo-backend
-    ```
-2. Instalar dependencias:
-    ```bash
-    pnpm install
-    ```
-3. Levantar el motor de Base de Datos:
-    Dentro del repositorio de backend, en una carpeta llamada db, encontrarás un archivo .txt llamado docker run. Es recomendable ejecutarlo en Docker para crear el contenedor necesario en el puerto configurado       en el código del proyecto.
-    (Otra opción es usar tu propia instancia de MySQL y cambiar las credenciales de conexión dentro del proyecto en la dirección: src/shared/db/orm.ts).
-
-4. Generar tablas y cargar datos base:
-    Con la base de datos encendida, ejecuta el siguiente comando para generar las tablas necesarias:
-    ```bash
-    pnpm run db:update
-    ```
-    Luego, en la misma carpeta db, encontrarás el archivo .sql con el nombre db_DSW_AD.sql. Ejecuta este archivo en MySQL Workbench (o tu cliente preferido), ya que en él están precargados los datos          necesarios para el correcto funcionamiento de la aplicación.
-   
-5. Ejecutar en modo desarrollo:
-    ```bash
-    pnpm start:dev
-    ```
+![Evidencia de Testing](./assets/testing-coverage.png)
