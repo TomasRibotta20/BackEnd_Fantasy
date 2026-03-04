@@ -1,46 +1,39 @@
-# BackEnd_Fantasy
+# Documentación: BackEnd Fantasy
 
-Este es el repositorio para el backend del trabajo de desarrollo de software
+Este directorio contiene toda la documentación técnica, manuales de integración y evidencia de calidad generada para la API REST del proyecto. Cumpliendo con los requisios de la materia, esta documentación abarca tres áreas fundamentales:
 
-## Requisitos Previos
+---
 
-| Requisito           | Descripción / Valor Necesario   |
-|---------------------|-------------------------------|
-| Node.js             | v22.16.0                      |
-| Gestor de Paquetes  | pnpm v10.11.0                 |
-| Git                 | Instalado                     |
-| Base de Datos       | MySQL o compatible            |
+## 1. Documentación de la API REST (Swagger)
 
-## Configuración de Variables
+La documentación para los consumidores de la API (como el equipo de Frontend) ha sido generada utilizando **Swagger UI** (`swagger-jsdoc`). En ella se detallan todos los endpoints disponibles, métodos HTTP, parámetros requeridos, esquemas de validación y modelos de respuesta.
 
-Configurar variables de entorno: Duplique el archivo `.env.example` y renómbrelo a `.env`. Luego, rellene cada variable que se especifica dentro del archivo.
+**Para explorar la API interactivamente:**
+1. Ejecute el servidor localmente (`pnpm start:dev`).
+2. Ingrese desde su navegador a: `http://localhost:3000/api-docs`
 
-### Base de datos
+**Vista Previa:**
+![Captura de Swagger](./assets/swagger-preview.png)
 
-Para las variables de la base de datos se debe tener en cuenta que la base de datos se creará automáticamente al ejecutar el proyecto si el usuario tiene las credenciales correctas. Es decir, solo hace falta definir previamente el nombre de la base de datos y un usuario con persimos para que la app pueda usarlo y conectarse a la base de datos.
-### JWT
+---
 
-Se debe definir una clave para cada uno de los tokens de autenticación que existen en la app. También se recomienda que la clave posea más de 50 caracteres y que sea bastante segura. Se recomienda que la clave sea distinta para cada token.
+## 2. Estructura del Código Fuente (TypeDoc)
 
-### Correo
+La lógica de negocio interna, los servicios, controladores, esquemas de Zod y entidades de MikroORM han sido documentados utilizando el estándar de comentarios **TSDoc**. 
 
-La app posee un sistema de envío de mails para recuperar la contraseña de un usuario. Para ello se requiere una cuenta que envíe esos mails a los usuarios. Entonces se debe poner un nombre de gmail de una cuenta existente y una contraseña de aplicación. Esta contraseña debe ser creada por el propietario del mail. Con esta clave es posible acceder a la cuenta de gmail para enviar los mails a los usuarios. En el siguiente link hay un video explicativo de como crear esta contraseña: https://www.youtube.com/watch?v=HV2wcj6oLhs
+A partir de estos comentarios, se generó un sitio web estático navegable utilizando TypeDoc, el cual permite explorar la jerarquía de clases y las firmas de los métodos.
 
-Es importante aclarar que no es necesario crear la contraseña de aplicacion si no se desea. Si este es el caso entonces la app puede funcionar igualmente. Se deberá usar la consola para poder ver el envio de mails al momento de solicitar recuperar la contraseña.
+**[Explorar la Documentación del Código](./index.html)** *(Nota: Para poder navegar por este sitio, es necesario haber descargado el repositorio y abrir el archivo `index.html` de esta misma carpeta en un navegador web).*
 
+---
 
-## Pasos de Ejecución
+## 3. Evidencia de Pruebas Automatizadas (Testing)
 
-1. Clonar el repositorio:
-    ```bash
-    git clone link-del-repo-backend
-    cd nombre-del-repo-backend
-    ```
-2. Instalar dependencias:
-    ```bash
-    pnpm install
-    ```
-3. Ejecutar en modo desarrollo:
-    ```bash
-    pnpm start:dev
-    ```
+El proyecto cuenta con un sitio de tests automatizados desarrollada con **Jest**. Se implementaron:
+* **Tests Unitarios:** Para validar los esquemas de Zod, la lógica de autenticación y los cálculos matemáticos aislados.
+* **Tests de Integración:** Para validar el flujo completo de los torneos, el sistema de Draft de jugadores, y el mercado de transferencias simulando peticiones HTTP reales sobre una base de datos aislada configurada para pruebas.
+
+**Cobertura de Código (Coverage) y Resultados:**
+Al ejecutar el comando `pnpm run test:coverage`, el sitio de pruebas imprimirá el siguiente informe de cobertura, destacando un 100% de eficacia en la validación de esquemas de autenticación y entidades compartidas:
+
+![Evidencia de Testing](./assets/testing-coverage.png)
