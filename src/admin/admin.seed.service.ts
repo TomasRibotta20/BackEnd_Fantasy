@@ -27,6 +27,8 @@ import { MercadoDiario } from '../Mercado/mercadoDiario.entity.js';
 import { Equipo } from '../Equipo/equipo.entity.js';
 import { TorneoUsuario } from '../Torneo/torneoUsuario.entity.js';
 import { Torneo } from '../Torneo/torneo.entity.js';
+import { Premio } from '../Premio/premio.entity.js';
+import { seedPremios } from '../Premio/premio.seed.js';
 
 export interface SeedResult {
   clubes: number;
@@ -34,6 +36,7 @@ export interface SeedResult {
   posiciones: number;
   jornadas: number;
   partidos: number;
+  premios: number;
 }
 
 export class SeedService {
@@ -71,12 +74,18 @@ export class SeedService {
     const fixtureResult = await this.seedFixtures(fixtures, clubMap, leagueId, season);
     console.log(`Jornadas creadas: ${fixtureResult.jornadasCount}, Partidos creados: ${fixtureResult.partidosCount}`);
 
+    // 6. Seedear premios
+    console.log('Creando premios...');
+    const premiosCount = await seedPremios(this.em);
+    console.log(`Premios creados: ${premiosCount}`);
+
     return {
       clubes: clubMap.size,
       jugadores: playerCount,
       posiciones: this.positionCache.size,
       jornadas: fixtureResult.jornadasCount,
       partidos: fixtureResult.partidosCount,
+      premios: premiosCount,
     };
   }
 
@@ -89,6 +98,7 @@ export class SeedService {
     await this.em.nativeDelete(Transaccion, {});
     await this.em.nativeDelete(EquipoJornadaJugador, {});
     await this.em.nativeDelete(Recompensa, {});
+    await this.em.nativeDelete(Premio, {});
     await this.em.nativeDelete(JugadorTorneo, {});
     await this.em.nativeDelete(EquipoJornada, {});
     await this.em.nativeDelete(EquipoJugador, {});

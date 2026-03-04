@@ -9,6 +9,7 @@ import { Player } from '../../src/Player/player.entity.js';
 import { Position } from '../../src/Position/position.entity.js';
 import { Jornada } from '../../src/Fixture/Jornada.entity.js';
 import { Partido } from '../../src/Fixture/partido.entity.js';
+import { Premio, Tier } from '../../src/Premio/premio.entity.js';
 
 const FAKE_TEAMS: TeamItem[] = [
   {
@@ -196,6 +197,7 @@ describe('SeedService.execute() - Integration Test', () => {
       posiciones: 5,
       jornadas: 3,
       partidos: 3,
+      premios: 7,
     });
   });
 
@@ -346,5 +348,20 @@ describe('SeedService.execute() - Integration Test', () => {
     expect(mockGetPlayersByTeam).toHaveBeenCalledWith(100, 2025);
     expect(mockGetPlayersByTeam).toHaveBeenCalledWith(200, 2025);
     expect(mockGetPlayersByTeam).toHaveBeenCalledWith(300, 2025);
+  });
+
+  it('debe crear los 7 premios con tiers correctos', async () => {
+    const em = orm.em.fork();
+    const premios = await em.find(Premio, {});
+
+    expect(premios).toHaveLength(7);
+
+    const oroCount = premios.filter(p => p.tier === Tier.ORO).length;
+    const plataCount = premios.filter(p => p.tier === Tier.PLATA).length;
+    const bronceCount = premios.filter(p => p.tier === Tier.BRONCE).length;
+
+    expect(oroCount).toBe(3);
+    expect(plataCount).toBe(3);
+    expect(bronceCount).toBe(1);
   });
 });

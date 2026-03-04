@@ -30,6 +30,8 @@ import { ErrorFactory } from './shared/errors/errors.factory.js';
 import { premioRouter } from './Premio/premio.routes.js';
 import { recompensaRouter } from './Recompensa/recompensa.routes.js';
 import { automationService } from './Automation/automation.service.js'
+import { Premio } from './Premio/premio.entity.js'
+import { seedPremios } from './Premio/premio.seed.js'
 
 const corsOptions = {
   origin: 'http://localhost:5173',
@@ -131,6 +133,20 @@ app.use((req, _, next) => {
 
 app.use(globalErrorHandler);
 
+// Inicializar premios si la tabla está vacía
+const initPremios = async () => {
+  try {
+    const em = orm.em.fork()
+    const count = await em.count(Premio, {})
+    if (count === 0) {
+      await seedPremios(em)
+      console.log('[Startup] Premios seeded automatically')
+    }
+  } catch (error: any) {
+    console.error('[Startup] Error al inicializar premios:', error.message)
+  }
+}
+
 // Inicializar automatización si estaba activa
 const initAutomation = async () => {
   try {
@@ -146,6 +162,7 @@ const initAutomation = async () => {
   }
 }
 
+initPremios()
 initAutomation()
 
 app.listen(3000, () => {});
