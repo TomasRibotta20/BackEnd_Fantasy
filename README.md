@@ -9,7 +9,7 @@ Link A la Proposal: https://github.com/TomasRibotta20/TPDSW
 Toda la documentación técnica del proyecto, manuales de la API (Swagger), estructura del código (TypeDoc) y evidencia de pruebas (Testing) se encuentra en nuestro directorio de **[documentación](/docs/README.md)**.
 
 
-## Requisitos Previos
+## Requisitos Previos para correr el backend
 
 | Requisito           | Descripción / Valor Necesario   |
 |---------------------|-------------------------------|
@@ -82,15 +82,16 @@ La aplicación integra la IA de Groq para generar análisis y tendencias automat
 3. Levantar el motor de Base de Datos:
     Dentro del repositorio de backend, en una carpeta llamada db, encontrarás un archivo .txt llamado docker run. Es recomendable ejecutarlo en Docker para crear el contenedor necesario en el puerto configurado       en el código del proyecto.
     (Otra opción es usar tu propia instancia de MySQL y cambiar las credenciales de conexión dentro del proyecto en la dirección: src/shared/db/orm.ts).
-
-4. Generar tablas y cargar datos base:
+    
+5. Generar tablas y cargar datos base:
     Con la base de datos encendida, ejecuta el siguiente comando para generar las tablas necesarias:
     ```bash
     pnpm run db:update
     ```
-    Luego, en la misma carpeta db, encontrarás el archivo .sql con el nombre db_DSW_AD.sql. Ejecuta este archivo en MySQL Workbench (o tu cliente preferido), ya que en él están precargados los datos          necesarios para el correcto funcionamiento de la aplicación.
+    Luego, en la misma carpeta db, encontrarás el archivo .sql con el nombre db_DSW_AD.sql. Ejecuta este archivo en MySQL Workbench (o tu cliente preferido), ya que en él están precargados los datos          necesarios para el correcto funcionamiento de la aplicación. Es importante recalcar que el script de la base de datos contendrá datos del año 2021 de la liga argentina, para cambiar esto se deberán seguir las instrucciones detalladas, de administrador, en el repositorio **[TPDSW](https://github.com/TomasRibotta20/TPDSW.git)**.
+
    
-5. Ejecutar en modo desarrollo:
+6. Ejecutar en modo desarrollo:
     ```bash
     pnpm start:dev
     ```
