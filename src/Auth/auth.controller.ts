@@ -125,9 +125,9 @@ async function forgotPassword(req: Request, res: Response, next: NextFunction) {
     const hashedToken = await bcrypt.hash(resetToken, 10);
     existingUser.resetToken = hashedToken;
 
-    const verificationLink = `http://localhost:5173/new-password/${resetToken}`;
+    const verificationLink = `${process.env.FRONTEND_URL}/new-password/${resetToken}`;
     const mailOptions = {
-    from: '"Forgot password" <arielmazalan15@gmail.com>',
+    from: `"Forgot password" <${process.env.GMAIL_USER}>`,
     to: existingUser.email,
     subject: 'Restablecer contraseña',
     html: `
@@ -140,20 +140,10 @@ async function forgotPassword(req: Request, res: Response, next: NextFunction) {
     }
     ////////////////////////////////////////////////////////////////////////////
     if (!process.env.GMAIL_PASS) {
-      console.log("⚠️ Falta configuración de correo. Usando modo demo.");
-      console.log("📧 Email que se habría enviado:");
+      console.log("Falta configuración de correo. Usando modo demo.");
+      console.log("Email que se habría enviado:");
       console.log(mailOptions);
-      console.log("🔗 Link de reset:", verificationLink);
-    } else {
-      await transporter.sendMail(mailOptions);
-    }
-    ////////////////////////////////////////////////////////////////////////////
-//////////////////////////////
-    if (!process.env.GMAIL_PASS) {
-      console.log("⚠️ Falta configuración de correo. Usando modo demo.");
-      console.log("📧 Email que se habría enviado:");
-      console.log(mailOptions);
-      console.log("🔗 Link de reset:", verificationLink);
+      console.log("Link de reset:", verificationLink);
     } else {
       await transporter.sendMail(mailOptions);
     }

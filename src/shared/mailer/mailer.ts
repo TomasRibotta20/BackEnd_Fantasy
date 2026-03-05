@@ -5,7 +5,7 @@ export const transporter = nodemailer.createTransport({
   port: 465,
   secure: true,
   auth: {
-    user: "arielmazalan15@gmail.com",
+    user: process.env.GMAIL_USER || "demo@gmail.com",
     pass: process.env.GMAIL_PASS || "demo",
   },
 });
@@ -14,11 +14,11 @@ export const transporter = nodemailer.createTransport({
 if (process.env.GMAIL_PASS) {
   transporter.verify()
     .then(() => {
-      console.log("✅ Ready to send emails");
+      console.log("Ready to send emails");
     })
     .catch((error) => {
-      console.error("❌ Error configuring email transport:", error);
+      console.error("Error configuring email transport:", error);
     });
 } else {
-  console.log("⚠️ Email no configurado. Usando modo DEMO");
+  console.log("Email no configurado. Usando modo DEMO");
 }

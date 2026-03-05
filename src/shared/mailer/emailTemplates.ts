@@ -37,7 +37,7 @@ export async function sendOfertaRecibidaEmail(
       <p>Tienes <strong>48 horas</strong> para aceptar o rechazar esta oferta.</p>
       
       <p style="margin-top: 30px;">
-        <a href="http://localhost:5173/mis-ofertas" 
+        <a href="${process.env.FRONTEND_URL}/mis-ofertas"
            style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
           Ver Ofertas
         </a>
@@ -52,7 +52,7 @@ export async function sendOfertaRecibidaEmail(
   try {
     if (process.env.GMAIL_PASS) {
       await transporter.sendMail({
-        from: '"Fantasy Football" <arielmazalan15@gmail.com>',
+        from: `"Fantasy Football" <${process.env.GMAIL_USER}>`,
         to,
         subject,
         html
@@ -97,7 +97,7 @@ export async function sendOfertaAceptadaEmail(
       <p>El jugador ya está en tu equipo. ¡Éxitos con tu nueva adquisición!</p>
       
       <p style="margin-top: 30px;">
-        <a href="http://localhost:5173/mi-equipo" 
+        <a href="${process.env.FRONTEND_URL}/mi-equipo"
            style="background: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
           Ver Mi Equipo
         </a>
@@ -112,7 +112,7 @@ export async function sendOfertaAceptadaEmail(
   try {
     if (process.env.GMAIL_PASS) {
       await transporter.sendMail({
-        from: '"Fantasy Football" <arielmazalan15@gmail.com>',
+        from: `"Fantasy Football" <${process.env.GMAIL_USER}>`,
         to,
         subject,
         html
@@ -161,7 +161,7 @@ export async function sendOfertaRechazadaEmail(
       <p>Puedes intentar con otro jugador o hacer una nueva oferta más adelante.</p>
       
       <p style="margin-top: 30px;">
-        <a href="http://localhost:5173/mercado/activo/torneo/${torneoId}" 
+        <a href="${process.env.FRONTEND_URL}/mercado/activo/torneo/${torneoId}"
            style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
           Buscar Jugadores
         </a>
@@ -176,7 +176,7 @@ export async function sendOfertaRechazadaEmail(
   try {
     if (process.env.GMAIL_PASS) {
       await transporter.sendMail({
-        from: '"Fantasy Football" <arielmazalan15@gmail.com>',
+        from: `"Fantasy Football" <${process.env.GMAIL_USER}>`,
         to,
         subject,
         html
@@ -219,7 +219,7 @@ export async function sendOfertaVencidaEmail(
       <p>Puedes hacer una nueva oferta si el jugador sigue disponible.</p>
       
       <p style="margin-top: 30px;">
-        <a href="http://localhost:5173/mercado/activo/torneo/${torneoId}" 
+        <a href="${process.env.FRONTEND_URL}/mercado/activo/torneo/${torneoId}"
            style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
           Buscar Jugadores
         </a>
@@ -234,7 +234,7 @@ export async function sendOfertaVencidaEmail(
   try {
     if (process.env.GMAIL_PASS) {
       await transporter.sendMail({
-        from: '"Fantasy Football" <arielmazalan15@gmail.com>',
+        from: `"Fantasy Football" <${process.env.GMAIL_USER}>`,
         to,
         subject,
         html
@@ -287,7 +287,7 @@ export async function sendClausulaEjecutadaEmail(
       <p>El dinero de la cláusula ya está disponible en tu presupuesto. ¡Aprovecha para fichar nuevos talentos!</p>
       
       <p style="margin-top: 30px;">
-        <a href="http://localhost:5173/mercado/activo/torneo/${torneoId}" 
+        <a href="${process.env.FRONTEND_URL}/mercado/activo/torneo/${torneoId}"
            style="background: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
            Buscar Jugadores
         </a>
@@ -302,7 +302,7 @@ export async function sendClausulaEjecutadaEmail(
   try {
     if (process.env.GMAIL_PASS) {
       await transporter.sendMail({
-        from: '"Fantasy Football" <arielmazalan15@gmail.com>',
+        from: `"Fantasy Football" <${process.env.GMAIL_USER}>`,
         to,
         subject,
         html
@@ -369,7 +369,7 @@ export async function sendClausulaExitosaEmail(
       <p><strong>Recuerda:</strong> Durante el período de protección, nadie podrá ejecutar la cláusula de este jugador.</p>
       
       <p style="margin-top: 30px;">
-        <a href="http://localhost:5173/mi-equipo" 
+        <a href="${process.env.FRONTEND_URL}/mi-equipo"
            style="background: #16a34a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
            Ver Mi Equipo
         </a>
@@ -384,7 +384,7 @@ export async function sendClausulaExitosaEmail(
   try {
     if (process.env.GMAIL_PASS) {
       await transporter.sendMail({
-        from: '"Fantasy Football" <arielmazalan15@gmail.com>',
+        from: `"Fantasy Football" <${process.env.GMAIL_USER}>`,
         to,
         subject,
         html

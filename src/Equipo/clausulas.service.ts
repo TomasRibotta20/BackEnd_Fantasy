@@ -237,6 +237,7 @@ export async function ejecutarClausula(
     const compradorNombre = equipoComprador.torneo_usuario.usuario.username;
     const torneoNombre = equipoComprador.torneo_usuario.torneo.nombre;
     
+    
     const fechaProteccionHasta = new Date(
       Date.now() + gameConfig.dias_proteccion_clausula * 86400000
     );
@@ -250,6 +251,7 @@ export async function ejecutarClausula(
       equipoComprador.nombre,
       compradorNombre,
       torneoNombre,
+      torneoId!,
       equipoVendedor.presupuesto
     );
     

@@ -34,7 +34,7 @@ import { Premio } from './Premio/premio.entity.js'
 import { seedPremios } from './Premio/premio.seed.js'
 
 const corsOptions = {
-  origin: 'http://localhost:5173',
+  origin: process.env.FRONTEND_URL,
   credentials: true, //access-control-allow-credentials:true
   optionSuccessStatus: 200,
 };
@@ -49,22 +49,24 @@ app.use((req, res, next) => {
 
 //middleware
 app.use((req, res, next) => {
-  console.log(`🌐 ${req.method} ${req.originalUrl}`);
-  console.log('🍪 Headers cookie:', req.headers.cookie);
+  console.log(`${req.method} ${req.originalUrl}`);
+  console.log('Headers cookie:', req.headers.cookie);
   next();
 });
+
 app.use(cookieParser()); // Middleware para manejar cookies
+
 app.use((req, res, next) => {
   const token = req.cookies.access_token;
-  console.log('🛤️ req.cookies:', req.cookies);
+  console.log('req.cookies:', req.cookies);
   req.authUser = { user: null };
   if (!token) { //Si no hay token continúo normalmente
-    console.log('🔓 No hay token, continuando...');
+    console.log('No hay token, continuando...');
     return next();
   }
   try {
     const decoded = jwt.decode(token) as any;
-    console.log('📄 Token decodificado:', {
+    console.log('Token decodificado:', {
       userId: decoded?.userId,
       username: decoded?.username,
       iat: decoded?.iat,
@@ -90,11 +92,11 @@ app.use((req, res, next) => {
   } catch (error: any) {
     req.authUser = { user: null };
     if (error.name === 'TokenExpiredError') {
-      console.log('🛤️ req.path:', req.path);
-      console.log('🛤️ req.originalUrl:', req.originalUrl);
-      console.log('🛤️ req.baseUrl:', req.baseUrl);
+      console.log('req.path:', req.path);
+      console.log('req.originalUrl:', req.originalUrl);
+      console.log('req.baseUrl:', req.baseUrl);
       const isPublicAuthRoute = req.originalUrl.startsWith('/api/auth');
-      console.log('🔓 Es ruta pública?', isPublicAuthRoute);
+      console.log('Es ruta pública?', isPublicAuthRoute);
       if (!isPublicAuthRoute) {
         return next(ErrorFactory.unauthorized('Token expired'));
       }

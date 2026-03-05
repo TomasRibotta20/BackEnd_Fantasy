@@ -2,33 +2,16 @@ import { MikroORM, Options } from '@mikro-orm/core';
 import { MySqlDriver } from '@mikro-orm/mysql';
 import { SqlHighlighter } from '@mikro-orm/sql-highlighter';
 
-//    export const orm = await MikroORM.init<MySqlDriver>({
-//      entities: ['dist/**/*.entity.js'],
-//      entitiesTs: ['src/**/*.entity.ts'],
-//      dbName: 'fantasydatabase',
-//      user: 'dsw',
-//      password: 'dsw',
-//     host: 'localhost',
-//      port: 3307,
-//      driver: MySqlDriver,
-//      highlighter: new SqlHighlighter(),
-//      debug: true,
-//      seeder: {
-//        path: './dist/Seeders',
-//        pathTs: './src/Seeders',
-//        glob: '!(*.d).{js,ts}',
-//      },
-//    });
 const isTest = process.env.NODE_ENV === 'test';
 
 const dbConfig: Options<MySqlDriver> = {
   entities: ['dist/**/*.entity.js'],
   entitiesTs: ['src/**/*.entity.ts'],
-  dbName: isTest ? 'fantasydatabase_test' : 'fantasydatabase',
-  user: 'dsw',
-  password: 'dsw',
-  host: 'localhost',
-  port: 3307,
+  dbName: isTest ? 'fantasydatabase_test' : (process.env.DB_NAME),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT),
   driver: MySqlDriver,
   highlighter: new SqlHighlighter(),
   debug: !isTest,
