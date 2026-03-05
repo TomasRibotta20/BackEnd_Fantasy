@@ -143,17 +143,17 @@ A continuación, se describen algunos de los flujos más importantes de la aplic
     2. Cuando otros Usuarios ingresaron el código de acceso, el Sistema valida las condiciones de inscripción (cupo disponible, equipo no duplicado), registra a los participantes y les asocia un equipo.
     3. Cuando el Usuario Creador decidió iniciar el torneo, el Sistema valida que existan al menos 2 participantes, asigna 15 jugadores aleatorios balanceados a cada equipo, ajusta los presupuestos iniciales, actualiza el estado del torneo a ACTIVO y abre el primer mercado de agentes libres.
 * **Caminos alternativos:**
-    * 2.a. <Durante> Torneo lleno o Usuario ya inscrito detectado:
+    * 2.a. \<Durante\> Torneo lleno o Usuario ya inscrito detectado:
         * 2.a.1. El Sistema informa el error de inscripción.
         * 2.a.2. FCU.
 * **Post-condiciones de negocio:**
     * Éxito: El torneo comenzó formalmente con todos los equipos armados y el mercado activo.
-    * Éxito alternativo: <Omitido>
+    * Éxito alternativo: \<Omitido\>
     * Fracaso: El torneo quedó en espera por falta de participantes o errores de cupo.
 * **Post-condiciones de sistema:**
     * Éxito: El torneo está registrado con estado ACTIVO. Los equipos están registrados con sus 15 jugadores asociados y presupuestos actualizados. El primer MercadoDiario está registrado con estado ABIERTO.
-    * Éxito alternativo: <vacío>
-    * Fracaso: <vacío>
+    * Éxito alternativo: \<vacío\>
+    * Fracaso: \<vacío\>
 
 ### CU-002 Realizar Puja en Mercado (Subasta Ciega)
 * **Meta:** Ofertar por un jugador libre en el mercado diario del torneo.
@@ -165,10 +165,10 @@ A continuación, se describen algunos de los flujos más importantes de la aplic
     1. El Usuario selecciona un jugador del mercado e ingresa el monto de su puja. El Sistema valida las condiciones de la puja (vigencia del mercado, monto mínimo y presupuesto disponible), bloquea el monto en el presupuesto del Usuario y registra la puja con estado PENDIENTE.
     2. Cuando el Administrador decidió cerrar el mercado, el Sistema evalúa las pujas pendientes agrupadas por jugador. El Sistema valida el cupo de la plantilla del mayor postor, transfiere el jugador al equipo ganador, descuenta definitivamente el presupuesto bloqueado del ganador, libera el presupuesto bloqueado de los perdedores y registra el mercado como CERRADO.
 * **Caminos alternativos:**
-    * 1.a. <Durante> Presupuesto insuficiente detectado:
+    * 1.a. \<Durante\> Presupuesto insuficiente detectado:
         * 1.a.1. El Sistema informa que los fondos no cubren la oferta.
         * 1.a.2. FCU.
-    * 2.a. <Durante> Cupo de plantilla lleno del ganador detectado (al cerrar mercado):
+    * 2.a. \<Durante\> Cupo de plantilla lleno del ganador detectado (al cerrar mercado):
         * 2.a.1. El Sistema rechaza la puja ganadora, libera sus fondos y asigna el jugador al siguiente postor con mayor monto.
 * **Post-condiciones de negocio:**
     * Éxito: El Usuario ganó la subasta ciega y fichó al jugador.
@@ -177,7 +177,7 @@ A continuación, se describen algunos de los flujos más importantes de la aplic
 * **Post-condiciones de sistema:**
     * Éxito: La puja está registrada con estado GANADA. El jugador está registrado en el nuevo equipo. Las transacciones económicas están registradas y el mercado está registrado como CERRADO.
     * Éxito alternativo: La puja está registrada como PERDIDA y el presupuesto bloqueado está liberado.
-    * Fracaso: <vacío>
+    * Fracaso: \<vacío\>
 
 ### CU-003 Procesar Jornada
 * **Meta:** Cerrar una fecha calculando puntajes, actualizando precios de jugadores y generando recompensas.
@@ -191,17 +191,17 @@ A continuación, se describen algunos de los flujos más importantes de la aplic
     3. Cuando el Sistema calculó los puntajes individuales, el Sistema suma los puntos de los jugadores titulares para obtener el puntaje total de cada equipo.
     4. Cuando el Sistema obtuvo los puntajes de los equipos, el Sistema actualiza los precios de mercado de los jugadores aplicando los modificadores de rendimiento y tendencia, genera las recompensas económicas según el ranking de la jornada y actualiza la configuración global activando la jornada siguiente.
 * **Caminos alternativos:**
-    * 1.a. <Durante> Modificaciones de equipos habilitadas detectadas:
+    * 1.a. \<Durante\> Modificaciones de equipos habilitadas detectadas:
         * 1.a.1. El Sistema informa que deben deshabilitarse las modificaciones antes de procesar.
         * 1.a.2. FCU.
 * **Post-condiciones de negocio:**
     * Éxito: La jornada se cerró, los puntos fueron asignados, los jugadores variaron su precio y se repartieron los premios.
-    * Éxito alternativo: <Omitido>
+    * Éxito alternativo: \<Omitido\>
     * Fracaso: La jornada no fue procesada por no cumplir precondiciones.
 * **Post-condiciones de sistema:**
     * Éxito: Los puntajes están registrados en EstadísticasJugador. Los historiales de precios están actualizados. Las Recompensas están registradas asociadas a los equipos. El GameConfig indica la nueva jornada activa.
     * Éxito alternativo: <vacío>
-    * Fracaso: <vacío>
+    * Fracaso: \<vacío\>
 
 ### CU-004 Realizar Oferta de Compra Directa
 * **Meta:** Adquirir un jugador de otro participante del mismo torneo mediante negociación directa.
@@ -213,13 +213,13 @@ A continuación, se describen algunos de los flujos más importantes de la aplic
     1. El Usuario Oferente selecciona al jugador rival e ingresa el monto. El Sistema valida las reglas de transferencia (presupuesto suficiente, no auto-oferta), bloquea preventivamente el monto en el presupuesto del oferente, emite una notificación al vendedor y registra la oferta con estado PENDIENTE.
     2. Cuando el Usuario Vendedor decidió aceptar la oferta, el Sistema valida la vigencia de la oferta y el cupo del comprador. El Sistema transfiere el jugador, transfiere el dinero al vendedor, rechaza automáticamente ofertas competidoras por el mismo jugador y registra las transacciones.
 * **Caminos alternativos:**
-    * 1.a. <Durante> Presupuesto insuficiente detectado:
+    * 1.a. \<Durante\> Presupuesto insuficiente detectado:
         * 1.a.1. El Sistema informa el error de fondos.
         * 1.a.2. FCU.
-    * 2.a. <Previo> El Usuario Vendedor decidió rechazar la oferta:
+    * 2.a. \<Previo\> El Usuario Vendedor decidió rechazar la oferta:
         * 2.a.1. El Usuario Vendedor ingresa la orden de rechazo. El Sistema desbloquea los fondos del oferente, marca la oferta como RECHAZADA y notifica al oferente.
         * 2.a.2. FCU.
-    * 2.b. <Previo> El Usuario Oferente decidió cancelar la oferta:
+    * 2.b. \<Previo\> El Usuario Oferente decidió cancelar la oferta:
         * 2.b.1. El Sistema desbloquea los fondos y marca la oferta como CANCELADA.
         * 2.b.2. FCU.
 * **Post-condiciones de negocio:**
@@ -229,7 +229,7 @@ A continuación, se describen algunos de los flujos más importantes de la aplic
 * **Post-condiciones de sistema:**
     * Éxito: La oferta está registrada con estado ACEPTADA. El jugador está registrado en el equipo comprador. Los presupuestos están actualizados. Las ofertas competidoras están registradas como RECHAZADAS.
     * Éxito alternativo: La oferta está registrada como RECHAZADA/CANCELADA y los fondos bloqueados están liberados.
-    * Fracaso: <vacío>
+    * Fracaso: \<vacío\>
 
 ### CU-005 Blindar Cláusula de Jugador
 * **Meta:** Incrementar la cláusula de rescisión de un jugador propio para protegerlo de compras hostiles.
@@ -241,17 +241,17 @@ A continuación, se describen algunos de los flujos más importantes de la aplic
     1. El Usuario selecciona un jugador de su plantilla e ingresa el monto de incremento deseado. El Sistema valida la propiedad del jugador, calcula el costo del blindaje según el ratio de configuración global y valida que el presupuesto del equipo cubra dicho costo.
     2. Cuando el Sistema validó los fondos, el Sistema suma el incremento a la cláusula actual, descuenta el costo del presupuesto del Usuario, registra la transacción de gasto y muestra los nuevos valores actualizados al Usuario.
 * **Caminos alternativos:**
-    * 1.a. <Durante> Presupuesto insuficiente detectado:
+    * 1.a. \<Durante\> Presupuesto insuficiente detectado:
         * 1.a.1. El Sistema informa el costo requerido y el presupuesto disponible.
         * 1.a.2. FCU.
 * **Post-condiciones de negocio:**
     * Éxito: El jugador quedó protegido con una cláusula de salida más alta a costa del presupuesto del usuario.
-    * Éxito alternativo: <Omitido>
+    * Éxito alternativo: \<Omitido\>
     * Fracaso: El blindaje no se realizó por falta de fondos.
 * **Post-condiciones de sistema:**
     * Éxito: El valor de la cláusula del jugador está actualizado. La transacción de GASTO_BLINDAJE está registrada. El presupuesto del equipo está actualizado.
-    * Éxito alternativo: <vacío>
-    * Fracaso: <vacío>
+    * Éxito alternativo: \<vacío\>
+    * Fracaso: \<vacío\>
 
 ### CU-006 Ejecutar Cláusula de Rescisión
 * **Meta:** Fichar forzosamente a un jugador rival pagando el valor total de su cláusula de salida.
@@ -264,10 +264,10 @@ A continuación, se describen algunos de los flujos más importantes de la aplic
     2. Cuando el Sistema calculó el precio, el Sistema valida que el presupuesto del Usuario comprador sea suficiente para cubrir el costo y que posea cupo disponible en su plantilla.
     3. Cuando el Usuario confirmó el pago, el Sistema descuenta el precio de salida al comprador, suma el importe al vendedor, transfiere la titularidad del jugador al comprador, reinicia el período de protección del jugador, resetea su blindaje a cero, registra las transacciones económicas y emite correos de notificación a ambos usuarios.
 * **Caminos alternativos:**
-    * 1.a. <Durante> Jugador en período de protección detectado:
+    * 1.a. \<Durante\> Jugador en período de protección detectado:
         * 1.a.1. El Sistema informa los días de inmunidad restantes del jugador.
         * 1.a.2. FCU.
-    * 2.a. <Durante> Presupuesto insuficiente o cupo de plantilla lleno detectado:
+    * 2.a. \<Durante\> Presupuesto insuficiente o cupo de plantilla lleno detectado:
         * 2.a.1. El Sistema informa el error correspondiente que impide la transferencia.
         * 2.a.2. FCU.
 * **Post-condiciones de negocio:**
@@ -276,5 +276,5 @@ A continuación, se describen algunos de los flujos más importantes de la aplic
     * Fracaso: La ejecución no se concretó por incumplir las reglas de negocio (protección, cupo o dinero).
 * **Post-condiciones de sistema:**
     * Éxito: El jugador está registrado en el equipo comprador con su fecha de incorporación actualizada y cláusula en cero. Las transacciones de PAGO_CLAUSULA y COBRO_CLAUSULA están registradas. Los presupuestos de ambos equipos están actualizados.
-    * Éxito alternativo: <vacío>
-    * Fracaso: <vacío>
+    * Éxito alternativo: \<vacío\>
+    * Fracaso: \<vacío\>
