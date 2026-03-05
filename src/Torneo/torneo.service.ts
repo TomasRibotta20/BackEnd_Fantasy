@@ -126,6 +126,11 @@ static async leaveTorneo(em: EntityManager, torneoId: number, userId: number) {
       } else if (miInscripcion.equipo) {
         const equipoId = miInscripcion.equipo.id;
         await transactionalEm.nativeDelete(EquipoJugador, { equipo: equipoId });
+        await transactionalEm.nativeDelete(MercadoPuja, { equipo: equipoId });
+        await transactionalEm.nativeDelete(Transaccion, { equipo: equipoId });
+        await transactionalEm.nativeDelete(OfertaVenta, { vendedor: equipoId });
+        await transactionalEm.nativeDelete(OfertaVenta, { oferente: equipoId });
+        await transactionalEm.nativeDelete(Recompensa, { torneo_usuario: miInscripcion.id });
         if (miInscripcion.rol === 'creador') {
           const sucesor = await transactionalEm.findOne(TorneoUsuario, {
             torneo: torneoId,

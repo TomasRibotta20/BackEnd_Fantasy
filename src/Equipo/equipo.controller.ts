@@ -13,7 +13,15 @@ import { orm } from '../shared/db/orm.js';
 export async function obtenerEquipos(req: Request, res: Response, next: NextFunction) {
   try {
     const em = orm.em;
-    const equipos = await em.find(Equipo, {}, { orderBy: { id: 'ASC' } });
+    const equipos = await em.find(Equipo, {}, {
+      orderBy: { id: 'ASC' },
+      populate: [
+        'torneo_usuario.usuario',
+        'torneo_usuario.torneo',
+        'jugadores.jugador.posicion',
+        'jugadores.jugador.club',
+      ],
+    });
     res.status(200).json(equipos);
   } catch (error: any) {
     next(ErrorFactory.internal('Error al obtener los equipos'));
