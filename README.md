@@ -63,7 +63,7 @@ La app posee un sistema de envío de mails para recuperar la contraseña de un u
 Es importante aclarar que no es necesario crear la contraseña de aplicacion si no se desea. Si este es el caso entonces la app puede funcionar igualmente. Se deberá usar la consola para poder ver el envio de mails al momento de solicitar recuperar la contraseña.
 
 ### Groq (Inteligencia Artificial)
-La aplicación integra la IA de Groq para generar análisis y tendencias automatizadas sobre el rendimiento de los jugadores. Puedes obtener tu clave API gratuita creando una cuenta en la consola de desarrolladores de Groq.
+La aplicación integra la IA de Groq para generar análisis y tendencias automatizadas sobre el rendimiento de los jugadores. Puedes obtener tu clave API gratuita creando una cuenta en la consola de desarrolladores de **[Groq](https://grok.com/?referrer=website)**.
 
 ```env 
     GROQ_API_KEY=tu_api_key_de_groq
