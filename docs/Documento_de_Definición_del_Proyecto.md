@@ -122,7 +122,10 @@ El sistema además cuenta con la opción de elegir un modo automático, en el cu
 * 11.5. Una vez calculados ambos modificadores, estos se suman y determinan el modificador de precio final.
 
 ### 12. Recompensas
-* 12.1. Luego de calcular los puntos para cada equipo de cada usuario, se hace una tabla de puntos en la cual, dependiendo de quién sacó más puntos, se reparten recompensas monetarias y de jugadores.
+* 12.1. Luego de calcular los puntos para cada equipo de cada usuario, se hace una tabla de puntos en la cual, dependiendo de quién sacó más puntos, se reparten recompensas monetarias y de jugadores. Cada recompensa tiene distintas opciones de **premios<sup>13</sup>** según la posicion en la que quedó el usuario en la tabla de puntos previamente calculada. Para el usuario que queda primero en el ranking final de esa jornada se le otorgará una recompensa de tier oro. Si queda segundo o tercero recibirá una recompensa de tier plata. Si queda cuarto o quinto recibirá una recompensa de tier bronce. Las recompensas se pueden reclamar en el transcurso de la jornada, es decir, si se procesa la jornada siguiente toda recompensa es auto-reclamada y se le otorgará un saldo en efectivo, según el tier de la recompensa, al equipo del usuario.
+
+### 13. Premios
+* 13.1. Los premios están definidos por tipo (ruleta, saldo, player pick). La ruleta sortea aleatoreamente un jugador y se lo transfiere instantáneamente al equipo del usuario que reclamó esa recompensa. El saldo asigna un monto en "efectivo" al equipo del usuario. El player pick te da a elegir entre 3 jugadores, sorteados aleatoreamente, y se asigna solo uno al equipo del usuario (pasados cinco minutos, el sorteo expira). Cada premio tiene además uno o varios tiers a los que pertenece, por ejemplo, la ruleta puede ser de tier oro y tier plata pero no existe una ruleta de tier bronce. Los premios mejoran en base al tier. Una ruleta tier oro tendrá mejores recompensas que una de tier plata.
 
 ---
 
